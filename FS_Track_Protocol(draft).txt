@@ -16,7 +16,7 @@ Tem como argumento o nome do ficheiro, quando pedido o servidor deve retornar um
 O escalonamento via carga de node ocorre no servidor, para não mandar sempre o mesmo node como melhor opção de transferencia
 Depois o cliente terá um algoritmo de escolha conforme a informação que recebeu mais a sua conexão com os 'nodes'
 
-O Node deverá devolver ao servidor o(s) node(s) que escolhe para este ter sempre conhecimento da carga em cada um.
+O Node deverá devolver ao servidor o(s) node(s) que escolhe para este ter sempre conhecimento da carga em cada um..
 
 
 
