@@ -1,6 +1,7 @@
 import java.net.*;
+import java.io.*;
 
-public class FSTrackerProtocol {
+public class FSTrackerProtocol implements Serializable{
     private byte[] payload;
 
 
