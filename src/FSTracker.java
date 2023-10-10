@@ -12,9 +12,7 @@ public class FSTracker {
         try {
 
             tracker = new ServerSocket(port);
-            InetAddress localhost = InetAddress.getLocalHost();
-            String ipv4 = localhost.getHostAddress();
-            System.out.println("Tracker ativo em " + ipv4 + ", porta " + port);
+            System.out.println("Tracker ativo em 10.4.4.1, porta " + port);
 
             while (true) {
                 Socket clientSocket = tracker.accept();
