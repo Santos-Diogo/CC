@@ -10,6 +10,7 @@ public class FSTracker
     public static void main(String[] args) throws ClassNotFoundException
     {
         int port = Integer.parseInt(args[0]);
+
         try 
         {
             tracker = new ServerSocket(port);
@@ -21,6 +22,7 @@ public class FSTracker
                 ObjectInputStream inputStream = new ObjectInputStream(clientSocket.getInputStream());
                 FSTrackerProtocol pacote = (FSTrackerProtocol) inputStream.readObject();
                 
+                //Packets are handled by distinct threads. Memory-safety mechanisms yet to implement.
                 new Thread (new Handle (pacote));
                 //System.out.println(new String(pacote.getPayload(), StandardCharsets.UTF_8));
             }
