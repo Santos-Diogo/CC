@@ -4,11 +4,16 @@ import java.io.*;
 public class FSTrackerProtocol implements Serializable 
 {
     //Packages are immutable
-    private final byte[] payload;
-    private final short type; // Tipo da mensagem
     private final InetAddress srcIP; // Endereço IP de origem
+    private final short type; // Tipo da mensagem
+    private final byte[] payload;
 
-    
+    @Override
+    public String toString ()
+    {
+        return "srcIP="+ srcIP+ " type="+ type; 
+    }
+
     public FSTrackerProtocol(byte[] payload, short type, InetAddress srcIP)
     {
         this.payload = payload;
