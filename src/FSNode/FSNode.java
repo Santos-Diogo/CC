@@ -1,5 +1,8 @@
+package FSNode;
 import java.io.*;
 import java.net.*;
+
+import FSProtocol.FSTrackerProtocol;
 
 public class FSNode {
 

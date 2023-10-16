@@ -1,7 +1,11 @@
+package FSTracker;
+
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
+
+import FSProtocol.FSTrackerProtocol;
 
 public class FSTracker
 {
