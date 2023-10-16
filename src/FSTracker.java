@@ -6,6 +6,7 @@ import java.nio.charset.StandardCharsets;
 public class FSTracker
 {
     private static ServerSocket tracker;
+    private ThreadManager tm;
 
     public static void main(String[] args) throws ClassNotFoundException
     {
