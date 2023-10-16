@@ -6,7 +6,7 @@ import java.nio.charset.StandardCharsets;
 public class FSTracker
 {
     private static ServerSocket tracker;
-    private ThreadManager tm;
+    private static ThreadManager tm;
 
     public static void main(String[] args) throws ClassNotFoundException
     {
@@ -15,6 +15,7 @@ public class FSTracker
         try 
         {
             tracker = new ServerSocket(port);
+            tm= new ThreadManager();
             System.out.println("Tracker ativo em 10.4.4.1, porta " + port);
 
             while (true)
@@ -23,9 +24,15 @@ public class FSTracker
                 ObjectInputStream inputStream = new ObjectInputStream(clientSocket.getInputStream());
                 FSTrackerProtocol pacote = (FSTrackerProtocol) inputStream.readObject();
                 
-                //Packets are handled by distinct threads. Memory-safety mechanisms yet to implement.
-                new Thread (new Handle (pacote));
-                //System.out.println(new String(pacote.getPayload(), StandardCharsets.UTF_8));
+                tm.l.lock();
+                try
+                {
+                    if (tm.new_thread())
+                        new Thread (new Handle (pacote));
+                    else
+                        Handle (pacote);
+                }
+                
             }
         }
         catch (IOException e) 

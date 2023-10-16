@@ -8,9 +8,16 @@ public class ThreadManager
 
     ThreadManager ()
     {
-        l= new ReentrantLock();
-        t_max= 4;
-        t_count= 0;
+        this.l= new ReentrantLock();
+        this.t_count= 0;
+        this.t_max= 4;
+    }
+
+    ThreadManager (int t_max)
+    {
+        this.l= new ReentrantLock();
+        this.t_count= 0;
+        this.t_max= t_max;
     }
 
     Boolean new_thread ()
@@ -21,5 +28,5 @@ public class ThreadManager
         return true;
     }
 
-    
+
 }
