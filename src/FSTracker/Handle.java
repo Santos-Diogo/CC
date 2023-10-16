@@ -4,21 +4,14 @@ import java.io.OutputStream;
 
 import FSProtocol.FSTrackerProtocol;
 
-public class Handle implements Runnable
+public class Handle
 {
-    private FSTrackerProtocol pacote;
-
-    Handle (FSTrackerProtocol pacote)
-    {
-        this.pacote= pacote;
-    }
-
     private void REG ()
     {
         
     }
 
-    public void run ()
+    static void handle (FSTrackerProtocol pacote)
     {
         switch (pacote.getType())
         {

@@ -33,9 +33,13 @@ public class FSTracker
                 try
                 {
                     if (tm.new_thread())
-                        new Thread (new Handle (pacote));
+                        new Thread (new ThreadCode (pacote));
                     else
-                        Handle (pacote);
+                        Handle.handle (pacote);
+                }
+                finally
+                {
+                    tm.l.unlock();
                 }
                 
             }
