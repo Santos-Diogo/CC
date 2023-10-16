@@ -5,6 +5,9 @@ import java.net.*;
 import FSProtocol.FSTrackerProtocol;
 
 public class FSNode {
+    private String nodeID;
+    private String nodeAdress;
+    private List<Blocks> blocks;
 
     public static void main(String[] args) {
         String serverAddress = args[0]; // Change to the server's IP address or hostname
