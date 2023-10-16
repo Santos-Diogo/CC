@@ -4,14 +4,19 @@ import java.util.*;
 
 import FSProtocol.FSTrackerProtocol;
 
+/**
+ * Class that defines the SolverThreads.<p>
+ * This are threads created by the MainThread that actually handle the packets collected by the MainThread and put into the PacketManager
+ * @author Diogo Santos
+ */
 public class SolverThread implements Runnable
 {
-    volatile Set<FSTrackerProtocol> p_list;
+    PacketManager pm;
     private volatile boolean stopRequested = false;
 
-    SolverThread (Set<FSTrackerProtocol> p_list)
+    SolverThread (PacketManager pm)
     {
-        this.p_list= p_list;
+        this.pm= pm;
     }
 
     //Synchronized method that prevents multiple calls from different threads
@@ -20,25 +25,11 @@ public class SolverThread implements Runnable
         stopRequested= true;
     }
 
-    //tem de ser reescrito para ter em conta que esta estrutura existe fora do scope das threads (main thread)
-    private synchronized FSTrackerProtocol get_packet ()
-    {
-        Iterator<FSTrackerProtocol> i= p_list.iterator();
-        if (i.hasNext())
-        {
-            FSTrackerProtocol p= i.next();
-            i.remove();
-            return p;
-        }
-        else
-            return null;
-    }
-
     public void run ()
     {
         while (!stopRequested)
         {
-            FSTrackerProtocol p= get_packet();
+            FSTrackerProtocol p= pm.get_packet();
             if (p!= null)
                 Handle.handle(p);
             else

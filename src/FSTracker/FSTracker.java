@@ -8,17 +8,23 @@ import java.util.*;
 
 import FSProtocol.FSTrackerProtocol;
 
+/**
+ * Class with the code belonging to the "MainThread"
+ * @author  Diogo Santos
+ * @author  Martim Félix
+ * @author  Luís Ribeiro
+ */
 public class FSTracker
 {
     private static ServerSocket tracker;
     private static ArrayList<Thread> t_list;
-    private static Set<FSTrackerProtocol> p_list;
+    private static PacketManager pm;
     private static int t_max;
 
     public static void main(String[] args) throws ClassNotFoundException
     {
         t_list= new ArrayList<Thread>();
-        p_list= new HashSet<FSTrackerProtocol>();
+        pm= new PacketManager();
         t_max= 8;
 
         int port = Integer.parseInt(args[0]);
@@ -30,17 +36,14 @@ public class FSTracker
     
             for (int i= 0; i< t_max; i++)
             {
-                //creating t_max threads and "storing" them in the t_list ArrayList
-                t_list.add(new Thread(new SolverThread(p_list)));
+                t_list.add(new Thread(new SolverThread(pm)));
             }
 
             while (true)
             {
                 Socket clientSocket = tracker.accept();
                 ObjectInputStream inputStream = new ObjectInputStream(clientSocket.getInputStream());
-
-                //adding a packet to the packet list
-                p_list.add ((FSTrackerProtocol) inputStream.readObject());
+                pm.add_packet ((FSTrackerProtocol) inputStream.readObject());
             }
         }
         catch (IOException e) 
