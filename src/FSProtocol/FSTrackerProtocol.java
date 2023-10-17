@@ -15,21 +15,31 @@ public class FSTrackerProtocol implements Serializable
         return "srcIP="+ srcIP+ " type="+ type; 
     }
 
-    public FSTrackerProtocol(byte[] payload, short type, InetAddress srcIP)
+    private short type_translate (String str)
+    {
+        switch (str)
+        {
+            case "END":
+                return 1;
+            case "REG":
+                return 2;
+            //mais mensagens
+            
+            default:
+                return 0;
+        }
+    }
+
+    public FSTrackerProtocol(byte[] payload, String type, InetAddress srcIP)
     {
         this.payload = payload;
-        this.type = type;
+        this.type = type_translate(type);
         this.srcIP = srcIP;
     }
 
     public InetAddress getSrcIP()
     {
         return srcIP;
-    }
-
-    public short getType()
-    {
-        return type;
     }
 
     public byte[] getPayload()
