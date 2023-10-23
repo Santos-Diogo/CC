@@ -12,10 +12,9 @@ public class FSTrackerProtocol implements Serializable
         GET
     };
 
-
     //Packages are immutable
     private final InetAddress srcIP; // Endereço IP de origem
-    private final TypeMsg type ;
+    private final TypeMsg type;
     private final byte[] payload;
 
     @Override

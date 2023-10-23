@@ -53,7 +53,7 @@ public class FSTracker
         finally 
         {
             // Close the ServerSocket when all is done
-            if (tracker != null && !tracker.isClosed())
+            if (tracker!= null && !tracker.isClosed())
             {
                 try
                 {
