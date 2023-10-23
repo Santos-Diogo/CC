@@ -1,21 +1,19 @@
 package FSTracker;
 
-import java.io.OutputStream;
-
 import FSProtocol.FSTrackerProtocol;
 
 public class Handle
 {
-    private void REG ()
+    private static void REG ()
     {
         
     }
 
     static void handle (FSTrackerProtocol pacote)
     {
-        switch (pacote.getType())
+        switch (pacote.getTypeMsg())
         {
-            case 0:
+            case REG:
                 REG ();
                 break;
             default:

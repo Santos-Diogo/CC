@@ -4,9 +4,18 @@ import java.io.*;
 
 public class FSTrackerProtocol implements Serializable 
 {
+    public enum TypeMsg
+    {
+        REG,
+        ACK,
+        AVF,
+        GET
+    };
+
+
     //Packages are immutable
     private final InetAddress srcIP; // Endereço IP de origem
-    private final short type; // Tipo da mensagem
+    private final TypeMsg type ;
     private final byte[] payload;
 
     @Override
@@ -15,7 +24,7 @@ public class FSTrackerProtocol implements Serializable
         return "srcIP="+ srcIP+ " type="+ type; 
     }
 
-    public FSTrackerProtocol(byte[] payload, short type, InetAddress srcIP)
+    public FSTrackerProtocol(byte[] payload, TypeMsg type, InetAddress srcIP)
     {
         this.payload = payload;
         this.type = type;
@@ -27,7 +36,7 @@ public class FSTrackerProtocol implements Serializable
         return srcIP;
     }
 
-    public short getType()
+    public TypeMsg getTypeMsg()
     {
         return type;
     }
@@ -36,4 +45,5 @@ public class FSTrackerProtocol implements Serializable
     {
         return payload;
     }
+
 }
