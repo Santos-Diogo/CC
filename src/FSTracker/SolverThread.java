@@ -25,15 +25,30 @@ public class SolverThread implements Runnable
         stopRequested= true;
     }
 
+    private static void REG ()
+    {
+        
+    }
+
+    static void handle (FSTrackerProtocol pacote)
+    {
+        switch (pacote.getTypeMsg())
+        {
+            case REG:
+                REG ();
+                break;
+            default:
+                System.out.println("Unknowkn type in the packet");
+        }
+    }    
+
     public void run ()
     {
         while (!stopRequested)
         {
             FSTrackerProtocol p= pm.get_packet();
             if (p!= null)
-                Handle.handle(p);
-            else
-                stop();
+                handle(p);
         }
     }    
 }
