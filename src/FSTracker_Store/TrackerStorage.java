@@ -14,7 +14,18 @@ public class TrackerStorage {
         short packetType = receivedPacket.getType();
         if (packetType == Registo_Arquivo) {
             String nomeArquivo = receivedPacket.getNomeArquivo();              //getNomeArquivo ainda tem de ser implementada
-            FSNode fsNode = receivedPacket.getFSNode();                       //getFSNode ainda tem de ser implementada    
+            FSNode fsNode = receivedPacket.getFSNode();                        //getFSNode ainda tem de ser implementada    
             adicionarArquivoAoFSNode(nomeArquivo,FSNode);                      // adicionarArquivoAoFSNode ainda tem de ser implementado e serve para atualizar as estruturas de dados!
+        }
+    }
+
+    public void adicionarArquivoAoFSNode (String nomeArquivo,FSNode fsNode){
+        if(fileToNodesMap.containsKey(nomeArquivo)){
+            List<FSNode> fsNodes = fileToNodesMap.get(nomeArquivo)
+            fsNodes.add(fsNode);
+        }
+        else{
+            List<FSNode> fsNodes = new ArrayList<>();
+        }
     }
 }
