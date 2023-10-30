@@ -3,7 +3,7 @@ import java.io.*;
 import java.net.*;
 
 import FSProtocol.FSTrackerProtocol;
-import FSProtocol.FSTrackerProtocol.TypeMsg;
+import FSProtocol.FSTrackerProtocol.TypeMsg;;
 
 public class FSNode {
 
@@ -16,7 +16,7 @@ public class FSNode {
             ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
 
             //temp
-            int [] payload= new int[4];
+            byte [] payload= new byte[4];
 
             TypeMsg type= TypeMsg.REG;
             FSTrackerProtocol protocol = new FSTrackerProtocol(payload, type, Inet4Address.getLocalHost());
