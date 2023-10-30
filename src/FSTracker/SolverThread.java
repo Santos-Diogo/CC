@@ -21,7 +21,7 @@ public class SolverThread implements Runnable
         this.stopRequested= false;
     }
 
-    synchronized FSTrackerProtocol get_packet (PacketManager pm)
+    synchronized FSTrackerProtocol get_packet ()
     {
         FSTrackerProtocol packet= pm.get_packet();
 
@@ -57,12 +57,12 @@ public class SolverThread implements Runnable
     }
 
 
-    static void handle (FSTrackerProtocol pacote)
+    static void handle (FSTrackerProtocol packet)
     {
-        if (pacote== null)
+        if (packet== null)
             return;
 
-        switch (pacote.getTypeMsg())
+        switch (packet.getTypeMsg())
         {
             case REG:
                 REG();
@@ -87,7 +87,7 @@ public class SolverThread implements Runnable
     {
         while (!stopRequested)
         {
-            handle (get_packet (m));
+            handle (get_packet());
         }
     }    
 }
