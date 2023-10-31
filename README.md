@@ -12,6 +12,17 @@ The server is responsible for keeping track of the nodes connected to the networ
 
 Tranfers happen between nodes and when a node recieves a block of a given file tracked in the network the node is responsible for communicating that to the server. 
 
+## Manual
+
+### Node
+
+#### Flags:
+
+-d : Used to specify a shared directory other than the current one
+
+### Server
+
+
 ## Documentation
 
 N/A
