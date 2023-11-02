@@ -1,4 +1,4 @@
-package FSTracker;
+package ver1.FSTracker;
 
 
 import java.io.IOException;
@@ -6,7 +6,7 @@ import java.io.ObjectInputStream;
 import java.net.*;
 import java.util.*;
 
-import FSProtocol.FSTrackerProtocol;
+import ver1.FSProtocol.FSTrackerProtocol;
 
 /**
  * Class with the code belonging to the "MainThread"

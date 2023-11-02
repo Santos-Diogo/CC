@@ -1,4 +1,4 @@
-package FSProtocol;
+package ver1.FSProtocol;
 import java.net.*;
 import java.io.*;
 

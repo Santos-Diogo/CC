@@ -1,9 +1,9 @@
-package FSTracker;
+package ver1.FSTracker;
 
 import java.util.*;
 
-import FSNode.FSNode;
-import FSProtocol.FSTrackerProtocol;
+import ver1.FSNode.FSNode;
+import ver1.FSProtocol.FSTrackerProtocol;
 
 /**
  * Class that defines the SolverThreads.<p>
