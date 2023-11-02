@@ -4,7 +4,6 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * Class we use to controll a group of threads
- * @author Diogo Santos
  */
 public class ThreadControl
 {

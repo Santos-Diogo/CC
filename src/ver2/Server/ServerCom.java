@@ -10,7 +10,6 @@ import ver2.Track_Protocol.Track_Packet;
 
 /**
  * Class responsible for handling communication for each independent node on the server side.
- * @author Diogo Santos
  */
 public class ServerCom implements Runnable
 {

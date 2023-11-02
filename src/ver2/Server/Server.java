@@ -10,7 +10,6 @@ import ver2.ThreadTools.ThreadControl;
 
 /**
  * Main server thread
- * @author Diogo Santos
  */
 public class Server 
 {
