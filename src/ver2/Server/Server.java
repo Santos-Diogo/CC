@@ -35,7 +35,6 @@ public class Server
                 
                 //The client socket is passed down to a thread.
                 Thread t= new Thread(new ServerCom(clientSocket, tc, ss));
-                threads.add(t);
                 t.start();
             }
         }
