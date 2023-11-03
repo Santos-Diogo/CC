@@ -13,10 +13,10 @@ import ver2.Track_Protocol.Track_Packet;
  * server side.
  */
 public class ServerCom implements Runnable {
-    private static ThreadControl tc;
-    private static Socket socket;
-    private static ObjectInputStream input;
-    private static SharedState ss;
+    private ThreadControl tc;
+    private Socket socket;
+    private ObjectInputStream input;
+    private SharedState ss;
 
     private void handle(Track_Packet packet) {
         switch (packet.getType()) {
