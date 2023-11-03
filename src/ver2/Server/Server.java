@@ -34,7 +34,9 @@ public class Server
                 Socket clientSocket = socket.accept();
                 
                 //The client socket is passed down to a thread.
-                threads.add(new Thread(new ServerCom(clientSocket, tc, ss)));
+                Thread t= new Thread(new ServerCom(clientSocket, tc, ss));
+                threads.add(t);
+                t.start();
             }
         }
         catch (IOException e) 
