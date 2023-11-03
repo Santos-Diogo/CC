@@ -1,8 +1,9 @@
-package FSNode;
+package ver1.FSNode;
 import java.io.*;
 import java.net.*;
 
-import FSProtocol.FSTrackerProtocol;
+import ver1.FSProtocol.FSTrackerProtocol;
+import ver1.FSProtocol.FSTrackerProtocol.TypeMsg;;
 
 public class FSNode {
     private String nodeID;
@@ -17,11 +18,11 @@ public class FSNode {
             Socket socket = new Socket(serverAddress, serverPort);
             ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
 
-            // Create an instance of FSTrackerProtocol with your data
-            byte[] payload = "Registo".getBytes();
-            short type = 1; // Replace with the actual type
-            InetAddress srcIP = InetAddress.getByName(args[2]); // Replace with the actual source IP
-            FSTrackerProtocol protocol = new FSTrackerProtocol(payload, type, srcIP);
+            //temp
+            byte [] payload= new byte[4];
+
+            TypeMsg type= TypeMsg.REG;
+            FSTrackerProtocol protocol = new FSTrackerProtocol(payload, type, Inet4Address.getLocalHost());
 
             // Serialize and send the protocol object
             outputStream.writeObject(protocol);

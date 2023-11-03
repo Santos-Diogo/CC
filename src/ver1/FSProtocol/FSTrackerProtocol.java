@@ -1,6 +1,4 @@
-package FSProtocol;
-import FSNode.FSNode;
-
+package ver1.FSProtocol;
 import java.net.*;
 import java.io.*;
 
@@ -33,10 +31,9 @@ public class FSTrackerProtocol implements Serializable
         GET
     };
 
-
     //Packages are immutable
     private final InetAddress srcIP; // Endereço IP de origem
-    private final TypeMsg type ;
+    private final TypeMsg type;
     private final byte[] payload;
 
     @Override

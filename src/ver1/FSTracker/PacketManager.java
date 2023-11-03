@@ -1,7 +1,8 @@
-package FSTracker;
+package ver1.FSTracker;
 
-import FSProtocol.FSTrackerProtocol;
 import java.util.*;
+
+import ver1.FSProtocol.FSTrackerProtocol;
 
 /**
  * Class responsible for managing the "queue" of packages between the main and solver threads. Integrity is ensured by the function relative synchronization mechanisms
