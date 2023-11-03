@@ -48,7 +48,7 @@ public class ServerCom implements Runnable {
     public void run() {
         Track_Packet packet;
 
-        while (tc.get_running() == true) {
+        while (tc.get_running() == true && !this.socket.isClosed()) {
             try {
 
                 packet = (Track_Packet) input.readObject();
