@@ -13,7 +13,7 @@ import ver2.Track_Protocol.Track_Packet.TypeMsg;;
  * Main Node thread
  */
 public class Node {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         String serverAddress = args[0];
         int serverPort = Integer.parseInt(args[1]);
 
@@ -29,6 +29,8 @@ public class Node {
             Track_Packet protocol = new Track_Packet(Inet4Address.getLocalHost(), type, payload);
             System.out.println(Inet4Address.getLocalHost().toString());
             // Serialize and send the protocol object
+            outputStream.writeObject(protocol);
+            Thread.sleep(5000);
             outputStream.writeObject(protocol);
 
             // Close the socket when done
