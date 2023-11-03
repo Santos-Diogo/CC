@@ -56,6 +56,7 @@ public class ServerCom implements Runnable {
             } catch (IOException | ClassNotFoundException e) {
                 System.out.println("ServerCom Thread encountered a problem while reading from client");
                 e.printStackTrace();
+                break;
             }
         }
     }
