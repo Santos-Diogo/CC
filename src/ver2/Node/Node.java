@@ -27,7 +27,7 @@ public class Node {
 
             TypeMsg type = TypeMsg.REG;
             Track_Packet protocol = new Track_Packet(Inet4Address.getLocalHost(), type, payload);
-
+            System.out.println(Inet4Address.getLocalHost().toString());
             // Serialize and send the protocol object
             outputStream.writeObject(protocol);
 
