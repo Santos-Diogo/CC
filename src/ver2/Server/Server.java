@@ -18,7 +18,7 @@ public class Server
     private static ThreadControl tc;
     private static SharedState ss;
 
-    public void main (String[] args)
+    public static void main (String[] args)
     {
         //Gets first connection from all nodes and then passes it down to a thread
         int port= Integer.parseInt(args[0]);
