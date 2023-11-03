@@ -30,8 +30,10 @@ public class Node {
             System.out.println(Inet4Address.getLocalHost().toString());
             // Serialize and send the protocol object
             outputStream.writeObject(protocol);
-            Thread.sleep(5000);
-            outputStream.writeObject(protocol);
+            /*
+             * Thread.sleep(5000);
+             * outputStream.writeObject(protocol);
+             */
 
             // Close the socket when done
             socket.close();
