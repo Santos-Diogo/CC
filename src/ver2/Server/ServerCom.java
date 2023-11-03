@@ -53,7 +53,7 @@ public class ServerCom implements Runnable
     {
         Track_Packet packet;
 
-        while (tc.get_running() == true && !this.socket.isClosed()) 
+        while (tc.get_running()== true) 
         {
             try 
             {
