@@ -18,7 +18,7 @@ public class Server
     private static ThreadControl tc;
     private static SharedState ss;
 
-    public void main (String[] args)
+    public static void main (String[] args)
     {
         //Gets first connection from all nodes and then passes it down to a thread
         int port= Integer.parseInt(args[0]);
@@ -34,7 +34,9 @@ public class Server
                 Socket clientSocket = socket.accept();
                 
                 //The client socket is passed down to a thread.
-                threads.add(new Thread(new ServerCom(clientSocket, tc, ss)));
+                Thread t= new Thread(new ServerCom(clientSocket, tc, ss));
+                threads.add(t);
+                t.start();
             }
         }
         catch (IOException e) 
