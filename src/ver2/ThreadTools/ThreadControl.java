@@ -7,7 +7,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  */
 public class ThreadControl
 {
-    private static boolean end;
+    private static boolean running;
     private final ReentrantReadWriteLock l = new ReentrantReadWriteLock();
     private final ReentrantReadWriteLock.ReadLock rl = l.readLock();
     private final ReentrantReadWriteLock.WriteLock wl = l.writeLock();
@@ -15,15 +15,15 @@ public class ThreadControl
 
     public ThreadControl ()
     {
-        end= false;
+        running= true;
     }
 
-    public void end ()
+    public void set_running (boolean b)
     {
         wl.lock();
         try
         {
-            end= true;
+            running= b;
         }
         finally
         {
@@ -31,12 +31,12 @@ public class ThreadControl
         }
     }
 
-    public boolean end_check ()
+    public boolean get_running ()
     {
         rl.lock();
         try
         {
-            return end;
+            return running;
         }
         finally
         {
