@@ -7,12 +7,15 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 
 import ver2.Track_Protocol.Track_Packet;
-import ver2.Track_Protocol.Track_Packet.TypeMsg;;
+import ver2.Track_Protocol.Track_Packet.TypeMsg;
 
-/**
+/***
  * Main Node thread
  */
 public class Node {
+
+    private static ObjectOutputStream 
+    
     public static void main(String[] args) throws InterruptedException {
         String serverAddress = args[0];
         int serverPort = Integer.parseInt(args[1]);
@@ -31,9 +34,9 @@ public class Node {
             // Serialize and send the protocol object
             outputStream.writeObject(protocol);
             /*
-             * Thread.sleep(5000);
-             * outputStream.writeObject(protocol);
-             */
+                * Thread.sleep(5000);
+                * outputStream.writeObject(protocol);
+                */
 
             // Close the socket when done
             socket.close();
