@@ -33,4 +33,12 @@ public class FSNode {
             e.printStackTrace();
         }
     }
+
+    public String getNodeId() {
+        return nodeID;
+    }
+
+    public void setNomeArquivo(String nodeID) {
+        this.nodeID = nodeID;
+    }
 }

@@ -1,11 +1,14 @@
 package ver1.FSProtocol;
+import ver1.FSNode.FSNode;
 import java.net.*;
 import java.io.*;
 
+
 public class FSTrackerProtocol implements Serializable 
 {
-    private String nomeDoArquivo;
-    private FSNode fsNode;
+    private String nomeDoArquivo; // Pacotes REG
+    private FSNode fsNode;        // Pacotes REG e ACK
+    private String fileId;        // Pacotes ACK
 
     public void setNomeDoArquivo(String nomeDoArquivo) {
         this.nomeDoArquivo = nomeDoArquivo;
@@ -21,6 +24,46 @@ public class FSTrackerProtocol implements Serializable
 
     public FSNode getFSNode(){
         return fsNode;
+    }
+
+    public void setFileId(String fileId) {
+        this.fileId = fileId;
+    }
+
+    public String getFileId(){
+        return fileId;
+    }
+
+
+
+    public static FSTrackerProtocol createRegProtocol (InetAddress srcIP, FSNode fsNode, String nomeDoArquivo){
+        byte[] regPayload = new byte[4];
+        FSTrackerProtocol regPacket = new FSTrackerProtocol(regPayload,TypeMsg.REG, srcIP);
+        regPacket.setNomeDoArquivo(nomeDoArquivo);
+        regPacket.setFSNode(fsNode);
+        return regPacket;
+    }
+
+    public static FSTrackerProtocol createAckPacket (InetAddress srcIP, FSNode fsNode, String fileId){
+        byte[] ackPayload = new byte[4];
+        FSTrackerProtocol ackPacket = new FSTrackerProtocol(ackPayload, TypeMsg.ACK, srcIP);
+        ackPacket.setFSNode(fsNode);
+        ackPacket.setFileId(fileId);
+        return ackPacket;
+    }
+    
+    public static FSTrackerProtocol createAvfPacket (InetAddress srcIP, FSNode fsNode){
+        byte[] avfPayload = new byte[4];
+        FSTrackerProtocol avfPacket = new FSTrackerProtocol(avfPayload,TypeMsg.AVF,srcIP);
+        avfPacket.setFSNode(fsNode);
+        return avfPacket;
+    }
+
+    public static FSTrackerProtocol createGetPacket (InetAddress srcIP, String fileId){
+        byte[] getPayload = new byte[4]; //Pacotes GET
+        FSTrackerProtocol getPacket = new FSTrackerProtocol(getPayload, TypeMsg.GET, srcIP);
+        getPacket.setFileId(fileId);
+        return getPacket;
     }
 
     public enum TypeMsg
