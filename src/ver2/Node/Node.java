@@ -1,35 +1,76 @@
 package ver2.Node;
 
+import java.io.Console;
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Inet4Address;
+import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.Scanner;
 
 import ver2.Track_Protocol.Track_Packet;
-import ver2.Track_Protocol.Track_Packet.TypeMsg;;
+import ver2.Track_Protocol.Track_Packet.TypeMsg;
 
-/**
+/***
  * Main Node thread
  */
 public class Node {
+
+    private static ObjectOutputStream trackerOutput;
+    private static ObjectInputStream trackerInput;
+    private static InetAddress adress;
+    private static Scanner scanner = new Scanner(System.in);
+
+    private static void handle_avf() {
+
+        try {
+            trackerOutput.writeObject(new Track_Packet(adress, TypeMsg.AVF_REQ));
+            Track_Packet files = (Track_Packet) trackerInput.readObject();
+            String list_of_files = new String(files.getPayload(), "UTF-8");
+            System.out.println("Available files to download:\n" + list_of_files);
+        } catch (IOException | ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void handle_command(String command) {
+
+        switch (command) {
+            case "avf":
+                handle_avf();
+                break;
+            default:
+                break;
+        }
+    }
+
+    private static String command_request() {
+        System.out.println("Type your desired command:\navf - available files\n");
+        return scanner.nextLine();
+    }
+
     public static void main(String[] args) throws InterruptedException {
         String serverAddress = args[0];
         int serverPort = Integer.parseInt(args[1]);
-
         try {
+            // Define this machine IP adress
+            adress = Inet4Address.getLocalHost();
             // Connects to server
             Socket socket = new Socket(serverAddress, serverPort);
-            ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
-
-            // temp
-            byte[] payload = new byte[4];
+            trackerOutput = new ObjectOutputStream(socket.getOutputStream());
 
             TypeMsg type = TypeMsg.REG;
-            Track_Packet protocol = new Track_Packet(Inet4Address.getLocalHost(), type, payload);
-            System.out.println(Inet4Address.getLocalHost().toString());
+            Track_Packet protocol = new Track_Packet(adress, type);
+            System.out.println(adress.toString());
             // Serialize and send the protocol object
-            outputStream.writeObject(protocol);
+            trackerOutput.writeObject(protocol);
+
+            String command;
+            while (!(command = command_request()).equals("quit")) {
+                handle_command(command);
+            }
             /*
              * Thread.sleep(5000);
              * outputStream.writeObject(protocol);
