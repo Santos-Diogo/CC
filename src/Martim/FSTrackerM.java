@@ -45,11 +45,3 @@ public class FSTrackerM {
         return arquivoParaFSNodes;
     }
 }
-
-
-
-
-
-
-
-
