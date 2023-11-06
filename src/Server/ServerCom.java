@@ -1,12 +1,12 @@
-package ver2.Server;
+package Server;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.net.Socket;
 
-import ver2.SharedState.SharedState;
-import ver2.ThreadTools.ThreadControl;
-import ver2.Track_Protocol.Track_Packet;
+import SharedState.SharedState;
+import ThreadTools.ThreadControl;
+import Track_Protocol.Track_Packet;
 
 /**
  * Class responsible for handling communication for each independent node on the

@@ -1,4 +1,4 @@
-package ver2.Node;
+package Node;
 
 import java.io.Console;
 import java.io.IOException;
@@ -10,8 +10,8 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.Scanner;
 
-import ver2.Track_Protocol.Track_Packet;
-import ver2.Track_Protocol.Track_Packet.TypeMsg;
+import Track_Protocol.Track_Packet;
+import Track_Protocol.Track_Packet.TypeMsg;
 
 /***
  * Main Node thread

@@ -1,4 +1,4 @@
-package ver2.Node;
+package Node;
 
 public class NodeCom
 {

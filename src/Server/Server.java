@@ -1,12 +1,12 @@
-package ver2.Server;
+package Server;
 
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Set;
 
-import ver2.SharedState.SharedState;
-import ver2.ThreadTools.ThreadControl;
+import SharedState.SharedState;
+import ThreadTools.ThreadControl;
 
 /**
  * Main server thread
