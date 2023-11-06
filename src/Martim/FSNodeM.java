@@ -3,15 +3,11 @@ import java.io.*;
 import java.net.*;
 import java.util.ArrayList;
 import java.util.List;
-import Martim.*;
-import ver1.FSNode.FSNode;
 
 public class FSNodeM {
         private String nodeID;
         private List<String> arquivos; // Lista de arquivos que este nó possui
         private List<String> blocosDisponiveis; // Lista de blocos disponíveis para armazenar mais arquivos 
-        //consultar o FS_Tracker
-        // ...
 
         public FSNodeM (String nodeID){
                 this.nodeID = nodeID;
@@ -54,20 +50,20 @@ public class FSNodeM {
                 List<FSNodeM> resposta = null;
                 try {
                         InetAddress fsTrackerAddress = InetAddress.getByName("endereco_do_tracker");
-                        int fsTrackerPort = 12345;  // Porta do tracker
+                        int fsTrackerPort = 12345;                                                              // Porta do tracker
         
 
                         Socket socket = new Socket(fsTrackerAddress, fsTrackerPort);                            // Criação de um socket para se conectar ao FSTracker (Não sei se a porta e endereço é isso)
         
 
-                        ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());                           // pacote de consulta e envie para o FSTracker
+                        ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());              // pacote de consulta e envie para o FSTracker
                         out.writeObject(consulta);
         
 
-                        ObjectInputStream in = new ObjectInputStream(socket.getInputStream());                              //resposta do FSTracker
+                        ObjectInputStream in = new ObjectInputStream(socket.getInputStream());                  //resposta do FSTracker
                         resposta = (List<FSNodeM>) in.readObject();
         
-                    // Feche a conexão
+                    // Fecha a conexão
                         socket.close();
                 } catch (IOException | ClassNotFoundException e) {
                         e.printStackTrace();
