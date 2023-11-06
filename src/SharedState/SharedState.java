@@ -1,4 +1,4 @@
-package ver2.SharedState;
+package SharedState;
 
 /**
  * Class that holds the data to be shared amongst all threads.

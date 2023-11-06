@@ -1,4 +1,4 @@
-package ver2.ThreadTools;
+package ThreadTools;
 
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
