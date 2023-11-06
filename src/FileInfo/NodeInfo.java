@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class NodeInfo {
-    private InetAddress nodeIP;     //Teste Commit   
+    private InetAddress nodeIP;      
     private List<String> arquivos; // Lista de arquivos que este nó possui
     private List<String> blocosDisponiveis; // Lista de blocos disponíveis para armazenar mais arquivos
 
