@@ -1,22 +1,41 @@
 package Node;
 
+import java.io.ByteArrayInputStream;
+import java.io.DataInputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collector;
 
+/**
+ * Class used for keeping an image of the server state
+ */
 public class NodeLog implements Serializable
 {
+    /**
+     * Types of Instructions
+     */
     public enum InstructionType
     {
         ADD_F,  //ADD FILE
         RM_F    //REMOVE FILE
     }
 
+    /**
+     * Notion of an Instruction from the Log perspective
+     */
     public class Instruction
     {
         InstructionType type;
         byte[] args;
+
+        public Instruction (InstructionType type, byte[] args)
+        {
+            this.type= type;
+            this.args= args;
+        }
     }
     
     public class State_Exception extends Exception
@@ -42,7 +61,61 @@ public class NodeLog implements Serializable
     }
 
     /**
-     * Add an instruction to the log
+     * Used in Serialization
+     * @param out
+     * @throws IOException
+     */
+    private void writeObject (ObjectOutputStream out) throws IOException
+    {
+        //Write the state
+        out.writeObject(this.state);
+
+        //Write the Instruction List
+        out.writeInt(instructions.size());
+        for (Instruction i: instructions)
+        {
+            //Write Type
+            out.writeObject(i.type);
+            //Write the size of and the array of bytes
+            out.writeInt(i.args.length);
+            out.write(i.args);
+        }
+    }
+
+    /**
+     * Used in Serialization
+     * @param in
+     * @throws IOException
+     * @throws ClassNotFoundException
+     */
+    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException
+    {
+        //Read the state
+        this.state= (NodeInfo) in.readObject();
+
+        //Read the Instruction List
+        this.instructions= new ArrayList<Instruction>(n_instructions);
+
+        //Read size and build Instruction List
+        int N= in.readInt();
+        Instruction instruction= new Instruction(null, null);
+
+        for (int i= 0; i< N; i++)
+        {
+            //Read Type
+            instruction.type= (InstructionType) in.readObject();
+
+            //Read the size of and the array of bytes
+            int size_a= in.readInt();
+            instruction.args= in.readNBytes(size_a);
+
+            //Add instruction to the List
+            this.instructions.add(new Instruction(instruction.type, instruction.args));
+        }
+    }
+
+    /**
+     * Add an instruction to the log. throws exception if the number n of instructions in the list has been exceeded
      * @param i instruction to add to the log
      * @throws State_Exception
      */
@@ -66,17 +139,33 @@ public class NodeLog implements Serializable
         this.instructions= new ArrayList<Instruction>(this.n_instructions);
     }
 
-    public void apply_instruction (NodeInfo n, Instruction i)
+    public void apply_instruction (NodeInfo n, Instruction instruction) throws IOException
     {
-        switch (i.type)
+        DataInputStream s= new DataInputStream(new ByteArrayInputStream(instruction.args));
+
+        switch (instruction.type)
         {
             case ADD_F:
-            //conseguir apanhar os argumentos a partir de um byte[]
-            //n.add_file ();
-            break;
+                String name_f= s.readUTF();
+                int size_b= s.readInt();
+                int size_l= s.readInt();
+                List<Integer> blocks= new ArrayList<Integer>(size_l);
+
+                //Compose the List
+                for (int i= 0; i< size_l; i++)
+                {
+                    blocks.add(s.readInt());
+                }
+                
+                //Add the file
+                n.add_file (name_f, size_b, blocks);
+                break;
+
             case RM_F:
-            //n.rm_file ();
-            break;
+                name_f= s.readUTF();
+
+                n.rm_file (name_f);
+                break;
         }
     }
 
@@ -88,7 +177,14 @@ public class NodeLog implements Serializable
     {
         for (Instruction i : this.instructions)
         {
-            apply_instruction (this.state, i);
+            try
+            {
+                apply_instruction (this.state, i);
+            }
+            catch (IOException e)
+            {
+                e.printStackTrace();
+            }
         }
         this.instructions= new ArrayList<Instruction>(this.n_instructions);
         return this.state;
