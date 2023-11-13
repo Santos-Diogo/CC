@@ -3,6 +3,7 @@ package Node;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collector;
 
 public class NodeLog implements Serializable
 {
@@ -27,7 +28,7 @@ public class NodeLog implements Serializable
     }
 
     private final int n_instructions= 25;
-    private NodeInfo init_state;
+    private NodeInfo state;
     private List<Instruction> instructions;
 
     /**
@@ -36,7 +37,7 @@ public class NodeLog implements Serializable
      */
     public NodeLog (NodeInfo state)
     {
-        this.init_state= state;
+        this.state= state;
         this.instructions= new ArrayList<Instruction>(n_instructions);
     }
 
@@ -61,16 +62,35 @@ public class NodeLog implements Serializable
      */
     public void update_state (NodeInfo state)
     {
-        this.init_state= state;
+        this.state= state;
         this.instructions= new ArrayList<Instruction>(this.n_instructions);
     }
 
+    public void apply_instruction (NodeInfo n, Instruction i)
+    {
+        switch (i.type)
+        {
+            case ADD_F:
+            //conseguir apanhar os argumentos a partir de um byte[]
+            //n.add_file ();
+            break;
+            case RM_F:
+            //n.rm_file ();
+            break;
+        }
+    }
+
     /**
+     * This method also updates the state
      * @return calculated state from initial state and following instructions
      */
     public NodeInfo get_state ()
     {
-        //@TODO
-        return this.init_state;
+        for (Instruction i : this.instructions)
+        {
+            apply_instruction (this.state, i);
+        }
+        this.instructions= new ArrayList<Instruction>(this.n_instructions);
+        return this.state;
     }
 }
