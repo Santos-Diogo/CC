@@ -8,8 +8,8 @@ public class NodeLog implements Serializable
 {
     public enum InstructionType
     {
-        ADD_F,
-        RM_F
+        ADD_F,  //ADD FILE
+        RM_F    //REMOVE FILE
     }
 
     public class Instruction
