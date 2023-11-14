@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
 
-public class NodeInfo implements Serializable
+public class NodeInfo
 {
     private List<String> files;
     private Map<String, Integer> files_size;
@@ -36,47 +36,6 @@ public class NodeInfo implements Serializable
         {
             e.printStackTrace(); // Handle potential IOException
         }
-    }
-
-    /**
-     * Used in Serialization
-     * @param in
-     * @throws IOException
-     * @throws ClassNotFoundException
-     */
-    private void writeObject (ObjectOutputStream out) throws IOException
-    {
-        //Write Files List
-        out.writeInt(this.files.size());
-        for (String s: this.files)
-            out.writeUTF(s);
-        
-        //Write Maps
-        out.writeObject(this.files_size);
-        out.writeObject(this.files_blocks);
-    }
-
-    /**
-     * Used in Serialization
-     * @param in
-     * @throws IOException
-     * @throws ClassNotFoundException
-     */
-    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException
-    {
-        //Read Files List
-        int size_l= in.readInt();
-        List<String> files= new ArrayList<>();
-        for (int i= 0; i< size_l; i++)
-            files.add((String) in.readObject());
-        
-        //Read Maps
-        Map<String, Integer> files_size= (Map<String,Integer>) in.readObject();
-        Map<String, List<Integer>> files_blocks= (Map<String,List<Integer>>) in.readObject();
-
-        this.files= files;
-        this.files_size= files_size;
-        this.files_blocks= files_blocks;
     }
 
     /**
