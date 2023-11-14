@@ -1,4 +1,4 @@
-package FileInfo;
+package Server;
 
 import java.net.InetAddress;
 import java.util.Map;
