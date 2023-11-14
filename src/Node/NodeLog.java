@@ -136,7 +136,7 @@ public class NodeLog implements Serializable
     public void update_state (NodeInfo state)
     {
         this.state= state;
-        this.instructions= new ArrayList<Instruction>(this.n_instructions);
+        this.instructions= new ArrayList<>(this.n_instructions);
     }
 
     public void apply_instruction (NodeInfo n, Instruction instruction) throws IOException
@@ -149,7 +149,7 @@ public class NodeLog implements Serializable
                 String name_f= s.readUTF();
                 int size_b= s.readInt();
                 int size_l= s.readInt();
-                List<Integer> blocks= new ArrayList<Integer>(size_l);
+                List<Integer> blocks= new ArrayList<>(size_l);
 
                 //Compose the List
                 for (int i= 0; i< size_l; i++)
@@ -186,7 +186,7 @@ public class NodeLog implements Serializable
                 e.printStackTrace();
             }
         }
-        this.instructions= new ArrayList<Instruction>(this.n_instructions);
+        this.instructions= new ArrayList<>(this.n_instructions);
         return this.state;
     }
 }
