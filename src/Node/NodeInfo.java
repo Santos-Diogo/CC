@@ -1,5 +1,7 @@
-package FileInfo;
+package Node;
 
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -10,12 +12,25 @@ public class NodeInfo
     private Map<String, List<Integer>> files_blocks;
 
     /**
-     * @param dir Direcotry from wich we read the files
+     * @param dir Directory from wich we read the files
      * @apiNote If the file as all the blocks leave the List in files_blocks as 0(null) =)
      */
     public NodeInfo (String dir)
     {
         //handle meta-data file
+        try (FileInputStream metadata = new FileInputStream(dir)) 
+        {
+            int n_bytes;
+            while ((n_bytes = metadata.read()) != -1)
+            {
+                // Process the bytes as needed
+                
+            }
+        } 
+        catch (IOException e) 
+        {
+            e.printStackTrace(); // Handle potential IOException
+        }
     }
 
     /**
