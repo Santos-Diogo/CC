@@ -47,7 +47,7 @@ public class Node {
     }
 
     private static String command_request() {
-        System.out.println("Type your desired command:\navf - available files\n");
+        System.out.println("Type your desired command:\navf - available files\nquit- exit the network\n");
         return scanner.nextLine();
     }
 
@@ -63,7 +63,6 @@ public class Node {
 
             TypeMsg type = TypeMsg.REG;
             Track_Packet protocol = new Track_Packet(adress, type);
-            System.out.println(adress.toString());
             // Serialize and send the protocol object
             trackerOutput.writeObject(protocol);
 

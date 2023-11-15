@@ -5,15 +5,21 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.HashMap;
 
 public class NodeInfo
 {
     private List<String> files;
-    private Map<String, Integer> files_size;
+    private Map<String, Long> files_size;
     private Map<String, List<Integer>> files_blocks;
 
     /**
@@ -36,6 +42,25 @@ public class NodeInfo
         {
             e.printStackTrace(); // Handle potential IOException
         }
+
+        //This part is very early production, it will NOT work
+        //Something similar to this will be done/this snipet will be used
+        try(DirectoryStream<Path> directoryStream = Files.newDirectoryStream(Paths.get(dir)))
+        {
+            for (Path filePath : directoryStream)
+            {
+                String fileName = filePath.getFileName().toString();
+                Long fileSize = Files.size(filePath);
+                files.add(fileName);
+                files_size.put(fileName, fileSize);
+                int blocks = (int) ((fileSize % 1024 == 0) ? fileSize / 1024 : (fileSize / 1024) + 1);
+                files_blocks.put(fileName, IntStream.rangeClosed(0, blocks).boxed().collect(Collectors.toList()));
+            }
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -45,7 +70,7 @@ public class NodeInfo
      * @param size  size of the file in blocks
      * @param blocks    blocks owned. (null for all blocks)
      */
-    public void add_file (String name, int size, List<Integer> blocks)
+    public void add_file (String name, long size, List<Integer> blocks)
     {
         files.add (name);
         files_size.put (name, size);
@@ -74,9 +99,9 @@ public class NodeInfo
 
     /**
      * @param file name of the file
-     * @return returns the number of blocks of a given file
+     * @return returns the file size
      */
-    public int get_file_size (String file)
+    public long get_file_size (String file)
     {
         return files_size.get(file);
     }
