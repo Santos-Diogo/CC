@@ -2,8 +2,9 @@ package Track_Protocol;
 
 import java.io.Serializable;
 import java.net.InetAddress;
+import Payload.TrackPacketPayload.*;
 
-public class Track_Packet implements Serializable 
+public class TrackPacket implements Serializable 
 {
     public enum TypeMsg 
     {
@@ -18,19 +19,13 @@ public class Track_Packet implements Serializable
 
     private InetAddress src_ip;
     private TypeMsg type;
-    private byte[] payload;
+    private TrackPacketPayload payload;
 
-    public Track_Packet(InetAddress src_ip, TypeMsg type, byte[] payload) 
+    public TrackPacket(InetAddress src_ip, TypeMsg type, TrackPacketPayload payload) 
     {
         this.src_ip= src_ip;
         this.type= type;
         this.payload= payload;
-    }
-
-    public Track_Packet(InetAddress src_ip, TypeMsg type) 
-    {
-        this.src_ip= src_ip;
-        this.type= type;
     }
 
     public InetAddress getSrc_ip() 
@@ -38,12 +33,12 @@ public class Track_Packet implements Serializable
         return src_ip;
     }
 
-    public TypeMsg getType() 
+    public TypeMsg getType ()
     {
         return type;
     }
 
-    public byte[] getPayload() 
+    public TrackPacketPayload getPayload()
     {
         return payload;
     }
