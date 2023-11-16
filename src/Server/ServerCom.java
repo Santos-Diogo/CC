@@ -6,49 +6,83 @@ import java.net.Socket;
 
 import SharedState.SharedState;
 import ThreadTools.ThreadControl;
-import Track_Protocol.Track_Packet;
+import Track_Protocol.TrackPacket;
+import Payload.TrackPacketPayload.*;
 
 /**
  * Class responsible for handling communication for each independent node on the
  * server side.
  */
-public class ServerCom implements Runnable {
+public class ServerCom implements Runnable 
+{
     private ThreadControl tc;
     private Socket socket;
     private ObjectInputStream input;
     private SharedState ss;
 
-    private void handle(Track_Packet packet) {
-        switch (packet.getType()) {
+    private void handle(TrackPacket packet)
+    {
+        switch (packet.getType()) 
+        {
             case REG:
+            {
                 System.out.println("REG message");
+                RegPacket p= (RegPacket) packet.getPayload();
+                //Lidar com o pacote de registo
                 break;
+            }
             case AVF_REQ:
-                System.out.println("AVF request message");
+            {
+    
+                break; 
+            }
+            case AVF_RESP:
+            {
+    
                 break;
-            case GET:
-                System.out.println("GET message");
-                break;
-            default:
+            }
+            case ADD_F:
+            {
+    
+                break;   
+            }
+            case RM_F:
+            {
+    
+                break;    
+            }
+            case GET_REQ:
+            {
+    
+                break; 
+            }
+            case GET_RESP:
+            {    
 
+            }
         }
-
     }
 
-    public ServerCom(Socket socket, ThreadControl tc, SharedState ss) throws IOException {
+    public ServerCom(Socket socket, ThreadControl tc, SharedState ss) throws IOException 
+    {
         this.socket = socket;
         this.tc = tc;
         this.ss = ss;
         this.input = new ObjectInputStream(socket.getInputStream());
     }
 
-    public void run() {
-        Track_Packet packet;
+    public void run() 
+    {
+        TrackPacket packet;
 
-        while (tc.get_running() == true) {
-            try {
-                packet = (Track_Packet) input.readObject();
-            } catch (IOException | ClassNotFoundException e) {
+        while (tc.get_running() == true) 
+        {
+            try 
+            {
+                packet = (TrackPacket) input.readObject();
+            }
+            catch (IOException | ClassNotFoundException e) 
+            {
                 break;
             }
             handle(packet);
