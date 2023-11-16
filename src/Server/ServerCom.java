@@ -1,10 +1,10 @@
 package Server;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.net.Socket;
+import java.io.*;
+import java.net.*;
+import java.util.*;
+import java.lang.String;
 
-import SharedState.SharedState;
 import ThreadTools.ThreadControl;
 import Track_Protocol.TrackPacket;
 import Payload.TrackPacketPayload.*;
@@ -16,9 +16,36 @@ import Payload.TrackPacketPayload.*;
 public class ServerCom implements Runnable 
 {
     private ThreadControl tc;
-    private Socket socket;
-    private ObjectInputStream input;
-    private SharedState ss;
+    private ObjectInputStream in;
+    private ObjectOutputStream out;
+    private ServerInfo serverInfo;
+
+    private void handle_REG (TrackPacket packet)
+    {
+        System.out.println("REG message");
+        RegPacket p= (RegPacket) packet.getPayload();
+
+        InetAddress srcAddress= packet.getSrc_ip();
+        //We insert each (file_name,blocks[])
+        for (Map.Entry<String,List<Integer>> e : p.get_files_blocks().entrySet())
+        {
+            serverInfo.add_file(e.getKey(), srcAddress, e.getValue());
+        }
+    }
+
+    private void handle_AVF_REQ (TrackPacket packet)
+    {
+        System.out.println("AVF REQ");
+        try
+        {
+            out.writeObject(new AvfRepPacket(serverInfo.get_files()));
+            out.flush();
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
+        }
+    }
 
     private void handle(TrackPacket packet)
     {
@@ -26,29 +53,22 @@ public class ServerCom implements Runnable
         {
             case REG:
             {
-                System.out.println("REG message");
-                RegPacket p= (RegPacket) packet.getPayload();
-                //Lidar com o pacote de registo
+                handle_REG(packet);
                 break;
             }
             case AVF_REQ:
             {
-    
+                handle_AVF_REQ(packet);   
                 break; 
-            }
-            case AVF_RESP:
-            {
-    
-                break;
             }
             case ADD_F:
             {
-    
+                
                 break;   
             }
             case RM_F:
             {
-    
+                
                 break;    
             }
             case GET_REQ:
@@ -56,21 +76,21 @@ public class ServerCom implements Runnable
     
                 break; 
             }
-            case GET_RESP:
-            {    
-
+            default:
+            {
+                System.out.println("Fodeu-se");
             }
         }
     }
-
-    public ServerCom(Socket socket, ThreadControl tc, SharedState ss) throws IOException 
+    
+    public ServerCom(Socket socket, ThreadControl tc, ServerInfo serverInfo) throws IOException 
     {
-        this.socket = socket;
-        this.tc = tc;
-        this.ss = ss;
-        this.input = new ObjectInputStream(socket.getInputStream());
+        this.tc= tc;
+        this.serverInfo= serverInfo;
+        this.in= new ObjectInputStream(socket.getInputStream());
+        this.out= new ObjectOutputStream(socket.getOutputStream());
     }
-
+    
     public void run() 
     {
         TrackPacket packet;
@@ -79,7 +99,7 @@ public class ServerCom implements Runnable
         {
             try 
             {
-                packet = (TrackPacket) input.readObject();
+                packet = (TrackPacket) in.readObject();
             }
             catch (IOException | ClassNotFoundException e) 
             {
