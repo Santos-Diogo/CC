@@ -53,7 +53,7 @@ public class Node {
     }
 
     private static String command_request() {
-        System.out.println("Type your desired command:\navf - available files\n");
+        System.out.println("Type your desired command:\navf - available files\nquit- exit the network\n");
         return scanner.nextLine();
     }
 
