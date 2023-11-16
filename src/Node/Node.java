@@ -10,8 +10,8 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.Scanner;
 
-import Track_Protocol.Track_Packet;
-import Track_Protocol.Track_Packet.TypeMsg;
+import Track_Protocol.TrackPacket;
+import Track_Protocol.TrackPacket.TypeMsg;
 
 /***
  * Main Node thread
@@ -23,21 +23,27 @@ public class Node {
     private static InetAddress adress;
     private static Scanner scanner = new Scanner(System.in);
 
-    private static void handle_avf() {
+    private static void handle_avf() 
+    {
+        try 
+        {
+            trackerOutput.writeObject(new TrackPacket(adress, TypeMsg.AVF_REQ, null));
+            TrackPacket files = (TrackPacket) trackerInput.readObject();
 
-        try {
-            trackerOutput.writeObject(new Track_Packet(adress, TypeMsg.AVF_REQ));
-            Track_Packet files = (Track_Packet) trackerInput.readObject();
-            String list_of_files = new String(files.getPayload(), "UTF-8");
-            System.out.println("Available files to download:\n" + list_of_files);
-        } catch (IOException | ClassNotFoundException e) {
+            //Deprecated
+            /* String list_of_files = new String(files.getPayload(), "UTF-8");
+            System.out.println("Available files to download:\n" + list_of_files); */
+        }
+        catch (IOException | ClassNotFoundException e) 
+        {
             e.printStackTrace();
         }
     }
 
-    private static void handle_command(String command) {
-
-        switch (command) {
+    private static void handle_command(String command) 
+    {
+        switch (command) 
+        {
             case "avf":
                 handle_avf();
                 break;
@@ -51,37 +57,40 @@ public class Node {
         return scanner.nextLine();
     }
 
-    public static void main(String[] args) throws InterruptedException {
+    public static void main(String[] args) throws InterruptedException 
+    {
         String serverAddress = args[0];
         int serverPort = Integer.parseInt(args[1]);
-        try {
+
+        try 
+        {
             // Define this machine IP adress
             adress = Inet4Address.getLocalHost();
             // Connects to server
             Socket socket = new Socket(serverAddress, serverPort);
             trackerOutput = new ObjectOutputStream(socket.getOutputStream());
 
+            // Reg Message
             TypeMsg type = TypeMsg.REG;
-            Track_Packet protocol = new Track_Packet(adress, type);
-            System.out.println(adress.toString());
-            // Serialize and send the protocol object
+            TrackPacket protocol = new TrackPacket(adress, type, null);
             trackerOutput.writeObject(protocol);
 
             String command;
-            while (!(command = command_request()).equals("quit")) {
+            while (!(command = command_request()).equals("quit")) 
+            {
                 handle_command(command);
             }
-            /*
-             * Thread.sleep(5000);
-             * outputStream.writeObject(protocol);
-             */
 
             // Close the socket when done
             socket.close();
-        } catch (UnknownHostException e) {
+        }
+        catch (UnknownHostException e) 
+        {
             System.out.println(serverAddress + " Is not a valid adress");
             e.printStackTrace();
-        } catch (IOException e) {
+        }
+        catch (IOException e) 
+        {
             e.printStackTrace();
         }
 
