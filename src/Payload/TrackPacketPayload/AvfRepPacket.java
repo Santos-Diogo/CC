@@ -8,7 +8,7 @@ public class AvfRepPacket implements TrackPacketPayload
 
     public AvfRepPacket (List<String> files)
     {
-        this.files= files;
+        this.files= new ArrayList<>(files);
     }
 
     public List<String> get_files ()

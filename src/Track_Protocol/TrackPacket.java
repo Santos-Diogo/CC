@@ -38,6 +38,9 @@ public class TrackPacket implements Serializable
         return type;
     }
 
+    /**
+     * @return Returns the payload directly (No copy made)
+     */
     public TrackPacketPayload getPayload()
     {
         return payload;
