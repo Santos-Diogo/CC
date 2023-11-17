@@ -51,7 +51,7 @@ public class ServerInfo
             rwl.readLock().lock();
             try
             {
-                return blocks;
+                return new ArrayList<>(this.blocks);
             }
             finally
             {

@@ -9,9 +9,9 @@ public class RegPacket implements TrackPacketPayload
 {
     private Map<String, List<Integer>> files_blocks;
 
-    public RegPacket ()
+    public RegPacket (Map<String, List<Integer>> files_blocks)
     {
-        files_blocks= new HashMap<>();
+        files_blocks= new HashMap<>(files_blocks);
     }
 
     public Map<String, List<Integer>> get_files_blocks() 
