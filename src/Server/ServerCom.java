@@ -1,54 +1,108 @@
 package Server;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.net.Socket;
+import java.io.*;
+import java.net.*;
+import java.util.*;
+import java.lang.String;
 
-import SharedState.SharedState;
 import ThreadTools.ThreadControl;
-import Track_Protocol.Track_Packet;
+import Track_Protocol.TrackPacket;
+import Payload.TrackPacketPayload.*;
 
 /**
  * Class responsible for handling communication for each independent node on the
  * server side.
  */
-public class ServerCom implements Runnable {
+public class ServerCom implements Runnable 
+{
     private ThreadControl tc;
-    private Socket socket;
-    private ObjectInputStream input;
-    private SharedState ss;
+    private ObjectInputStream in;
+    private ObjectOutputStream out;
+    private ServerInfo serverInfo;
 
-    private void handle(Track_Packet packet) {
-        switch (packet.getType()) {
-            case REG:
-                System.out.println("REG message");
-                break;
-            case AVF_REQ:
-                System.out.println("AVF request message");
-                break;
-            case GET:
-                System.out.println("GET message");
-                break;
-            default:
+    private void handle_REG (TrackPacket packet)
+    {
+        System.out.println("REG message");
+        RegPacket p= (RegPacket) packet.getPayload();
 
+        InetAddress srcAddress= packet.getSrc_ip();
+        //We insert each (file_name,blocks[])
+        for (Map.Entry<String,List<Integer>> e : p.get_files_blocks().entrySet())
+        {
+            serverInfo.add_file(e.getKey(), srcAddress, e.getValue());
         }
-
     }
 
-    public ServerCom(Socket socket, ThreadControl tc, SharedState ss) throws IOException {
-        this.socket = socket;
-        this.tc = tc;
-        this.ss = ss;
-        this.input = new ObjectInputStream(socket.getInputStream());
+    private void handle_AVF_REQ (TrackPacket packet)
+    {
+        System.out.println("AVF REQ");
+        try
+        {
+            out.writeObject(new AvfRepPacket(serverInfo.get_files()));
+            out.flush();
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
+        }
     }
 
-    public void run() {
-        Track_Packet packet;
+    private void handle(TrackPacket packet)
+    {
+        switch (packet.getType()) 
+        {
+            case REG:
+            {
+                handle_REG(packet);
+                break;
+            }
+            case AVF_REQ:
+            {
+                handle_AVF_REQ(packet);   
+                break; 
+            }
+            case ADD_F:
+            {
+                
+                break;   
+            }
+            case RM_F:
+            {
+                
+                break;    
+            }
+            case GET_REQ:
+            {
+    
+                break; 
+            }
+            default:
+            {
+                System.out.println("Fodeu-se");
+            }
+        }
+    }
+    
+    public ServerCom(Socket socket, ThreadControl tc, ServerInfo serverInfo) throws IOException 
+    {
+        this.tc= tc;
+        this.serverInfo= serverInfo;
+        this.in= new ObjectInputStream(socket.getInputStream());
+        this.out= new ObjectOutputStream(socket.getOutputStream());
+    }
+    
+    public void run() 
+    {
+        TrackPacket packet;
 
-        while (tc.get_running() == true) {
-            try {
-                packet = (Track_Packet) input.readObject();
-            } catch (IOException | ClassNotFoundException e) {
+        while (tc.get_running() == true) 
+        {
+            try 
+            {
+                packet = (TrackPacket) in.readObject();
+            }
+            catch (IOException | ClassNotFoundException e) 
+            {
                 break;
             }
             handle(packet);
