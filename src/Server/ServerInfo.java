@@ -23,7 +23,7 @@ public class ServerInfo
         {
             this.rwl= new ReentrantReadWriteLock();
             this.node_adr= node_adr;
-            this.blocks= blocks;
+            this.blocks= new ArrayList<>(blocks);
         }
 
         /**
