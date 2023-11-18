@@ -68,11 +68,10 @@ public class Node {
             // Connects to server
             Socket socket = new Socket(serverAddress, serverPort);
             trackerOutput = new ObjectOutputStream(socket.getOutputStream());
-	    trackerInput = new ObjectInputStream(socket.getInputStream());
+            trackerInput = new ObjectInputStream(socket.getInputStream());
             // Reg Message
             TypeMsg type = TypeMsg.REG;
             NodeInfo ndinfo = new NodeInfo(args[2]);
-            System.out.println(ndinfo.get_file_blocks().toString());
             TrackPacket protocol = new TrackPacket(adress, type, new RegPacket(ndinfo.get_file_blocks()));
             trackerOutput.writeObject(protocol);
             trackerOutput.flush();
