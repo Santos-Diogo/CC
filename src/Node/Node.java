@@ -72,8 +72,10 @@ public class Node {
             // Reg Message
             TypeMsg type = TypeMsg.REG;
             NodeInfo ndinfo = new NodeInfo(args[2]);
+            System.out.println(ndinfo.get_file_blocks().toString());
             TrackPacket protocol = new TrackPacket(adress, type, new RegPacket(ndinfo.get_file_blocks()));
             trackerOutput.writeObject(protocol);
+            trackerOutput.flush();
 
             String command;
             while (!(command = command_request()).equals("quit")) {
