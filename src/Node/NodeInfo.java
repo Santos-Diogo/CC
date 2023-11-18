@@ -6,6 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -26,10 +27,13 @@ public class NodeInfo {
     public NodeInfo(String dir) {
         // This part is very early production, it will NOT work
         // Something similar to this will be done/this snipet will be used
+        this.files = new ArrayList<>();
+        this.files_size = new HashMap<>();
+        this.files_blocks = new HashMap<>();
         try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(Paths.get(dir))) {
             for (Path filePath : directoryStream) {
                 String fileName = filePath.getFileName().toString();
-                Pattern pattern = Pattern.compile("^(.+)\\.blk\\.(\\d+)$");
+                Pattern pattern = Pattern.compile("^(.+)\\.fsblk\\.(\\d+)$");
                 Matcher matcher = pattern.matcher(fileName);
                 if (matcher.matches()) {
                     fileName = matcher.group(1);
