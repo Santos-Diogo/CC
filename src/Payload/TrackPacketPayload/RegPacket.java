@@ -9,8 +9,8 @@ import java.util.*;
 public class RegPacket implements TrackPacketPayload, Serializable {
     private Map<String, List<Integer>> files_blocks;
 
-    public RegPacket(Map<String, List<Integer>> files_blocks) {
-        files_blocks = new HashMap<>(files_blocks);
+    public RegPacket(Map<String, List<Integer>> files_blockss) {
+        files_blocks = new HashMap<>(files_blockss);
     }
 
     public Map<String, List<Integer>> get_files_blocks() {
@@ -18,7 +18,9 @@ public class RegPacket implements TrackPacketPayload, Serializable {
 
         for (Map.Entry<String, List<Integer>> entry : this.files_blocks.entrySet()) {
             // Clone the List
-            List<Integer> clonedList = new ArrayList<>(entry.getValue());
+	    List<Integer> clonedList = null;
+            if(entry.getValue() != null)
+		clonedList = new ArrayList<>(entry.getValue());
 
             clonedMap.put(entry.getKey(), clonedList);
         }

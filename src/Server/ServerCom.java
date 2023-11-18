@@ -24,10 +24,11 @@ public class ServerCom implements Runnable
     {
         System.out.println("REG message");
         RegPacket p= (RegPacket) packet.getPayload();
-
+	System.out.println(p.get_files_blocks().toString());
         InetAddress srcAddress= packet.getSrc_ip();
         //We insert each (file_name,blocks[])
-        for (Map.Entry<String,List<Integer>> e : p.get_files_blocks().entrySet())
+        
+	for (Map.Entry<String,List<Integer>> e : p.get_files_blocks().entrySet())
         {
             serverInfo.add_file(e.getKey(), srcAddress, e.getValue());
         }
@@ -38,7 +39,7 @@ public class ServerCom implements Runnable
         System.out.println("AVF REQ");
         try
         {
-            out.writeObject(new AvfRepPacket(serverInfo.get_files()));
+            out.writeObject(new TrackPacket(null, null, new AvfRepPacket(serverInfo.get_files())));
             out.flush();
         }
         catch (IOException e)

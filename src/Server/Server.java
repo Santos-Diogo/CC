@@ -14,15 +14,14 @@ import ThreadTools.ThreadControl;
 public class Server 
 {
     private static ServerSocket socket;
-    private static ThreadControl tc;
-    private static ServerInfo serverInfo;
+    private static ThreadControl tc = new ThreadControl();
+    private static ServerInfo serverInfo = new ServerInfo();
     private static InetAddress address;
 
     public static void main(String[] args) 
     {
         // Gets first connection from all nodes and then passes it down to a thread
         int port = Integer.parseInt(args[0]);
-        tc = new ThreadControl();
         try 
         {
             address = Inet4Address.getLocalHost();
