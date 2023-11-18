@@ -1,6 +1,5 @@
 package Node;
 
-import java.io.Console;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -8,10 +7,11 @@ import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.util.Scanner;
+import java.util.*;
 
 import Track_Protocol.TrackPacket;
 import Track_Protocol.TrackPacket.TypeMsg;
+import Payload.TrackPacketPayload.*;
 
 /***
  * Main Node thread
@@ -25,14 +25,22 @@ public class Node {
 
     private static void handle_avf() 
     {
-        try 
+        try
         {
+            //Write Request
             trackerOutput.writeObject(new TrackPacket(adress, TypeMsg.AVF_REQ, null));
-            TrackPacket files = (TrackPacket) trackerInput.readObject();
+            trackerOutput.flush();
 
-            //Deprecated
-            /* String list_of_files = new String(files.getPayload(), "UTF-8");
-            System.out.println("Available files to download:\n" + list_of_files); */
+            //Get response
+            TrackPacket packet = (TrackPacket) trackerInput.readObject();
+
+            //Write File Names
+            AvfRepPacket payload= (AvfRepPacket) packet.getPayload();
+            List<String> files= payload.get_files();
+            for (String s : files)
+            {
+                System.out.println(s);
+            }
         }
         catch (IOException | ClassNotFoundException e) 
         {
