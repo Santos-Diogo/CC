@@ -1,5 +1,4 @@
 package Payload.TrackPacketPayload;
 
-public interface TrackPacketPayload 
-{
+public interface TrackPacketPayload {
 }
