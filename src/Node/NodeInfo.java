@@ -91,7 +91,11 @@ public class NodeInfo {
      * @param file name of the file
      * @return returns the blocks the node has of a given file
      */
-    public List<Integer> get_file_blocks(String file) {
+    public List<Integer> get_blocks_by_file(String file) {
         return files_blocks.get(file);
+    }
+
+    public Map<String, List<Integer>> get_file_blocks() {
+        return files_blocks;
     }
 }

@@ -23,35 +23,28 @@ public class Node {
     private static InetAddress adress;
     private static Scanner scanner = new Scanner(System.in);
 
-    private static void handle_avf() 
-    {
-        try
-        {
-            //Write Request
+    private static void handle_avf() {
+        try {
+            // Write Request
             trackerOutput.writeObject(new TrackPacket(adress, TypeMsg.AVF_REQ, null));
             trackerOutput.flush();
 
-            //Get response
+            // Get response
             TrackPacket packet = (TrackPacket) trackerInput.readObject();
 
-            //Write File Names
-            AvfRepPacket payload= (AvfRepPacket) packet.getPayload();
-            List<String> files= payload.get_files();
-            for (String s : files)
-            {
+            // Write File Names
+            AvfRepPacket payload = (AvfRepPacket) packet.getPayload();
+            List<String> files = payload.get_files();
+            for (String s : files) {
                 System.out.println(s);
             }
-        }
-        catch (IOException | ClassNotFoundException e) 
-        {
+        } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
     }
 
-    private static void handle_command(String command) 
-    {
-        switch (command) 
-        {
+    private static void handle_command(String command) {
+        switch (command) {
             case "avf":
                 handle_avf();
                 break;
@@ -65,13 +58,11 @@ public class Node {
         return scanner.nextLine();
     }
 
-    public static void main(String[] args) throws InterruptedException 
-    {
+    public static void main(String[] args) throws InterruptedException {
         String serverAddress = args[0];
         int serverPort = Integer.parseInt(args[1]);
 
-        try 
-        {
+        try {
             // Define this machine IP adress
             adress = Inet4Address.getLocalHost();
             // Connects to server
@@ -80,25 +71,21 @@ public class Node {
 
             // Reg Message
             TypeMsg type = TypeMsg.REG;
-            TrackPacket protocol = new TrackPacket(adress, type, null);
+            NodeInfo ndinfo = new NodeInfo(args[2]);
+            TrackPacket protocol = new TrackPacket(adress, type, new RegPacket(ndinfo.get_file_blocks()));
             trackerOutput.writeObject(protocol);
 
             String command;
-            while (!(command = command_request()).equals("quit")) 
-            {
+            while (!(command = command_request()).equals("quit")) {
                 handle_command(command);
             }
 
             // Close the socket when done
             socket.close();
-        }
-        catch (UnknownHostException e) 
-        {
+        } catch (UnknownHostException e) {
             System.out.println(serverAddress + " Is not a valid adress");
             e.printStackTrace();
-        }
-        catch (IOException e) 
-        {
+        } catch (IOException e) {
             e.printStackTrace();
         }
 
