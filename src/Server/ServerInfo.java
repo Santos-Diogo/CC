@@ -19,11 +19,13 @@ public class ServerInfo
          * @param node_adr adress of the node
          * @param blocks list of blocks for the file we associate with in "file_node_blocks"
          */
-        public NodeBlock (InetAddress node_adr, List <Integer> blocks)
+        public NodeBlock (InetAddress node_adr, List <Integer> blockss)
         {
             this.rwl= new ReentrantReadWriteLock();
             this.node_adr= node_adr;
-            this.blocks= new ArrayList<>(blocks);
+	    this.blocks = null;
+	    if(blockss != null)
+	    	this.blocks= new ArrayList<>(blockss);
         }
 
         /**
@@ -66,7 +68,7 @@ public class ServerInfo
     public ServerInfo ()
     {
         this.rwl= new ReentrantReadWriteLock();
-        this.file_node_blocks= new HashMap <String, List <NodeBlock>>();
+        this.file_node_blocks= new HashMap <>();
     }
 
     /**
