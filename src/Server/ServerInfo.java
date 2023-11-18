@@ -51,7 +51,7 @@ public class ServerInfo
             rwl.readLock().lock();
             try
             {
-                return blocks;
+                return new ArrayList<>(this.blocks);
             }
             finally
             {
@@ -104,5 +104,13 @@ public class ServerInfo
         {
             this.rwl.writeLock().unlock();
         }
+    }
+
+    /**
+     * @return Returns the names of the files currently stored
+     */
+    public List<String> get_files ()
+    {
+        return new ArrayList<>(this.file_node_blocks.keySet());
     }
 }
