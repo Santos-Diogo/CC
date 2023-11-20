@@ -6,31 +6,34 @@ import java.util.*;
 import java.lang.String;
 
 import ThreadTools.ThreadControl;
-import Track_Protocol.TrackPacket;
-import Payload.TrackPacketPayload.*;
+import Track_Protocol.*;
 
 /**
  * Class responsible for handling communication for each independent node on the
  * server side.
  */
-public class ServerCom implements Runnable {
+public class ServerCom implements Runnable 
+{
     private ThreadControl tc;
     private ObjectInputStream in;
     private ObjectOutputStream out;
     private ServerInfo serverInfo;
 
-    private void handle_REG(TrackPacket packet) {
+    private void handle_REG(TrackPacket packet) 
+    {
         System.out.println("REG message");
-        RegPacket p = (RegPacket) packet.getPayload();
+        RegPacket p = (RegPacket) packet;
         InetAddress srcAddress = packet.getSrc_ip();
         // We insert each (file_name,blocks[])
 
-        for (Map.Entry<String, List<Integer>> e : p.get_files_blocks().entrySet()) {
+        for (Map.Entry<String, List<Integer>> e : p.get_files_blocks().entrySet()) 
+        {
             serverInfo.add_file(e.getKey(), srcAddress, e.getValue());
         }
     }
 
-    private void handle_AVF_REQ(TrackPacket packet) {
+    private void handle_AVF_REQ(TrackPacket packet) 
+    {
         System.out.println("AVF REQ");
         try {
             out.writeObject(new TrackPacket(null, null, new AvfRepPacket(serverInfo.get_files())));
