@@ -9,6 +9,7 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.*;
 
+import Shared.Net_Id;
 import Track_Protocol.*;
 import Track_Protocol.TrackPacket.TypeMsg;
 
@@ -27,7 +28,7 @@ public class Node
         try 
         {
             // Write Request
-            trackerOutput.writeObject(new TrackPacket(adress, TypeMsg.AVF_REQ));
+            trackerOutput.writeObject(new TrackPacket(new Net_Id(adress), TypeMsg.AVF_REQ));
             trackerOutput.flush();
 
             // Get response
@@ -79,7 +80,7 @@ public class Node
             trackerInput = new ObjectInputStream(socket.getInputStream());
             // Send Reg message
             NodeInfo ndinfo = new NodeInfo(args[2]);
-            trackerOutput.writeObject(new RegPacket(adress, TypeMsg.REG, ndinfo.get_file_blocks()));
+            trackerOutput.writeObject(new RegPacket(new Net_Id(adress), TypeMsg.REG, ndinfo.get_file_blocks()));
             trackerOutput.flush();
             
             // Handle commands

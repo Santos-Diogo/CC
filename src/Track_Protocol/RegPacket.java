@@ -1,6 +1,6 @@
 package Track_Protocol;
 
-import java.net.InetAddress;
+import Shared.Net_Id;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -10,9 +10,9 @@ public class RegPacket extends TrackPacket
 {
     private Map<String, List<Integer>> files_blocks;
 
-    public RegPacket (InetAddress src_ip, TypeMsg type, Map<String, List<Integer>> files_blockss) 
+    public RegPacket (Net_Id n, TypeMsg type, Map<String, List<Integer>> files_blockss) 
     {
-        super (src_ip, type);
+        super (n, type);
         files_blocks = new HashMap<>(files_blockss);
     }
 

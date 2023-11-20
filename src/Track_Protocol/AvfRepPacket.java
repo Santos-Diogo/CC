@@ -1,6 +1,6 @@
 package Track_Protocol;
 
-import java.net.InetAddress;
+import Shared.Net_Id;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -8,9 +8,9 @@ public class AvfRepPacket extends TrackPacket
 {
     List<String> files;
 
-    public AvfRepPacket(InetAddress src_ip, TypeMsg type_msg, List<String> files) 
+    public AvfRepPacket(Net_Id n, TypeMsg type_msg, List<String> files) 
     {
-        super(src_ip, type_msg);
+        super(n, type_msg);
         this.files = new ArrayList<>(files);
     }
 
