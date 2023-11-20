@@ -3,10 +3,12 @@ package Server;
 import java.io.*;
 import java.net.*;
 import java.util.*;
+
 import java.lang.String;
 
 import ThreadTools.ThreadControl;
 import Track_Protocol.*;
+import Track_Protocol.TrackPacket.TypeMsg;
 
 /**
  * Class responsible for handling communication for each independent node on the
@@ -32,59 +34,76 @@ public class ServerCom implements Runnable
         }
     }
 
-    private void handle_AVF_REQ(TrackPacket packet) 
+    private void handle_AVF_REQ() 
     {
         System.out.println("AVF REQ");
-        try {
-            out.writeObject(new TrackPacket(null, null, new AvfRepPacket(serverInfo.get_files())));
+        try 
+        {
+            out.writeObject(new AvfRepPacket (null, TypeMsg.AVF_RESP, serverInfo.get_files()));
             out.flush();
-        } catch (IOException e) {
+        }
+        catch (IOException e) 
+        {
             e.printStackTrace();
         }
     }
 
-    private void handle(TrackPacket packet) {
-        switch (packet.getType()) {
-            case REG: {
+    private void handle(TrackPacket packet) 
+    {
+        switch (packet.getType()) 
+        {
+            case REG: 
+            {
                 handle_REG(packet);
                 break;
             }
-            case AVF_REQ: {
-                handle_AVF_REQ(packet);
+            case AVF_REQ: 
+            {
+                handle_AVF_REQ();
                 break;
             }
-            case ADD_F: {
+            case ADD_F: 
+            {
 
                 break;
             }
-            case RM_F: {
+            case RM_F: 
+            {
 
                 break;
             }
-            case GET_REQ: {
+            case GET_REQ: 
+            {
 
                 break;
             }
-            default: {
+            default: 
+            {
                 System.out.println("Fodeu-se");
             }
         }
     }
 
-    public ServerCom(Socket socket, ThreadControl tc, ServerInfo serverInfo) throws IOException {
+    public ServerCom(Socket socket, ThreadControl tc, ServerInfo serverInfo) throws IOException 
+    {
         this.tc = tc;
         this.serverInfo = serverInfo;
         this.in = new ObjectInputStream(socket.getInputStream());
         this.out = new ObjectOutputStream(socket.getOutputStream());
     }
 
-    public void run() {
+    public void run()
+    {
         TrackPacket packet;
 
-        while (tc.get_running() == true) {
-            try {
+        while (tc.get_running() == true) 
+        {
+            try 
+            {
                 packet = (TrackPacket) in.readObject();
-            } catch (IOException | ClassNotFoundException e) {
+            } 
+            catch (IOException | ClassNotFoundException e) 
+            {
                 break;
             }
             handle(packet);
