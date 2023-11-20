@@ -1,4 +1,4 @@
-package FileInfo;
+package Server;
 
 import java.net.InetAddress;
 import java.util.Map;
@@ -19,11 +19,13 @@ public class ServerInfo
          * @param node_adr adress of the node
          * @param blocks list of blocks for the file we associate with in "file_node_blocks"
          */
-        public NodeBlock (InetAddress node_adr, List <Integer> blocks)
+        public NodeBlock (InetAddress node_adr, List <Integer> blockss)
         {
             this.rwl= new ReentrantReadWriteLock();
             this.node_adr= node_adr;
-            this.blocks= blocks;
+	    this.blocks = null;
+	    if(blockss != null)
+	    	this.blocks= new ArrayList<>(blockss);
         }
 
         /**
@@ -51,7 +53,7 @@ public class ServerInfo
             rwl.readLock().lock();
             try
             {
-                return blocks;
+                return new ArrayList<>(this.blocks);
             }
             finally
             {
@@ -66,7 +68,7 @@ public class ServerInfo
     public ServerInfo ()
     {
         this.rwl= new ReentrantReadWriteLock();
-        this.file_node_blocks= new HashMap <String, List <NodeBlock>>();
+        this.file_node_blocks= new HashMap <>();
     }
 
     /**
@@ -104,5 +106,13 @@ public class ServerInfo
         {
             this.rwl.writeLock().unlock();
         }
+    }
+
+    /**
+     * @return Returns the names of the files currently stored
+     */
+    public List<String> get_files ()
+    {
+        return new ArrayList<>(this.file_node_blocks.keySet());
     }
 }

@@ -1,6 +1,5 @@
 package Node;
 
-import java.io.Console;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -8,10 +7,11 @@ import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.util.Scanner;
+import java.util.*;
 
-import Track_Protocol.Track_Packet;
-import Track_Protocol.Track_Packet.TypeMsg;
+import Track_Protocol.TrackPacket;
+import Track_Protocol.TrackPacket.TypeMsg;
+import Payload.TrackPacketPayload.*;
 
 /***
  * Main Node thread
@@ -24,19 +24,26 @@ public class Node {
     private static Scanner scanner = new Scanner(System.in);
 
     private static void handle_avf() {
-
         try {
-            trackerOutput.writeObject(new Track_Packet(adress, TypeMsg.AVF_REQ));
-            Track_Packet files = (Track_Packet) trackerInput.readObject();
-            String list_of_files = new String(files.getPayload(), "UTF-8");
-            System.out.println("Available files to download:\n" + list_of_files);
+            // Write Request
+            trackerOutput.writeObject(new TrackPacket(adress, TypeMsg.AVF_REQ, null));
+            trackerOutput.flush();
+
+            // Get response
+            TrackPacket packet = (TrackPacket) trackerInput.readObject();
+
+            // Write File Names
+            AvfRepPacket payload = (AvfRepPacket) packet.getPayload();
+            List<String> files = payload.get_files();
+            for (String s : files) {
+                System.out.println(s);
+            }
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
     }
 
     private static void handle_command(String command) {
-
         switch (command) {
             case "avf":
                 handle_avf();
@@ -47,34 +54,32 @@ public class Node {
     }
 
     private static String command_request() {
-        System.out.println("Type your desired command:\navf - available files\n");
+        System.out.println("Type your desired command:\navf - available files\nquit- exit the network\n");
         return scanner.nextLine();
     }
 
     public static void main(String[] args) throws InterruptedException {
         String serverAddress = args[0];
         int serverPort = Integer.parseInt(args[1]);
+
         try {
             // Define this machine IP adress
             adress = Inet4Address.getLocalHost();
             // Connects to server
             Socket socket = new Socket(serverAddress, serverPort);
             trackerOutput = new ObjectOutputStream(socket.getOutputStream());
-
+            trackerInput = new ObjectInputStream(socket.getInputStream());
+            // Reg Message
             TypeMsg type = TypeMsg.REG;
-            Track_Packet protocol = new Track_Packet(adress, type);
-            System.out.println(adress.toString());
-            // Serialize and send the protocol object
+            NodeInfo ndinfo = new NodeInfo(args[2]);
+            TrackPacket protocol = new TrackPacket(adress, type, new RegPacket(ndinfo.get_file_blocks()));
             trackerOutput.writeObject(protocol);
+            trackerOutput.flush();
 
             String command;
             while (!(command = command_request()).equals("quit")) {
                 handle_command(command);
             }
-            /*
-             * Thread.sleep(5000);
-             * outputStream.writeObject(protocol);
-             */
 
             // Close the socket when done
             socket.close();
