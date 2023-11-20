@@ -9,7 +9,6 @@ import java.lang.String;
 import Shared.Net_Id;
 import ThreadTools.ThreadControl;
 import Track_Protocol.*;
-import Track_Protocol.TrackPacket.TypeMsg;
 
 /**
  * Class responsible for handling communication for each independent node on the

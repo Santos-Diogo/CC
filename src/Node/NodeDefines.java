@@ -5,5 +5,5 @@ package Node;
  */
 public class NodeDefines 
 {
-    static final int interNodePort= 7575;    
+    static final int hubPort= 7575;    
 }

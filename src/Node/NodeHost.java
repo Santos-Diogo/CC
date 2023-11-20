@@ -1,24 +1,44 @@
 package Node;
 
 import java.io.IOException;
-import java.net.ServerSocket;
+import java.net.DatagramSocket;
+
+import ThreadTools.ThreadControl;
 
 /**
  * Class responsible for handling incoming connections from other nodes (transfers)
  */
-public class NodeHost 
+public class NodeHost implements Runnable
 {
-    ServerSocket hub;
+    DatagramSocket hub;
+    ThreadControl tc;
 
-    public NodeHost ()
+    public NodeHost (ThreadControl tc)
     {
+        this.tc= tc;
         try
         {
-            this.hub= new ServerSocket(NodeDefines.interNodePort);
+            this.hub= new DatagramSocket(NodeDefines.hubPort);
         }
         catch (IOException e)
         {
             e.printStackTrace();
+        }
+    }
+
+    public void run ()
+    {
+        while (tc.get_running())
+        {
+            try
+            {
+                hub.receive(null);
+                // Instanciar recetores
+            }
+            catch (Exception e)
+            {
+                e.printStackTrace();
+            }
         }
     }
 }
