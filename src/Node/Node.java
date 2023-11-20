@@ -20,7 +20,7 @@ public class Node
 {
     private static ObjectOutputStream trackerOutput;
     private static ObjectInputStream trackerInput;
-    private static InetAddress adress;
+    private static Net_Id net_Id;
     private static Scanner scanner = new Scanner(System.in);
 
     private static void handle_avf() 
@@ -28,7 +28,7 @@ public class Node
         try 
         {
             // Write Request
-            trackerOutput.writeObject(new TrackPacket(new Net_Id(adress), TypeMsg.AVF_REQ));
+            trackerOutput.writeObject(new TrackPacket(net_Id, TypeMsg.AVF_REQ));
             trackerOutput.flush();
 
             // Get response
@@ -47,6 +47,27 @@ public class Node
         }
     }
 
+    /**
+     * Temporary solution
+     */
+    private static void handle_get ()
+    {
+        System.out.println("Name of file to transfer:");
+        String file= scanner.nextLine();
+        try
+        {
+            trackerOutput.writeObject(new GetReqPacket(null, file));
+            trackerOutput.flush();
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Arguments not enough
+     */
     private static void handle_command(String command) 
     {
         switch (command) 
@@ -76,7 +97,7 @@ public class Node
         try 
         {
             // Define this machine IP adress
-            adress = Inet4Address.getLocalHost();
+            net_Id = new Net_Id(Inet4Address.getLocalHost());
 
             // Connects to server
             Socket socket = new Socket(serverAddress, serverPort);
@@ -85,9 +106,11 @@ public class Node
 
             // Send Reg message
             NodeInfo ndinfo = new NodeInfo(args[2]);
-            trackerOutput.writeObject(new RegPacket(new Net_Id(adress), TypeMsg.REG, ndinfo.get_file_blocks()));
+            trackerOutput.writeObject(new RegPacket(net_Id, TypeMsg.REG, ndinfo.get_file_blocks()));
             trackerOutput.flush();
             
+            // Initiate NodeHost
+
             // Handle commands
             String command;
             while (!(command = command_request()).equals("quit")) 
