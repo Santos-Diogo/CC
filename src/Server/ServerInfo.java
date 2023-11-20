@@ -23,9 +23,9 @@ public class ServerInfo
         {
             this.rwl= new ReentrantReadWriteLock();
             this.node_adr= node_adr;
-	    this.blocks = null;
-	    if(blockss != null)
-	    	this.blocks= new ArrayList<>(blockss);
+	        this.blocks = null;
+	        if(blockss != null)
+	    	    this.blocks= new ArrayList<>(blockss);
         }
 
         /**
