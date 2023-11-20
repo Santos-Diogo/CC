@@ -6,6 +6,7 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 
+import Shared.Net_Id;
 import ThreadTools.ThreadControl;
 
 /**
@@ -16,7 +17,7 @@ public class Server
     private static ServerSocket socket;
     private static ThreadControl tc = new ThreadControl();
     private static ServerInfo serverInfo = new ServerInfo();
-    private static InetAddress address;
+    private static Net_Id n;
 
     public static void main(String[] args) 
     {
@@ -24,7 +25,9 @@ public class Server
         int port = Integer.parseInt(args[0]);
         try 
         {
-            address = Inet4Address.getLocalHost();
+            InetAddress address= Inet4Address.getLocalHost();
+            n= new Net_Id(address);
+
             socket = new ServerSocket(port);
             System.out.println("Tracker ativo em " + address.getHostAddress() + ", porta " + port);
 
@@ -33,7 +36,7 @@ public class Server
                 Socket clientSocket = socket.accept();
 
                 // The client socket is passed down to a thread.
-                Thread t = new Thread(new ServerCom(clientSocket, tc, serverInfo));
+                Thread t = new Thread(new ServerCom(clientSocket, tc, serverInfo, n));
                 t.start();
             }
         }

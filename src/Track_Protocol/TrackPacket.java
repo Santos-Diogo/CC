@@ -1,48 +1,37 @@
 package Track_Protocol;
 
 import java.io.Serializable;
-import java.net.InetAddress;
-import Payload.TrackPacketPayload.*;
+import Shared.Net_Id;
 
 public class TrackPacket implements Serializable 
 {
     public enum TypeMsg 
     {
-        REG,        //Register
-        AVF_REQ,    //Available Files Request
-        AVF_RESP,   //Available Files Response
-        ADD_F,      //Add a File/ Blocks
-        RM_F,       //Remove a File/ Blocks
-        GET_REQ,    //Get files request
-        GET_RESP    //Get files response
+        REG, // Register
+        AVF_REQ, // Available Files Request
+        AVF_RESP, // Available Files Response
+        ADD_F, // Add a File/ Blocks
+        RM_F, // Remove a File/ Blocks
+        DC, // Node disconnected from network
+        GET_REQ, // Get files request
+        GET_RESP // Get files response
     }
 
-    private InetAddress src_ip;
+    private Net_Id node;
     private TypeMsg type;
-    private TrackPacketPayload payload;
 
-    public TrackPacket(InetAddress src_ip, TypeMsg type, TrackPacketPayload payload) 
+    public TrackPacket(Net_Id n, TypeMsg type) 
     {
-        this.src_ip= src_ip;
+        this.node= n;
         this.type= type;
-        this.payload= payload;
     }
 
-    public InetAddress getSrc_ip() 
+    public Net_Id getNode() 
     {
-        return src_ip;
+        return this.node;
     }
 
-    public TypeMsg getType ()
-    {
+    public TypeMsg getType() {
         return type;
-    }
-
-    /**
-     * @return Returns the payload directly (No copy made)
-     */
-    public TrackPacketPayload getPayload()
-    {
-        return payload;
     }
 }

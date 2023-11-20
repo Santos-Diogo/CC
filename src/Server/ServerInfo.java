@@ -7,25 +7,27 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import Shared.Net_Id;
+
 public class ServerInfo
 {
     private class NodeBlock
     {
         private ReentrantReadWriteLock rwl;
-        private InetAddress node_adr;
+        private Net_Id n;
         private List <Integer> blocks;
 
         /**
          * @param node_adr adress of the node
          * @param blocks list of blocks for the file we associate with in "file_node_blocks"
          */
-        public NodeBlock (InetAddress node_adr, List <Integer> blockss)
+        public NodeBlock (Net_Id n, List <Integer> blockss)
         {
             this.rwl= new ReentrantReadWriteLock();
-            this.node_adr= node_adr;
-	    this.blocks = null;
-	    if(blockss != null)
-	    	this.blocks= new ArrayList<>(blockss);
+            this.n= n;
+	        this.blocks = null;
+	        if(blockss != null)
+	    	    this.blocks= new ArrayList<>(blockss);
         }
 
         /**
@@ -74,10 +76,10 @@ public class ServerInfo
     /**
      * Add a file to be tracked
      * @param file file to be tracked
-     * @param node_adr node adress
+     * @param node node
      * @param blocks list of blocks in the file (null for full file)
      */
-    public void add_file (String file, InetAddress node_adr, List<Integer> blocks)
+    public void add_file (String file, Net_Id node, List<Integer> blocks)
     {
         List<NodeBlock> l;
 
@@ -100,7 +102,7 @@ public class ServerInfo
             }
             
             //Add NodeBlock to the list
-            l.add(new NodeBlock(node_adr, blocks));
+            l.add (new NodeBlock(node, blocks));
         }
         finally
         {
