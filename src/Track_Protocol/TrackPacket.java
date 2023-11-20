@@ -1,11 +1,12 @@
 package Track_Protocol;
 
 import java.io.Serializable;
-import java.net.InetAddress;
-import Payload.TrackPacketPayload.*;
+import Shared.Net_Id;
 
-public class TrackPacket implements Serializable {
-    public enum TypeMsg {
+public class TrackPacket implements Serializable 
+{
+    public enum TypeMsg 
+    {
         REG, // Register
         AVF_REQ, // Available Files Request
         AVF_RESP, // Available Files Response
@@ -16,28 +17,21 @@ public class TrackPacket implements Serializable {
         GET_RESP // Get files response
     }
 
-    private InetAddress src_ip;
+    private Net_Id node;
     private TypeMsg type;
-    private TrackPacketPayload payload;
 
-    public TrackPacket(InetAddress src_ip, TypeMsg type, TrackPacketPayload payload) {
-        this.src_ip = src_ip;
-        this.type = type;
-        this.payload = payload;
+    public TrackPacket(Net_Id n, TypeMsg type) 
+    {
+        this.node= n;
+        this.type= type;
     }
 
-    public InetAddress getSrc_ip() {
-        return src_ip;
+    public Net_Id getNode() 
+    {
+        return this.node;
     }
 
     public TypeMsg getType() {
         return type;
-    }
-
-    /**
-     * @return Returns the payload directly (No copy made)
-     */
-    public TrackPacketPayload getPayload() {
-        return payload;
     }
 }

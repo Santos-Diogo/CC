@@ -9,42 +9,48 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.*;
 
-import Track_Protocol.TrackPacket;
+import Shared.Net_Id;
+import Track_Protocol.*;
 import Track_Protocol.TrackPacket.TypeMsg;
-import Payload.TrackPacketPayload.*;
 
 /***
  * Main Node thread
  */
-public class Node {
-
+public class Node 
+{
     private static ObjectOutputStream trackerOutput;
     private static ObjectInputStream trackerInput;
     private static InetAddress adress;
     private static Scanner scanner = new Scanner(System.in);
 
-    private static void handle_avf() {
-        try {
+    private static void handle_avf() 
+    {
+        try 
+        {
             // Write Request
-            trackerOutput.writeObject(new TrackPacket(adress, TypeMsg.AVF_REQ, null));
+            trackerOutput.writeObject(new TrackPacket(new Net_Id(adress), TypeMsg.AVF_REQ));
             trackerOutput.flush();
 
             // Get response
-            TrackPacket packet = (TrackPacket) trackerInput.readObject();
+            AvfRepPacket packet = (AvfRepPacket) trackerInput.readObject();
 
             // Write File Names
-            AvfRepPacket payload = (AvfRepPacket) packet.getPayload();
-            List<String> files = payload.get_files();
-            for (String s : files) {
+            List<String> files = packet.get_files();
+            for (String s : files) 
+            {
                 System.out.println(s);
             }
-        } catch (IOException | ClassNotFoundException e) {
+        } 
+        catch (IOException | ClassNotFoundException e) 
+        {
             e.printStackTrace();
         }
     }
 
-    private static void handle_command(String command) {
-        switch (command) {
+    private static void handle_command(String command) 
+    {
+        switch (command) 
+        {
             case "avf":
                 handle_avf();
                 break;
@@ -53,40 +59,47 @@ public class Node {
         }
     }
 
-    private static String command_request() {
+    private static String command_request() 
+    {
         System.out.println("Type your desired command:\navf - available files\nquit- exit the network\n");
         return scanner.nextLine();
     }
 
-    public static void main(String[] args) throws InterruptedException {
+    public static void main(String[] args) throws InterruptedException 
+    {
         String serverAddress = args[0];
         int serverPort = Integer.parseInt(args[1]);
 
-        try {
+        try 
+        {
             // Define this machine IP adress
             adress = Inet4Address.getLocalHost();
             // Connects to server
             Socket socket = new Socket(serverAddress, serverPort);
             trackerOutput = new ObjectOutputStream(socket.getOutputStream());
             trackerInput = new ObjectInputStream(socket.getInputStream());
-            // Reg Message
-            TypeMsg type = TypeMsg.REG;
+            // Send Reg message
             NodeInfo ndinfo = new NodeInfo(args[2]);
-            TrackPacket protocol = new TrackPacket(adress, type, new RegPacket(ndinfo.get_file_blocks()));
-            trackerOutput.writeObject(protocol);
+            trackerOutput.writeObject(new RegPacket(new Net_Id(adress), TypeMsg.REG, ndinfo.get_file_blocks()));
             trackerOutput.flush();
-
+            
+            // Handle commands
             String command;
-            while (!(command = command_request()).equals("quit")) {
+            while (!(command = command_request()).equals("quit")) 
+            {
                 handle_command(command);
             }
 
             // Close the socket when done
             socket.close();
-        } catch (UnknownHostException e) {
+        } 
+        catch (UnknownHostException e) 
+        {
             System.out.println(serverAddress + " Is not a valid adress");
             e.printStackTrace();
-        } catch (IOException e) {
+        } 
+        catch (IOException e) 
+        {
             e.printStackTrace();
         }
 
