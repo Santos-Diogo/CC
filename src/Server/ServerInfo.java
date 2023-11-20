@@ -1,6 +1,5 @@
 package Server;
 
-import java.net.InetAddress;
 import java.util.Map;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.ArrayList;
@@ -116,5 +115,24 @@ public class ServerInfo
     public List<String> get_files ()
     {
         return new ArrayList<>(this.file_node_blocks.keySet());
+    }
+
+    /**
+     * Temporary method for transfering a file
+     * @param file
+     * @return
+     */
+    public Net_Id getTransfer (String file)
+    {
+        for (Map.Entry<String, List<NodeBlock>> e : this.file_node_blocks.entrySet())
+        {
+            if (e.getKey()== file)
+            {
+                return e.getValue().get(0).n;
+            }
+        }
+
+        //Dind't find the file
+        return null;
     }
 }

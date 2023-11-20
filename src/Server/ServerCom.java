@@ -37,7 +37,7 @@ public class ServerCom implements Runnable
     {
         System.out.println("REG message");
         RegPacket p = (RegPacket) packet;
-        Net_Id node= packet.getNode();
+        Net_Id node= packet.getNet_Id();
         // We insert each (file_name,blocks[])
 
         for (Map.Entry<String, List<Integer>> e : p.get_files_blocks().entrySet()) 
@@ -51,7 +51,24 @@ public class ServerCom implements Runnable
         System.out.println("AVF REQ");
         try 
         {
-            out.writeObject(new AvfRepPacket (n, TypeMsg.AVF_RESP, serverInfo.get_files()));
+            out.writeObject(new AvfRepPacket (n, serverInfo.get_files()));
+            out.flush();
+        }
+        catch (IOException e) 
+        {
+            e.printStackTrace();
+        }
+    }
+
+    private void handle_GET_REQ(TrackPacket packet)
+    {
+        System.out.println("GET message");
+        GetReqPacket p= (GetReqPacket) packet;
+        
+        //Find a node that can transfer the file - Only for test
+        try 
+        {
+            out.writeObject(new GetRepPacket (n, serverInfo.getTransfer(p.getFile())));
             out.flush();
         }
         catch (IOException e) 
@@ -86,7 +103,7 @@ public class ServerCom implements Runnable
             }
             case GET_REQ: 
             {
-
+                handle_GET_REQ(packet);
                 break;
             }
             default: 

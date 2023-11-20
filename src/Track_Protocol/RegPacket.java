@@ -12,7 +12,7 @@ public class RegPacket extends TrackPacket
 
     public RegPacket (Net_Id n, TypeMsg type, Map<String, List<Integer>> files_blockss) 
     {
-        super (n, type);
+        super (n, TypeMsg.REG);
         files_blocks = new HashMap<>(files_blockss);
     }
 

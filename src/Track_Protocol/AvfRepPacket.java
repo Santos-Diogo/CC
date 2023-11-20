@@ -8,9 +8,9 @@ public class AvfRepPacket extends TrackPacket
 {
     List<String> files;
 
-    public AvfRepPacket(Net_Id n, TypeMsg type_msg, List<String> files) 
+    public AvfRepPacket(Net_Id n, List<String> files) 
     {
-        super(n, type_msg);
+        super(n, TypeMsg.AVF_RESP);
         this.files = new ArrayList<>(files);
     }
 

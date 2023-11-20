@@ -54,6 +54,9 @@ public class Node
             case "avf":
                 handle_avf();
                 break;
+            case "get":
+                handle_get();
+                break;
             default:
                 break;
         }
@@ -74,10 +77,12 @@ public class Node
         {
             // Define this machine IP adress
             adress = Inet4Address.getLocalHost();
+
             // Connects to server
             Socket socket = new Socket(serverAddress, serverPort);
             trackerOutput = new ObjectOutputStream(socket.getOutputStream());
             trackerInput = new ObjectInputStream(socket.getInputStream());
+
             // Send Reg message
             NodeInfo ndinfo = new NodeInfo(args[2]);
             trackerOutput.writeObject(new RegPacket(new Net_Id(adress), TypeMsg.REG, ndinfo.get_file_blocks()));

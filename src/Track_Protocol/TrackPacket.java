@@ -17,18 +17,18 @@ public class TrackPacket implements Serializable
         GET_RESP // Get files response
     }
 
-    private Net_Id node;
+    private Net_Id Net_Id;
     private TypeMsg type;
 
     public TrackPacket(Net_Id n, TypeMsg type) 
     {
-        this.node= n;
+        this.Net_Id= n;
         this.type= type;
     }
 
-    public Net_Id getNode() 
+    public Net_Id getNet_Id() 
     {
-        return this.node;
+        return this.Net_Id;
     }
 
     public TypeMsg getType() {
