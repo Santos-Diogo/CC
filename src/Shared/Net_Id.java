@@ -1,11 +1,12 @@
 package Shared;
 
 import java.net.InetAddress;
+import java.io.Serializable;
 
 /**
  * This class is how the communicators identify each other
  */
-public class Net_Id 
+public class Net_Id implements Serializable
 {
     private InetAddress adr;
 
