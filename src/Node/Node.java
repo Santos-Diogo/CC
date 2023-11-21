@@ -8,9 +8,9 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.*;
 
-import Shared.Net_Id;
-import Track_Protocol.*;
-import Track_Protocol.TrackPacket.TypeMsg;
+import Shared.NetId;
+import TrackProtocol.*;
+import TrackProtocol.TrackPacket.TypeMsg;
 
 /***
  * Main Node thread
@@ -19,7 +19,7 @@ public class Node
 {
     private static ObjectOutputStream trackerOutput;
     private static ObjectInputStream trackerInput;
-    private static Net_Id net_Id;
+    private static NetId net_Id;
     private static Scanner scanner = new Scanner(System.in);
 
     private static void handle_avf() 
@@ -96,7 +96,7 @@ public class Node
         try 
         {
             // Define this machine IP adress
-            net_Id = new Net_Id(Inet4Address.getLocalHost());
+            net_Id = new NetId(Inet4Address.getLocalHost());
 
             // Connects to server
             Socket socket = new Socket(serverAddress, serverPort);

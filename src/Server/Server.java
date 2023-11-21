@@ -6,7 +6,7 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-import Shared.Net_Id;
+import Shared.NetId;
 import ThreadTools.ThreadControl;
 
 /**
@@ -17,7 +17,7 @@ public class Server
     private static ServerSocket socket;
     private static ThreadControl tc = new ThreadControl();
     private static ServerInfo serverInfo = new ServerInfo();
-    private static Net_Id n;
+    private static NetId n;
 
     public static void main(String[] args) 
     {
@@ -26,7 +26,7 @@ public class Server
         try 
         {
             InetAddress address= Inet4Address.getLocalHost();
-            n= new Net_Id(address);
+            n= new NetId(address);
 
             socket = new ServerSocket(port);
             System.out.println("Tracker ativo em " + address.getHostAddress() + ", porta " + port);

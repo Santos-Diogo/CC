@@ -5,11 +5,15 @@ import java.nio.file.*;
 import java.util.*;
 import java.util.regex.*;
 
+import Block.BlockInfo;
+
 public class NodeInfo 
 {
     private List<String> files;
     private Map<String, Long> files_size;
     private Map<String, List<Integer>> files_blocks;
+
+    private Map<String, BlockInfo> filesBlockInfo;
 
     /**
      * @param dir Directory from wich we read the files
@@ -18,11 +22,11 @@ public class NodeInfo
      */
     public NodeInfo(String dir) 
     {
-        // This part is very early production, it will NOT work
-        // Something similar to this will be done/this snipet will be used
         this.files = new ArrayList<>();
         this.files_size = new HashMap<>();
         this.files_blocks = new HashMap<>();
+
+        this.filesBlockInfo= new HashMap<>();
 
         try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(Paths.get(dir))) 
         {
@@ -32,17 +36,16 @@ public class NodeInfo
                 Pattern pattern = Pattern.compile("^(.+)\\.fsblk\\.(\\d+)$");
                 Matcher matcher = pattern.matcher(fileName);
 
-                if (matcher.matches()) 
+                if (matcher.matches())
                 {
                     fileName = matcher.group(1);
+                    
                     if (!files.contains(fileName))
                         files.add(fileName);
-                    if (!files_size.containsKey(fileName))
-                        files_size.put(fileName, null);
-                    if (files_blocks.containsKey(fileName))
-                        files_blocks.get(fileName).add(Integer.parseInt(matcher.group(2)));
-                    else
-                        files_blocks.put(fileName, new ArrayList<>(List.of(Integer.parseInt(matcher.group(2)))));
+
+                    if (!filesBlockInfo.containsKey(fileName))
+                        filesBlockInfo.put(fileName, new BlockInfo(null, new ArrayList<>()));
+                    filesBlockInfo.get(fileName).add_block(Integer.parseInt(matcher.group(2)));
                 }
                 else 
                 {

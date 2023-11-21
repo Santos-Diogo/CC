@@ -6,21 +6,21 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import Shared.Net_Id;
+import Shared.NetId;
 
 public class ServerInfo
 {
     private class NodeBlock
     {
         private ReentrantReadWriteLock rwl;
-        private Net_Id n;
+        private NetId n;
         private List <Integer> blocks;
 
         /**
          * @param node_adr adress of the node
          * @param blocks list of blocks for the file we associate with in "file_node_blocks"
          */
-        public NodeBlock (Net_Id n, List <Integer> blockss)
+        public NodeBlock (NetId n, List <Integer> blockss)
         {
             this.rwl= new ReentrantReadWriteLock();
             this.n= n;
@@ -64,12 +64,13 @@ public class ServerInfo
     }
 
     private ReentrantReadWriteLock rwl;
-    private Map <String, List<NodeBlock>> file_node_blocks;
+    private Map<String, Integer> fileSize;
+    private Map<String, List<NodeBlock>> fileNodeBlocks;
 
     public ServerInfo ()
     {
         this.rwl= new ReentrantReadWriteLock();
-        this.file_node_blocks= new HashMap <>();
+        this.fileNodeBlocks= new HashMap <>();
     }
 
     /**
@@ -78,26 +79,27 @@ public class ServerInfo
      * @param node node
      * @param blocks list of blocks in the file (null for full file)
      */
-    public void add_file (String file, Net_Id node, List<Integer> blocks)
+    public void add_file (String file, int size, NetId node, List<Integer> blocks)
     {
         List<NodeBlock> l;
 
         this.rwl.writeLock().lock();
         try
         {
-
             //if File not tracked
-            if (!this.file_node_blocks.containsKey(file))
+            if (!this.fileSize.containsKey(file))
             {
-                //New Node Block List
+                //Put in fileSize
+                this.fileSize.put(file, size);
+
+                //Put in fileNodeBlocks
                 l= new ArrayList<NodeBlock>();
-                //New File entry
-                this.file_node_blocks.put(file, l);
+                this.fileNodeBlocks.put(file, l);
             }
             else
             {
                 //Find Node Block
-                l= this.file_node_blocks.get(file);
+                l= this.fileNodeBlocks.get(file);
             }
             
             //Add NodeBlock to the list
@@ -114,7 +116,7 @@ public class ServerInfo
      */
     public List<String> get_files ()
     {
-        return new ArrayList<>(this.file_node_blocks.keySet());
+        return new ArrayList<>(this.fileNodeBlocks.keySet());
     }
 
     /**
@@ -122,9 +124,9 @@ public class ServerInfo
      * @param file
      * @return
      */
-    public Net_Id getTransfer (String file)
+    public NetId getTransfer (String file)
     {
-        for (Map.Entry<String, List<NodeBlock>> e : this.file_node_blocks.entrySet())
+        for (Map.Entry<String, List<NodeBlock>> e : this.fileNodeBlocks.entrySet())
         {
             if (e.getKey()== file)
             {

@@ -6,9 +6,9 @@ import java.util.*;
 
 import java.lang.String;
 
-import Shared.Net_Id;
+import Shared.NetId;
 import ThreadTools.ThreadControl;
-import Track_Protocol.*;
+import TrackProtocol.*;
 
 /**
  * Class responsible for handling communication for each independent node on the
@@ -21,9 +21,9 @@ public class ServerCom implements Runnable
     private ObjectInputStream in;
     private ObjectOutputStream out;
     private ServerInfo serverInfo;
-    private Net_Id n;
+    private NetId n;
 
-    public ServerCom(Socket socket, ThreadControl tc, ServerInfo serverInfo, Net_Id n) throws IOException 
+    public ServerCom(Socket socket, ThreadControl tc, ServerInfo serverInfo, NetId n) throws IOException 
     {
         this.tc = tc;
         this.serverInfo = serverInfo;
@@ -36,7 +36,7 @@ public class ServerCom implements Runnable
     {
         System.out.println("REG message");
         RegPacket p = (RegPacket) packet;
-        Net_Id node= packet.getNet_Id();
+        NetId node= packet.getNet_Id();
         // We insert each (file_name,blocks[])
 
         for (Map.Entry<String, List<Integer>> e : p.get_files_blocks().entrySet()) 
@@ -63,17 +63,13 @@ public class ServerCom implements Runnable
     {
         System.out.println("GET message");
         GetReqPacket p= (GetReqPacket) packet;
+
+        //Get number of blocks and BlockNodes
+        int nBlocks= serverInfo.nBlocks(p.getFile());
         
-        //Find a node that can transfer the file - Only for test
-        try 
-        {
-            out.writeObject(new GetRepPacket (n, serverInfo.getTransfer(p.getFile())));
-            out.flush();
-        }
-        catch (IOException e) 
-        {
-            e.printStackTrace();
-        }
+
+
+        out.writeObject(new GetRepPacket(n, , null));
     }
 
     private void handle(TrackPacket packet) 
