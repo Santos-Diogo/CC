@@ -4,8 +4,6 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 
-import Blocker.FileBlockInfo;
-
 import java.lang.String;
 
 import Shared.NetId;
@@ -22,10 +20,10 @@ public class ServerCom implements Runnable
     private ThreadControl tc;
     private ObjectInputStream in;
     private ObjectOutputStream out;
-    private FileBlockInfo serverInfo;
+    private ServerInfo serverInfo;
     private NetId n;
 
-    public ServerCom(Socket socket, ThreadControl tc, FileBlockInfo serverInfo, NetId n) throws IOException 
+    public ServerCom(Socket socket, ThreadControl tc, ServerInfo serverInfo, NetId n) throws IOException 
     {
         this.tc = tc;
         this.serverInfo = serverInfo;
@@ -41,7 +39,7 @@ public class ServerCom implements Runnable
         NetId node= packet.getNet_Id();
         // We insert each (file_name,blocks[])
 
-        for () 
+        for (Map.Entry<String, List<Integer>> e : p.get_files_blocks().entrySet()) 
         {
             serverInfo.add_file(e.getKey(), node, e.getValue());
         }

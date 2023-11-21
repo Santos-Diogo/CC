@@ -1,22 +1,31 @@
-package Blocker;
+package Node;
 
 import java.io.*;
 import java.nio.file.*;
 import java.util.*;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.regex.*;
 
-public class FileBlockInfo 
+import Block.BlockInfo;
+
+public class NodeInfo 
 {
-    private ReentrantReadWriteLock rwLock;
+    private List<String> files;
+    private Map<String, Long> files_size;
+    private Map<String, List<Integer>> files_blocks;
+
     private Map<String, BlockInfo> filesBlockInfo;
 
     /**
      * @param dir Directory from wich we read the files
+     * @apiNote If the file has all the blocks leave the List in files_blocks as
+     *          0(null) =)
      */
-    public FileBlockInfo(String dir) 
+    public NodeInfo(String dir) 
     {
-        this.rwLock= new ReentrantReadWriteLock();
+        this.files = new ArrayList<>();
+        this.files_size = new HashMap<>();
+        this.files_blocks = new HashMap<>();
+
         this.filesBlockInfo= new HashMap<>();
 
         try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(Paths.get(dir))) 
@@ -30,15 +39,20 @@ public class FileBlockInfo
                 if (matcher.matches())
                 {
                     fileName = matcher.group(1);
+                    
+                    if (!files.contains(fileName))
+                        files.add(fileName);
 
                     if (!filesBlockInfo.containsKey(fileName))
                         filesBlockInfo.put(fileName, new BlockInfo(null, new ArrayList<>()));
                     filesBlockInfo.get(fileName).add_block(Integer.parseInt(matcher.group(2)));
                 }
-                else
+                else 
                 {
                     Long fileSize = Files.size(filePath);
-                    filesBlockInfo.put(fileName, new BlockInfo(fileSize, null));
+                    files.add(fileName);
+                    files_size.put(fileName, fileSize);
+                    files_blocks.put(fileName, null);
                 }
             }
         } 
@@ -57,15 +71,9 @@ public class FileBlockInfo
      */
     public void add_file(String name, long size, List<Integer> blocks) 
     {
-        this.rwLock.writeLock().lock();
-        try
-        {
-            filesBlockInfo.put(name, new BlockInfo(size, blocks));
-        }
-        finally
-        {
-            this.rwLock.writeLock().unlock();
-        }
+        files.add(name);
+        files_size.put(name, size);
+        files_blocks.put(name, blocks);
     }
 
     /**
@@ -73,47 +81,41 @@ public class FileBlockInfo
      * 
      * @param name name of the file
      */
-    public void rm_file (String name) 
+    public void rm_file(String name) 
     {
-        this.rwLock.writeLock().lock();
-        try
-        {
-            filesBlockInfo.remove(name);
-        }
-        finally
-        {
-            this.rwLock.writeLock().unlock();
-        }
+        files.removeIf(file -> file.equals(name));
+        files_size.remove(name);
+        files_blocks.remove(name);
     }
 
     /**
-     * Remove a block from a file
-     * @param name
-     * @param block
+     * @return returns the names of the files stored
      */
-    public void rm_block (String name, int block)
+    public List<String> get_files() 
     {
-        this.rwLock.writeLock().lock();
-        try
-        {
-            filesBlockInfo.get(name).get_filesBlocks().remove(block);
-        }
-        finally
-        {
-            this.rwLock.writeLock().unlock();
-        }
+        return files;
     }
 
-    public BlockInfo get_BlockInfo (String file)
+    /**
+     * @param file name of the file
+     * @return returns the file size
+     */
+    public long get_file_size(String file) 
     {
-        this.rwLock.readLock().lock();
-        try
-        {
-            return filesBlockInfo.get(file);
-        }
-        finally
-        {
-            this.rwLock.readLock().unlock();
-        }
+        return files_size.get(file);
+    }
+
+    /**
+     * @param file name of the file
+     * @return returns the blocks the node has of a given file
+     */
+    public List<Integer> get_blocks_by_file(String file) 
+    {
+        return files_blocks.get(file);
+    }
+
+    public Map<String, List<Integer>> get_file_blocks() 
+    {
+        return files_blocks;
     }
 }
