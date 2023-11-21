@@ -1,7 +1,9 @@
 package Node;
 
 import java.io.IOException;
+import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import Shared.*;
 
 import ThreadTools.ThreadControl;
 
@@ -18,7 +20,7 @@ public class NodeHost implements Runnable
         this.tc= tc;
         try
         {
-            this.hub= new DatagramSocket(NodeDefines.hubPort);
+            this.hub= new DatagramSocket(Shared.Defines.nodeHostPort);
         }
         catch (IOException e)
         {
@@ -32,8 +34,16 @@ public class NodeHost implements Runnable
         {
             try
             {
-                hub.receive(null);
-                // Instanciar recetores
+                //Create a new packet
+                byte[] buf= new byte[Defines.transferBuffer];
+                DatagramPacket p= new DatagramPacket(buf, 0);
+
+                //Recieve packet
+                hub.receive(p);
+
+                // Instanciar handlers
+                Thread t= new Thread(new NodeHostMinion (p));
+                t.start();
             }
             catch (Exception e)
             {
