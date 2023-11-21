@@ -11,6 +11,7 @@ import java.util.*;
 import Shared.NetId;
 import TrackProtocol.*;
 import TrackProtocol.TrackPacket.TypeMsg;
+import Blocker.*;
 
 /***
  * Main Node thread
@@ -103,9 +104,8 @@ public class Node
             trackerOutput = new ObjectOutputStream(socket.getOutputStream());
             trackerInput = new ObjectInputStream(socket.getInputStream());
 
-            // Send Reg message
-            NodeInfo ndinfo = new NodeInfo(args[2]);
-            trackerOutput.writeObject(new RegPacket(net_Id, TypeMsg.REG, ndinfo.get_file_blocks()));
+            // Send Reg message by checking data on Node
+            trackerOutput.writeObject(new RegPacket(net_Id, new FileBlockInfo(args[2])));
             trackerOutput.flush();
             
             // Initiate NodeHost

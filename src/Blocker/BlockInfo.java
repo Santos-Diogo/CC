@@ -18,7 +18,7 @@ public class BlockInfo
         this.filesBlocks= filesBlocks;
     }
 
-    Long get_nBlocks ()
+    public Long get_nBlocks ()
     {
         return this.nBlocks;
     }

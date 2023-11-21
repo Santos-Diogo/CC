@@ -2,19 +2,19 @@ package TrackProtocol;
 
 import java.util.Map;
 
+import Blocker.*;
 import Shared.NetId;
-import Block.BlockInfo;
 
 public class RegPacket extends TrackPacket
 {
-    private Map<String, BlockInfo> fileBlockInfo;
+    FileBlockInfo fileBlockInfo;
 
     /**
      * 
      * @param self self NetId
      * @param files_blocks Filename in relation to BlockInfo
      */
-    public RegPacket (NetId self, Map<String, BlockInfo> files_blocks) 
+    public RegPacket (NetId self, FileBlockInfo files_blocks) 
     {
         super (self, TypeMsg.REG);
         this.fileBlockInfo= files_blocks;
@@ -22,7 +22,7 @@ public class RegPacket extends TrackPacket
 
     public BlockInfo get_blockInfo (String file)
     {
-        return this.fileBlockInfo.get(file);
+        return this.fileBlockInfo;
     }
 
     public Map<String, BlockInfo> get_fileBlockInfo() 
