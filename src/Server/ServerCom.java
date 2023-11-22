@@ -4,6 +4,8 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 
+import Blocker.BlockInfo;
+
 import java.lang.String;
 
 import Shared.NetId;
@@ -21,7 +23,7 @@ public class ServerCom implements Runnable
     private ObjectInputStream in;
     private ObjectOutputStream out;
     private ServerInfo serverInfo;
-    private NetId n;
+    private NetId selfId;
 
     public ServerCom(Socket socket, ThreadControl tc, ServerInfo serverInfo, NetId n) throws IOException 
     {
@@ -29,7 +31,7 @@ public class ServerCom implements Runnable
         this.serverInfo = serverInfo;
         this.in = new ObjectInputStream(socket.getInputStream());
         this.out = new ObjectOutputStream(socket.getOutputStream());
-        this.n= n;
+        this.selfId= n;
     }
 
     private void handle_REG(TrackPacket packet) 
@@ -37,11 +39,13 @@ public class ServerCom implements Runnable
         System.out.println("REG message");
         RegPacket p = (RegPacket) packet;
         NetId node= packet.getNet_Id();
+        BlockInfo nBlock;
         // We insert each (file_name,blocks[])
 
-        for (Map.Entry<String, List<Integer>> e : p.get_files_blocks().entrySet()) 
+        for (Map.Entry<String, BlockInfo> e : p.get_fileBlockInfo().get_fileBlockInfo().entrySet()) 
         {
-            serverInfo.add_file(e.getKey(), node, e.getValue());
+            nBlock=e.getValue();
+            serverInfo.add_file(e.getKey(), node, nBlock);
         }
     }
 
@@ -50,7 +54,7 @@ public class ServerCom implements Runnable
         System.out.println("AVF REQ");
         try 
         {
-            out.writeObject(new AvfRepPacket (n, serverInfo.get_files()));
+            out.writeObject(new AvfRepPacket (selfId, serverInfo.get_files()));
             out.flush();
         }
         catch (IOException e) 
@@ -61,15 +65,22 @@ public class ServerCom implements Runnable
 
     private void handle_GET_REQ(TrackPacket packet)
     {
+        //@TODO
         System.out.println("GET message");
-        GetReqPacket p= (GetReqPacket) packet;
-
-        //Get number of blocks and BlockNodes
-        int nBlocks= serverInfo.nBlocks(p.getFile());
-        
-
-
-        out.writeObject(new GetRepPacket(n, , null));
+        try
+        {
+            GetReqPacket p= (GetReqPacket) packet;
+            String file= p.getFile();
+            GetRepPacket replyP= new GetRepPacket(  selfId,
+                                                    serverInfo.get_nBlocks(file),
+                                                    serverInfo.get_nodeInfoFile(file));
+            out.writeObject(replyP);
+            out.flush();
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
+        }
     }
 
     private void handle(TrackPacket packet) 
