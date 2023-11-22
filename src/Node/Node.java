@@ -58,8 +58,19 @@ public class Node
         {
             trackerOutput.writeObject(new GetReqPacket(null, file));
             trackerOutput.flush();
+
+            //DEBUG!!! 
+
+            GetRepPacket resp = (GetRepPacket) trackerInput.readObject();
+            Set<NetId> nodes= resp.get_nodeBlocks().keySet();
+
+            System.out.println("Nodes:");
+            for (NetId n : nodes)
+            {
+                System.out.println(n.get_adr().toString());
+            }
         }
-        catch (IOException e)
+        catch (Exception e)
         {
             e.printStackTrace();
         }
