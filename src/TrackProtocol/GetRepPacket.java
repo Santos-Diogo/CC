@@ -8,17 +8,17 @@ import Shared.NetId;
  */
 public class GetRepPacket extends TrackPacket
 {
-    private int nBlocks;
+    private Long nBlocks;
     private Map<NetId,List<Integer>> nodeBlocks;
 
-    public GetRepPacket (NetId self, int nBlocks, Map<NetId,List<Integer>> nodeBlocks)
+    public GetRepPacket (NetId self, Long nBlocks, Map<NetId,List<Integer>> nodeBlocks)
     {
         super (self, TypeMsg.GET_RESP);
         this.nBlocks= nBlocks;
         this.nodeBlocks= nodeBlocks;
     }
 
-    public int get_nBlocks ()
+    public Long get_nBlocks ()
     {
         return this.nBlocks;
     }
