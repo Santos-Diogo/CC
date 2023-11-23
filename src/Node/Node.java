@@ -4,14 +4,14 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Inet4Address;
-import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.*;
 
-import Shared.Net_Id;
-import Track_Protocol.*;
-import Track_Protocol.TrackPacket.TypeMsg;
+import Blocker.*;
+import Shared.NetId;
+import TrackProtocol.*;
+import TrackProtocol.TrackPacket.TypeMsg;
 
 /***
  * Main Node thread
@@ -20,7 +20,7 @@ public class Node
 {
     private static ObjectOutputStream trackerOutput;
     private static ObjectInputStream trackerInput;
-    private static InetAddress adress;
+    private static NetId net_Id;
     private static Scanner scanner = new Scanner(System.in);
 
     private static void handle_avf() 
@@ -28,7 +28,7 @@ public class Node
         try 
         {
             // Write Request
-            trackerOutput.writeObject(new TrackPacket(new Net_Id(adress), TypeMsg.AVF_REQ));
+            trackerOutput.writeObject(new TrackPacket(net_Id, TypeMsg.AVF_REQ));
             trackerOutput.flush();
 
             // Get response
@@ -47,12 +47,47 @@ public class Node
         }
     }
 
+    /**
+     * Temporary solution
+     */
+    private static void handle_get ()
+    {
+        System.out.println("Name of file to transfer:");
+        String file= scanner.nextLine();
+        try
+        {
+            trackerOutput.writeObject(new GetReqPacket(null, file));
+            trackerOutput.flush();
+
+            //DEBUG!!! 
+
+            GetRepPacket resp = (GetRepPacket) trackerInput.readObject();
+            Set<NetId> nodes= resp.get_nodeBlocks().keySet();
+
+            System.out.println("Nodes:");
+            for (NetId n : nodes)
+            {
+                System.out.println(n.get_adr().toString());
+            }
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Arguments not enough
+     */
     private static void handle_command(String command) 
     {
         switch (command) 
         {
             case "avf":
                 handle_avf();
+                break;
+            case "get":
+                handle_get();
                 break;
             default:
                 break;
@@ -73,16 +108,19 @@ public class Node
         try 
         {
             // Define this machine IP adress
-            adress = Inet4Address.getLocalHost();
+            net_Id = new NetId(Inet4Address.getLocalHost());
+
             // Connects to server
             Socket socket = new Socket(serverAddress, serverPort);
             trackerOutput = new ObjectOutputStream(socket.getOutputStream());
             trackerInput = new ObjectInputStream(socket.getInputStream());
-            // Send Reg message
-            NodeInfo ndinfo = new NodeInfo(args[2]);
-            trackerOutput.writeObject(new RegPacket(new Net_Id(adress), TypeMsg.REG, ndinfo.get_file_blocks()));
+
+            // Send Reg message with Node Status collected by "FileBlockInfo"
+            trackerOutput.writeObject(new RegPacket(net_Id, new FileBlockInfo(args[2])));
             trackerOutput.flush();
             
+            // Initiate NodeHost
+
             // Handle commands
             String command;
             while (!(command = command_request()).equals("quit")) 

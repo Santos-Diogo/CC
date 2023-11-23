@@ -4,12 +4,13 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 
+import Blocker.BlockInfo;
+
 import java.lang.String;
 
-import Shared.Net_Id;
+import Shared.NetId;
 import ThreadTools.ThreadControl;
-import Track_Protocol.*;
-import Track_Protocol.TrackPacket.TypeMsg;
+import TrackProtocol.*;
 
 /**
  * Class responsible for handling communication for each independent node on the
@@ -22,27 +23,29 @@ public class ServerCom implements Runnable
     private ObjectInputStream in;
     private ObjectOutputStream out;
     private ServerInfo serverInfo;
-    private Net_Id n;
+    private NetId selfId;
 
-    public ServerCom(Socket socket, ThreadControl tc, ServerInfo serverInfo, Net_Id n) throws IOException 
+    public ServerCom(Socket socket, ThreadControl tc, ServerInfo serverInfo, NetId n) throws IOException 
     {
         this.tc = tc;
         this.serverInfo = serverInfo;
         this.in = new ObjectInputStream(socket.getInputStream());
         this.out = new ObjectOutputStream(socket.getOutputStream());
-        this.n= n;
+        this.selfId= n;
     }
 
     private void handle_REG(TrackPacket packet) 
     {
         System.out.println("REG message");
         RegPacket p = (RegPacket) packet;
-        Net_Id node= packet.getNode();
+        NetId node= packet.getNet_Id();
+        BlockInfo nBlock;
         // We insert each (file_name,blocks[])
 
-        for (Map.Entry<String, List<Integer>> e : p.get_files_blocks().entrySet()) 
+        for (Map.Entry<String, BlockInfo> e : p.get_fileBlockInfo().get_fileBlockInfo().entrySet()) 
         {
-            serverInfo.add_file(e.getKey(), node, e.getValue());
+            nBlock=e.getValue();
+            serverInfo.add_file(e.getKey(), node, nBlock);
         }
     }
 
@@ -51,10 +54,30 @@ public class ServerCom implements Runnable
         System.out.println("AVF REQ");
         try 
         {
-            out.writeObject(new AvfRepPacket (n, TypeMsg.AVF_RESP, serverInfo.get_files()));
+            out.writeObject(new AvfRepPacket (selfId, serverInfo.get_files()));
             out.flush();
         }
         catch (IOException e) 
+        {
+            e.printStackTrace();
+        }
+    }
+
+    private void handle_GET_REQ(TrackPacket packet)
+    {
+        //@TODO
+        System.out.println("GET message");
+        try
+        {
+            GetReqPacket p= (GetReqPacket) packet;
+            String file= p.getFile();
+            GetRepPacket replyP= new GetRepPacket(  selfId,
+                                                    serverInfo.get_nBlocks(file),
+                                                    serverInfo.get_nodeInfoFile(file));
+            out.writeObject(replyP);
+            out.flush();
+        }
+        catch (IOException e)
         {
             e.printStackTrace();
         }
@@ -86,7 +109,7 @@ public class ServerCom implements Runnable
             }
             case GET_REQ: 
             {
-
+                handle_GET_REQ(packet);
                 break;
             }
             default: 
