@@ -73,8 +73,7 @@ public class ServerCom implements Runnable {
 
     private void handle_DC(TrackPacket packet) {
         System.out.println("DC message");
-        DcPacket p = (DcPacket) packet;
-        serverInfo.remove_infoFromNode(p.getNet_Id());
+        serverInfo.remove_infoFromNode(packet.getNet_Id());
     }
 
     private void handle(TrackPacket packet) {
