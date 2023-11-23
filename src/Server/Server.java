@@ -6,7 +6,7 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-import Shared.Net_Id;
+import Shared.NetId;
 import ThreadTools.ThreadControl;
 
 /**
@@ -16,7 +16,7 @@ public class Server {
     private static ServerSocket socket;
     private static ThreadControl tc = new ThreadControl();
     private static ServerInfo serverInfo = new ServerInfo();
-    private static Net_Id n;
+    private static NetId n;
 
     public static void main(String[] args) {
         // Gets first connection from all nodes and then passes it down to a thread

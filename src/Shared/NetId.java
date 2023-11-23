@@ -6,11 +6,11 @@ import java.io.Serializable;
 /**
  * This class is how the communicators identify each other
  */
-public class Net_Id implements Serializable
+public class NetId implements Serializable
 {
     private InetAddress adr;
 
-    public Net_Id (InetAddress adr)
+    public NetId (InetAddress adr)
     {
         this.adr= adr;
     }
@@ -28,7 +28,7 @@ public class Net_Id implements Serializable
         if (obj== null || this.getClass()!= obj.getClass())
             return false;
 
-        Net_Id n= (Net_Id) obj;
+        NetId n= (NetId) obj;
 
         if (!this.adr.equals(n.get_adr()))
             return false;

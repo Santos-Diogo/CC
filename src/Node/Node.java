@@ -8,9 +8,10 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.*;
 
-import Shared.Net_Id;
-import Track_Protocol.*;
-import Track_Protocol.TrackPacket.TypeMsg;
+import Blocker.*;
+import Shared.NetId;
+import TrackProtocol.*;
+import TrackProtocol.TrackPacket.TypeMsg;
 
 /***
  * Main Node thread
@@ -18,7 +19,7 @@ import Track_Protocol.TrackPacket.TypeMsg;
 public class Node {
     private static ObjectOutputStream trackerOutput;
     private static ObjectInputStream trackerInput;
-    private static Net_Id net_Id;
+    private static NetId net_Id;
     private static Scanner scanner = new Scanner(System.in);
 
     private static void handle_avf() {
@@ -49,7 +50,17 @@ public class Node {
         try {
             trackerOutput.writeObject(new GetReqPacket(null, file));
             trackerOutput.flush();
-        } catch (IOException e) {
+
+            // DEBUG!!!
+
+            GetRepPacket resp = (GetRepPacket) trackerInput.readObject();
+            Set<NetId> nodes = resp.get_nodeBlocks().keySet();
+
+            System.out.println("Nodes:");
+            for (NetId n : nodes) {
+                System.out.println(n.get_adr().toString());
+            }
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -81,16 +92,15 @@ public class Node {
 
         try {
             // Define this machine IP adress
-            net_Id = new Net_Id(Inet4Address.getLocalHost());
+            net_Id = new NetId(Inet4Address.getLocalHost());
 
             // Connects to server
             Socket socket = new Socket(serverAddress, serverPort);
             trackerOutput = new ObjectOutputStream(socket.getOutputStream());
             trackerInput = new ObjectInputStream(socket.getInputStream());
 
-            // Send Reg message
-            NodeInfo ndinfo = new NodeInfo(args[0]);
-            trackerOutput.writeObject(new RegPacket(net_Id, TypeMsg.REG, ndinfo.get_file_blocks()));
+            // Send Reg message with Node Status collected by "FileBlockInfo"
+            trackerOutput.writeObject(new RegPacket(net_Id, new FileBlockInfo(args[2])));
             trackerOutput.flush();
 
             // Initiate NodeHost

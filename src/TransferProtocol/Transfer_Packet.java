@@ -1,4 +1,4 @@
-package Transfer_Protocol;
+package TransferProtocol;
 import java.io.Serializable;
 import java.net.InetAddress;
 import java.util.Set;
