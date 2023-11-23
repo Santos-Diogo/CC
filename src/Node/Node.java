@@ -100,7 +100,7 @@ public class Node {
             trackerInput = new ObjectInputStream(socket.getInputStream());
 
             // Send Reg message with Node Status collected by "FileBlockInfo"
-            trackerOutput.writeObject(new RegPacket(net_Id, new FileBlockInfo(args[2])));
+            trackerOutput.writeObject(new RegPacket(net_Id, new FileBlockInfo(args[0])));
             trackerOutput.flush();
 
             // Initiate NodeHost
