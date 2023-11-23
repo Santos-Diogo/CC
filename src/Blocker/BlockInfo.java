@@ -2,8 +2,9 @@ package Blocker;
 
 import java.util.List;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.io.Serializable;
 
-public class BlockInfo
+public class BlockInfo implements Serializable
 {
     private ReentrantReadWriteLock lock_rw;
     private Long nBlocks;               //Number of Blocks

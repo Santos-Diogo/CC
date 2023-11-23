@@ -11,8 +11,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.io.Serializable;
 
-public class FileBlockInfo
+public class FileBlockInfo implements Serializable
 {
     private Map<String, BlockInfo> fileBlockInfo;
 
