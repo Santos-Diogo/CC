@@ -54,6 +54,10 @@ public class ServerInfo {
             this.sbiList.removeIf(element -> element.contains_NetID(id));
         }
 
+        boolean isEmpty() {
+            return this.sbiList.isEmpty();
+        }
+
         Long get_fileSize() {
             return this.fileSize;
         }
@@ -108,8 +112,11 @@ public class ServerInfo {
     }
 
     public void remove_infoFromNode(NetId node) {
-        for (FileInfo f : this.file_nodeData.values()) {
+        for (Map.Entry<String, FileInfo> map : this.file_nodeData.entrySet()) {
+            FileInfo f = map.getValue();
             f.rm_list(node);
+            if (f.isEmpty())
+                this.file_nodeData.remove(map.getKey());
         }
     }
 }
