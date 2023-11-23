@@ -23,7 +23,7 @@ public class Server {
         int port = (args[0] != null) ? Integer.parseInt(args[0]) : Shared.Defines.trackerPort;
         try {
             InetAddress address = Inet4Address.getLocalHost();
-            n = new Net_Id(address);
+            n = new NetId(address);
 
             socket = new ServerSocket(port);
             System.out.println("Tracker ativo em " + address.getHostAddress() + ", porta " + port);
