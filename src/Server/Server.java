@@ -20,7 +20,7 @@ public class Server {
 
     public static void main(String[] args) {
         // Gets first connection from all nodes and then passes it down to a thread
-        int port = (args[0] != null) ? Integer.parseInt(args[0]) : Shared.Defines.trackerPort;
+        int port = (args.length > 0) ? Integer.parseInt(args[0]) : Shared.Defines.trackerPort;
         try {
             InetAddress address = Inet4Address.getLocalHost();
             n = new NetId(address);

@@ -88,7 +88,7 @@ public class Node {
 
     public static void main(String[] args) throws InterruptedException {
         String serverAddress = args[1];
-        int serverPort = (args[2] != null) ? Integer.parseInt(args[2]) : Shared.Defines.trackerPort;
+        int serverPort = (args.length > 2) ? Integer.parseInt(args[2]) : Shared.Defines.trackerPort;
 
         try {
             // Define this machine IP adress
