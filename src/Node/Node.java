@@ -65,6 +65,16 @@ public class Node {
         }
     }
 
+    private static void handle_quit() {
+        try {
+            trackerOutput.writeObject(new TrackPacket(net_Id, TypeMsg.DC));
+            trackerOutput.flush();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     /**
      * Arguments not enough
      */
@@ -75,6 +85,9 @@ public class Node {
                 break;
             case "get":
                 handle_get();
+                break;
+            case "quit":
+                handle_quit();
                 break;
             default:
                 break;
@@ -110,7 +123,7 @@ public class Node {
             while (!(command = command_request()).equals("quit")) {
                 handle_command(command);
             }
-
+            handle_command("quit");
             // Close the socket when done
             socket.close();
         } catch (UnknownHostException e) {
