@@ -112,11 +112,18 @@ public class ServerInfo {
     }
 
     public void remove_infoFromNode(NetId node) {
-        for (Map.Entry<String, FileInfo> map : this.file_nodeData.entrySet()) {
-            FileInfo f = map.getValue();
+        Iterator<Map.Entry<String, FileInfo>> iterator = this.file_nodeData.entrySet().iterator();
+
+        while (iterator.hasNext()) {
+            Map.Entry<String, FileInfo> entry = iterator.next();
+            FileInfo f = entry.getValue();
+
             f.rm_list(node);
-            if (f.isEmpty())
-                this.file_nodeData.remove(map.getKey());
+
+            if (f.isEmpty()) {
+                iterator.remove(); // Remove the current entry using the iterator
+            }
         }
     }
+
 }
