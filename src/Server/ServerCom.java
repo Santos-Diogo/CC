@@ -48,7 +48,7 @@ public class ServerCom implements Runnable {
     private void handle_AVF_REQ() {
         System.out.println("AVF REQ");
         try {
-            out.writeObject(new AvfRepPacket(selfId, serverInfo.get_files()));
+            out.writeObject(new AvfRepPacket(selfId, serverInfo.get_filesWithSizes()));
             out.flush();
         } catch (IOException e) {
             e.printStackTrace();

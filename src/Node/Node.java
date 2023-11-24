@@ -32,10 +32,15 @@ public class Node {
             AvfRepPacket packet = (AvfRepPacket) trackerInput.readObject();
 
             // Write File Names
-            List<String> files = packet.get_files();
-            for (String s : files) {
-                System.out.println(s);
+            Map<String, Long> files = packet.get_files();
+            System.out.println("Files:");
+
+            //Can be chaged latter (Better values for bigger files)
+            for (Map.Entry<String, Long> e : files.entrySet())
+            {
+                System.out.println(e.getKey()+ (e.getValue()*Shared.Defines.blockSize/1024)+ "kB");
             }
+
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
@@ -50,8 +55,6 @@ public class Node {
         try {
             trackerOutput.writeObject(new GetReqPacket(null, file));
             trackerOutput.flush();
-
-            // DEBUG!!!
 
             GetRepPacket resp = (GetRepPacket) trackerInput.readObject();
             Set<NetId> nodes = resp.get_nodeBlocks().keySet();
