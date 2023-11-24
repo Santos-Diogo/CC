@@ -12,50 +12,38 @@ import ThreadTools.ThreadControl;
 /**
  * Main server thread
  */
-public class Server 
-{
+public class Server {
     private static ServerSocket socket;
     private static ThreadControl tc = new ThreadControl();
     private static ServerInfo serverInfo = new ServerInfo();
     private static NetId n;
 
-    public static void main(String[] args) 
-    {
+    public static void main(String[] args) {
         // Gets first connection from all nodes and then passes it down to a thread
-        int port = Integer.parseInt(args[0]);
-        try 
-        {
-            InetAddress address= Inet4Address.getLocalHost();
-            n= new NetId(address);
+        int port = (args.length > 0) ? Integer.parseInt(args[0]) : Shared.Defines.trackerPort;
+        try {
+            InetAddress address = Inet4Address.getLocalHost();
+            n = new NetId(address);
 
             socket = new ServerSocket(port);
             System.out.println("Tracker ativo em " + address.getHostAddress() + ", porta " + port);
 
-            while (true) 
-            {
+            while (true) {
                 Socket clientSocket = socket.accept();
 
                 // The client socket is passed down to a thread.
                 Thread t = new Thread(new ServerCom(clientSocket, tc, serverInfo, n));
                 t.start();
             }
-        }
-        catch (IOException e) 
-        {
+        } catch (IOException e) {
             e.printStackTrace();
-        }
-        finally 
-        {
+        } finally {
             // Close the ServerSocket when all is done
-            if (socket != null && !socket.isClosed()) 
-            {
-                try 
-                {
+            if (socket != null && !socket.isClosed()) {
+                try {
                     socket.close();
                     System.out.println("Job done");
-                }
-                catch (IOException e) 
-                {
+                } catch (IOException e) {
                     e.printStackTrace();
                 }
             }

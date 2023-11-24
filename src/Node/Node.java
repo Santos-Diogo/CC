@@ -16,17 +16,14 @@ import TrackProtocol.TrackPacket.TypeMsg;
 /***
  * Main Node thread
  */
-public class Node 
-{
+public class Node {
     private static ObjectOutputStream trackerOutput;
     private static ObjectInputStream trackerInput;
     private static NetId net_Id;
     private static Scanner scanner = new Scanner(System.in);
 
-    private static void handle_avf() 
-    {
-        try 
-        {
+    private static void handle_avf() {
+        try {
             // Write Request
             trackerOutput.writeObject(new TrackPacket(net_Id, TypeMsg.AVF_REQ));
             trackerOutput.flush();
@@ -36,13 +33,10 @@ public class Node
 
             // Write File Names
             List<String> files = packet.get_files();
-            for (String s : files) 
-            {
+            for (String s : files) {
                 System.out.println(s);
             }
-        } 
-        catch (IOException | ClassNotFoundException e) 
-        {
+        } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
     }
@@ -50,28 +44,33 @@ public class Node
     /**
      * Temporary solution
      */
-    private static void handle_get ()
-    {
+    private static void handle_get() {
         System.out.println("Name of file to transfer:");
-        String file= scanner.nextLine();
-        try
-        {
+        String file = scanner.nextLine();
+        try {
             trackerOutput.writeObject(new GetReqPacket(null, file));
             trackerOutput.flush();
 
-            //DEBUG!!! 
+            // DEBUG!!!
 
             GetRepPacket resp = (GetRepPacket) trackerInput.readObject();
-            Set<NetId> nodes= resp.get_nodeBlocks().keySet();
+            Set<NetId> nodes = resp.get_nodeBlocks().keySet();
 
             System.out.println("Nodes:");
-            for (NetId n : nodes)
-            {
+            for (NetId n : nodes) {
                 System.out.println(n.get_adr().toString());
             }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-        catch (Exception e)
-        {
+    }
+
+    private static void handle_quit() {
+        try {
+            trackerOutput.writeObject(new TrackPacket(net_Id, TypeMsg.DC));
+            trackerOutput.flush();
+
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
@@ -79,34 +78,32 @@ public class Node
     /**
      * Arguments not enough
      */
-    private static void handle_command(String command) 
-    {
-        switch (command) 
-        {
+    private static void handle_command(String command) {
+        switch (command) {
             case "avf":
                 handle_avf();
                 break;
             case "get":
                 handle_get();
                 break;
+            case "quit":
+                handle_quit();
+                break;
             default:
                 break;
         }
     }
 
-    private static String command_request() 
-    {
+    private static String command_request() {
         System.out.println("Type your desired command:\navf - available files\nquit- exit the network\n");
         return scanner.nextLine();
     }
 
-    public static void main(String[] args) throws InterruptedException 
-    {
-        String serverAddress = args[0];
-        int serverPort = Integer.parseInt(args[1]);
+    public static void main(String[] args) throws InterruptedException {
+        String serverAddress = args[1];
+        int serverPort = (args.length > 2) ? Integer.parseInt(args[2]) : Shared.Defines.trackerPort;
 
-        try 
-        {
+        try {
             // Define this machine IP adress
             net_Id = new NetId(Inet4Address.getLocalHost());
 
@@ -116,28 +113,23 @@ public class Node
             trackerInput = new ObjectInputStream(socket.getInputStream());
 
             // Send Reg message with Node Status collected by "FileBlockInfo"
-            trackerOutput.writeObject(new RegPacket(net_Id, new FileBlockInfo(args[2])));
+            trackerOutput.writeObject(new RegPacket(net_Id, new FileBlockInfo(args[0])));
             trackerOutput.flush();
-            
+
             // Initiate NodeHost
 
             // Handle commands
             String command;
-            while (!(command = command_request()).equals("quit")) 
-            {
+            while (!(command = command_request()).equals("quit")) {
                 handle_command(command);
             }
-
+            handle_command("quit");
             // Close the socket when done
             socket.close();
-        } 
-        catch (UnknownHostException e) 
-        {
+        } catch (UnknownHostException e) {
             System.out.println(serverAddress + " Is not a valid adress");
             e.printStackTrace();
-        } 
-        catch (IOException e) 
-        {
+        } catch (IOException e) {
             e.printStackTrace();
         }
 
