@@ -1,11 +1,15 @@
 package Server;
 
 import java.util.*;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+
 import Blocker.BlockInfo;
 import Shared.NetId;
 
-public class ServerInfo {
-    private class ServerBlockInfo extends BlockInfo {
+public class ServerInfo 
+{
+    private class ServerBlockInfo extends BlockInfo 
+    {
         NetId netId;
 
         public ServerBlockInfo(BlockInfo bInfo, NetId netId) {
@@ -25,7 +29,8 @@ public class ServerInfo {
     /**
      * Has to be concurrency ready
      */
-    private class FileInfo {
+    private class FileInfo 
+    {
         List<ServerBlockInfo> sbiList;
         Long fileSize;
 
@@ -61,35 +66,66 @@ public class ServerInfo {
         }
     }
 
+    ReentrantReadWriteLock rwl;
     Map<String, FileInfo> file_nodeData;
 
-    public ServerInfo() {
+    public ServerInfo() 
+    {
+        this.rwl= new ReentrantReadWriteLock();
         this.file_nodeData = new HashMap<>();
     }
 
-    public void add_file(String fileName, NetId netId, BlockInfo bInfo) {
-        FileInfo f;
-        // No file with that name exists
-        if (!this.file_nodeData.containsKey(fileName)) {
-            this.file_nodeData.put(fileName, f = new FileInfo());
-        }
-        // Get the list to add that entry
-        else {
-            f = this.file_nodeData.get(fileName);
-        }
+    public void add_file(String fileName, NetId netId, BlockInfo bInfo) 
+    {
+        try
+        {
+            rwl.writeLock().lock();
+            FileInfo f;
 
-        // Add info from node about file
-        f.add_list(new ServerBlockInfo(bInfo, netId));
-        // Set FileSize
-        f.set_fileSize(bInfo.get_nBlocks());
+            // No file with that name exists
+            if (!this.file_nodeData.containsKey(fileName)) {
+                this.file_nodeData.put(fileName, f = new FileInfo());
+            }
+            // Get the list to add that entry
+            else {
+                f = this.file_nodeData.get(fileName);
+            }
+            
+            // Add info from node about file
+            f.add_list(new ServerBlockInfo(bInfo, netId));
+            // Set FileSize
+            f.set_fileSize(bInfo.get_nBlocks());
+        }
+        finally
+        {
+            rwl.writeLock().unlock();
+        }
     }
 
-    public List<String> get_files() {
-        return this.file_nodeData.keySet().stream().toList();
+    public List<String> get_files() 
+    {
+        try
+        {
+            rwl.readLock().lock();
+            return this.file_nodeData.keySet().stream().toList();
+        }
+        finally
+        {
+            rwl.readLock().unlock();
+        }
     }
 
-    public Long get_nBlocks(String file) {
-        return this.file_nodeData.get(file).fileSize;
+    public Long get_nBlocks(String file) 
+    {
+        try
+        {
+            rwl.readLock().lock();
+            return this.file_nodeData.get(file).fileSize;
+        }
+        finally
+        {
+            rwl.readLock().unlock();
+        }
     }
 
     /**
@@ -98,29 +134,48 @@ public class ServerInfo {
      * @param file
      * @return
      */
-    public Map<NetId, List<Integer>> get_nodeInfoFile(String file) {
-        List<ServerBlockInfo> l = this.file_nodeData.get(file).sbiList;
-        Map<NetId, List<Integer>> m = new HashMap<>();
-
-        // We Map each Node to a NodeList
-        for (ServerBlockInfo sbi : l) {
-            m.put(sbi.netId, sbi.get_filesBlocks());
+    public Map<NetId, List<Integer>> get_nodeInfoFile(String file) 
+    {
+        try
+        {
+            rwl.readLock().lock();
+            List<ServerBlockInfo> l = this.file_nodeData.get(file).sbiList;
+            Map<NetId, List<Integer>> m = new HashMap<>();
+            
+            // We Map each Node to a NodeList
+            for (ServerBlockInfo sbi : l) 
+            {
+                m.put(sbi.netId, sbi.get_filesBlocks());
+            }
+            return m;
         }
-        return m;
+        finally
+        {
+            rwl.readLock().unlock();
+        }
     }
 
-    public void remove_infoFromNode(NetId node) {
-        Iterator<Map.Entry<String, FileInfo>> iterator = this.file_nodeData.entrySet().iterator();
-
-        while (iterator.hasNext()) {
-            Map.Entry<String, FileInfo> entry = iterator.next();
-            FileInfo f = entry.getValue();
-
-            f.rm_list(node);
-
-            if (f.isEmpty()) {
-                iterator.remove(); // Remove the current entry using the iterator
+    public void remove_infoFromNode(NetId node) 
+    {
+        try
+        {
+            rwl.writeLock().lock();
+            Iterator<Map.Entry<String, FileInfo>> iterator = this.file_nodeData.entrySet().iterator();
+            
+            while (iterator.hasNext()) {
+                Map.Entry<String, FileInfo> entry = iterator.next();
+                FileInfo f = entry.getValue();
+                
+                f.rm_list(node);
+                
+                if (f.isEmpty()) {
+                    iterator.remove(); // Remove the current entry using the iterator
+                }
             }
+        }
+        finally
+        {
+            rwl.writeLock().unlock();
         }
     }
 
@@ -129,13 +184,21 @@ public class ServerInfo {
      */
     public Map<String, Long> get_filesWithSizes ()
     {
-        Map<String, Long> m= new HashMap<>();
-
-        for (Map.Entry<String, FileInfo> e : this.file_nodeData.entrySet())
+        try
         {
-            m.put(e.getKey(), e.getValue().fileSize);
+            rwl.readLock().lock();
+            Map<String, Long> m= new HashMap<>();
+            
+            for (Map.Entry<String, FileInfo> e : this.file_nodeData.entrySet())
+            {
+                m.put(e.getKey(), e.getValue().fileSize);
+            }
+            
+            return m;
         }
-
-        return m;
+        finally
+        {
+            rwl.readLock().unlock();
+        }
     }
 }
