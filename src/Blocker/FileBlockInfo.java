@@ -13,6 +13,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.io.Serializable;
 
+import Shared.*;
+
 public class FileBlockInfo implements Serializable
 {
     private Map<String, BlockInfo> fileBlockInfo;
@@ -46,7 +48,8 @@ public class FileBlockInfo implements Serializable
                 else 
                 {
                     Long fileSize = Files.size(filePath);
-                    fileBlockInfo.put(fileName, new BlockInfo(fileSize, null));
+                    Long nBlocks= fileSize/ Shared.Defines.blockSize;
+                    fileBlockInfo.put(fileName, new BlockInfo(nBlocks, null));
                 }
             }
         } 

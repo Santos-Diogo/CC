@@ -1,21 +1,20 @@
 package TrackProtocol;
 
 import Shared.NetId;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Map;
 
 public class AvfRepPacket extends TrackPacket
 {
-    List<String> files;
+    Map<String, Long> fileSizes;
 
-    public AvfRepPacket(NetId n, List<String> files) 
+    public AvfRepPacket(NetId n, Map<String, Long> files) 
     {
         super(n, TypeMsg.AVF_RESP);
-        this.files = new ArrayList<>(files);
+        this.fileSizes = files;
     }
 
-    public List<String> get_files() 
+    public Map<String, Long> get_files() 
     {
-        return new ArrayList<>(this.files);
+        return this.fileSizes;
     }    
 }

@@ -1,8 +1,6 @@
 package Server;
 
-import java.io.File;
 import java.util.*;
-
 import Blocker.BlockInfo;
 import Shared.NetId;
 
@@ -126,4 +124,18 @@ public class ServerInfo {
         }
     }
 
+    /**
+     * @return FileSizes mapped to corresponding filenames
+     */
+    public Map<String, Long> get_filesWithSizes ()
+    {
+        Map<String, Long> m= new HashMap<>();
+
+        for (Map.Entry<String, FileInfo> e : this.file_nodeData.entrySet())
+        {
+            m.put(e.getKey(), e.getValue().fileSize);
+        }
+
+        return m;
+    }
 }
