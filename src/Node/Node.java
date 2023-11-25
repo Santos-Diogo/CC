@@ -44,8 +44,9 @@ public class Node
             {
                 System.out.println(e.getKey()+ (e.getValue()*Shared.Defines.blockSize/1024)+ "kB");
             }
-
-        } catch (IOException | ClassNotFoundException e) {
+        } 
+        catch (Exception e) 
+        {
             e.printStackTrace();
         }
     }
@@ -135,9 +136,6 @@ public class Node
 
             //Registers Self
             filesId= register (new FileBlockInfo(args[0]));
-            // Send Reg message with Node Status collected by "FileBlockInfo"
-            trackerOutput.writeObject(new RegReqPacket(net_Id, new FileBlockInfo(args[0])));
-            trackerOutput.flush();
 
             // Initiate NodeHost
 
