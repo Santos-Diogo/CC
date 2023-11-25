@@ -42,7 +42,7 @@ public class Node
             //Can be chaged latter (Better values for bigger files)
             for (Map.Entry<String, Long> e : files.entrySet())
             {
-                System.out.println(e.getKey()+ (e.getValue()*Shared.Defines.blockSize/1024)+ "kB");
+                System.out.println(e.getKey() + " Size ~ " + (e.getValue()*Shared.Defines.blockSize/1024)+ "kB");
             }
         } 
         catch (Exception e) 
@@ -155,8 +155,6 @@ public class Node
 
             //Registers Self
             filesId= register (new FileBlockInfo(args[0]));
-
-            // Initiate NodeHost
 
             // Handle commands
             String command;

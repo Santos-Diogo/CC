@@ -65,6 +65,13 @@ public class ServerInfo
             return this.sbiList.isEmpty();
         }
 
+        boolean isAvailable () {
+            for(ServerBlockInfo sbi : sbiList) 
+                if (sbi.get_nBlocks() != null)
+                    return true;
+            return false;
+        }
+
         Long get_fileSize() {
             return this.fileSize;
         }
@@ -209,7 +216,8 @@ public class ServerInfo
             
             for (Map.Entry<String, FileInfo> e : this.file_nodeData.entrySet())
             {
-                m.put(e.getKey(), e.getValue().fileSize);
+                if(e.getValue().isAvailable())
+                    m.put(e.getKey(), e.getValue().fileSize);
             }
             
             return m;

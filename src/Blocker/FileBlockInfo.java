@@ -48,7 +48,8 @@ public class FileBlockInfo implements Serializable
                 else 
                 {
                     Long fileSize = Files.size(filePath);
-                    Long nBlocks= fileSize/ Shared.Defines.blockSize;
+                    // If the fileSize % blockSize is not 0 we must add another block otherwise we lose information about the file.
+                    Long nBlocks= (fileSize % Shared.Defines.blockSize == 0 ) ? fileSize/ Shared.Defines.blockSize : (fileSize/ Shared.Defines.blockSize) + 1;
                     fileBlockInfo.put(fileName, new BlockInfo(nBlocks, null));
                 }
             }
