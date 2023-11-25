@@ -219,4 +219,17 @@ public class ServerInfo
             rwl.readLock().unlock();
         }
     }
+
+    public long get_fileId (String file)
+    {
+        try
+        {
+            rwl.readLock().lock();
+            return this.file_nodeData.get(file).fileId;
+        }
+        finally
+        {
+            rwl.readLock().unlock();
+        }
+    }
 }

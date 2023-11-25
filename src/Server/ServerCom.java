@@ -62,10 +62,13 @@ public class ServerCom implements Runnable {
 
     private void handle_AVF_REQ() {
         System.out.println("AVF REQ");
-        try {
+        try 
+        {
             out.writeObject(new AvfRepPacket(selfId, serverInfo.get_filesWithSizes()));
             out.flush();
-        } catch (IOException e) {
+        }
+        catch (IOException e) 
+        {
             e.printStackTrace();
         }
     }
@@ -76,9 +79,10 @@ public class ServerCom implements Runnable {
         try {
             GetReqPacket p = (GetReqPacket) packet;
             String file = p.getFile();
-            GetRepPacket replyP = new GetRepPacket(selfId,
-                    serverInfo.get_nBlocks(file),
-                    serverInfo.get_nodeInfoFile(file));
+            GetRepPacket replyP = new GetRepPacket( selfId,
+                                                    serverInfo.get_fileId(file),
+                                                    serverInfo.get_nBlocks(file),
+                                                    serverInfo.get_nodeInfoFile(file));
             out.writeObject(replyP);
             out.flush();
         } catch (IOException e) {
