@@ -51,9 +51,35 @@ public class Node
         }
     }
 
-    private static Map<Long, NetId> scalonate (Map<NetId, List<Long>> nodeBlocks, long nBlocks)
+    /**
+     * This only solves the transfer without scalonation
+     * @param nodeBlocks
+     * @param nBlocks
+     * @return
+     */
+    private static Map<Long, NetId> scalonate (Map<NetId, List<Long>> nodeBlocks, long nBlocks) throws Exception
     {
         Map <Long, NetId> m= new HashMap<>();
+
+        for (long i= 0; i< nBlocks; i++)
+        {
+            NetId id= null;
+            for (Map.Entry<NetId, List<Long>> entry : nodeBlocks.entrySet())
+            {
+                if (entry.getValue().contains(i))
+                {
+                    id= entry.getKey();
+                    break;
+                }
+            }
+
+            //Not a single Node owns a given block
+            if (id== null)
+                throw new Exception("Transfer not possible");
+
+            //Add the node to the scalonation list
+            m.put(i, id);
+        }
 
         return m;
     }
