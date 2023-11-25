@@ -32,16 +32,31 @@ public class ServerCom implements Runnable {
         this.selfId = n;
     }
 
-    private void handle_REG(TrackPacket packet) {
+    private void handle_REG(TrackPacket packet) 
+    {
         System.out.println("REG message");
-        RegPacket p = (RegPacket) packet;
+        RegReqPacket p = (RegReqPacket) packet;
         NetId node = packet.getNet_Id();
+        
+        Map<String, Long> fileId= new HashMap<>();
         BlockInfo nBlock;
-        // We insert each (file_name,blocks[])
-
-        for (Map.Entry<String, BlockInfo> e : p.get_fileBlockInfo().get_fileBlockInfo().entrySet()) {
+        String fileName;
+        // We insert each (file_name,blocks[]) and get a correspondig id for our files
+        for (Map.Entry<String, BlockInfo> e : p.get_fileBlockInfo().get_fileBlockInfo().entrySet()) 
+        {
             nBlock = e.getValue();
-            serverInfo.add_file(e.getKey(), node, nBlock);
+            fileName= e.getKey();
+            fileId.put(fileName, serverInfo.add_file(fileName, node, nBlock));
+        }
+        try
+        {
+            //Write back to node the sent file's ids
+            out.writeObject(new RegRepPacket(selfId, fileId));    
+            out.flush();
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
         }
     }
 
@@ -78,7 +93,7 @@ public class ServerCom implements Runnable {
 
     private void handle(TrackPacket packet) {
         switch (packet.getType()) {
-            case REG: {
+            case REG_REQ: {
                 handle_REG(packet);
                 break;
             }
