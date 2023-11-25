@@ -7,7 +7,8 @@ public class TrackPacket implements Serializable
 {
     public enum TypeMsg 
     {
-        REG,        // Register
+        REG_REQ,    // Register Request
+        REG_REP,    // Register Response
         AVF_REQ,    // Available Files Request
         AVF_RESP,   // Available Files Response
         ADD_F,      // Add a File/ Blocks
@@ -19,6 +20,12 @@ public class TrackPacket implements Serializable
 
     private NetId Net_Id;
     private TypeMsg type;
+
+    public TrackPacket(TrackPacket p)
+    {
+        this.Net_Id= p.Net_Id;
+        this.type= p.type;
+    }
 
     public TrackPacket(NetId n, TypeMsg type) 
     {
