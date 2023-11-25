@@ -43,7 +43,7 @@ public class FileBlockInfo implements Serializable
 
                     if (!fileBlockInfo.containsKey(fileName))
                         fileBlockInfo.put(fileName, new BlockInfo(null, new ArrayList<>()));
-                    fileBlockInfo.get(fileName).add_block(Integer.parseInt(matcher.group(2)));
+                    fileBlockInfo.get(fileName).add_block(Long.parseLong(matcher.group(2)));
                 }
                 else 
                 {
@@ -66,7 +66,7 @@ public class FileBlockInfo implements Serializable
      * @param size   size of the file in blocks
      * @param blocks blocks owned. (null for all blocks)
      */
-    public void add_file(String name, long size, List<Integer> blocks) 
+    public void add_file(String name, long size, List<Long> blocks) 
     {
         fileBlockInfo.put(name, new BlockInfo(size, blocks));
     }
