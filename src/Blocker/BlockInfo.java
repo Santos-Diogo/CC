@@ -8,14 +8,14 @@ public class BlockInfo implements Serializable
 {
     private ReentrantReadWriteLock lock_rw;
     private Long nBlocks;               //Number of Blocks
-    private List<Integer> filesBlocks;  //Which Blocks
+    private List<Long> filesBlocks;  //Which Blocks
 
     /**
      * 
      * @param nBlocks number of blocks the file has, -1 for unknown
      * @param filesBlocks list of blocks form file in the node
      */
-    public BlockInfo (Long nBlocks, List<Integer> filesBlocks)
+    public BlockInfo (Long nBlocks, List<Long> filesBlocks)
     {
         this.lock_rw= new ReentrantReadWriteLock();
         this.nBlocks= nBlocks;
@@ -42,7 +42,7 @@ public class BlockInfo implements Serializable
         }
     }
 
-    public List<Integer> get_filesBlocks () throws NullPointerException
+    public List<Long> get_filesBlocks () throws NullPointerException
     {
         try
         {
@@ -55,7 +55,7 @@ public class BlockInfo implements Serializable
         }
     }
 
-    public void add_block (Integer block)
+    public void add_block (Long block)
     {
         try
         {

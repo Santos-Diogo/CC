@@ -159,13 +159,13 @@ public class ServerInfo
      * @param file
      * @return
      */
-    public Map<NetId, List<Integer>> get_nodeInfoFile(String file) 
+    public Map<NetId, List<Long>> get_nodeInfoFile(String file) 
     {
         try
         {
             rwl.readLock().lock();
             List<ServerBlockInfo> l = this.file_nodeData.get(file).sbiList;
-            Map<NetId, List<Integer>> m = new HashMap<>();
+            Map<NetId, List<Long>> m = new HashMap<>();
             
             // We Map each Node to a NodeList
             for (ServerBlockInfo sbi : l) 

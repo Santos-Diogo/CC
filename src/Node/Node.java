@@ -51,24 +51,43 @@ public class Node
         }
     }
 
+    private static Map<Long, NetId> scalonate (Map<NetId, List<Long>> nodeBlocks, long nBlocks)
+    {
+        Map <Long, NetId> m= new HashMap<>();
+
+        return m;
+    }
+
     /**
      * Temporary solution
      */
-    private static void handle_get() {
+    private static void handle_get() 
+    {
         System.out.println("Name of file to transfer:");
         String file = scanner.nextLine();
-        try {
+        try 
+        {
+            // Send Repply
             trackerOutput.writeObject(new GetReqPacket(null, file));
             trackerOutput.flush();
 
+            //Get Response
             GetRepPacket resp = (GetRepPacket) trackerInput.readObject();
+
+            //Debug
             Set<NetId> nodes = resp.get_nodeBlocks().keySet();
 
             System.out.println("Nodes:");
-            for (NetId n : nodes) {
+            for (NetId n : nodes) 
+            {
                 System.out.println(n.get_adr().toString());
             }
-        } catch (Exception e) {
+            //Debug end
+
+            Map<Long, NetId> blockNode= scalonate (resp.get_nodeBlocks(), resp.get_nBlocks());
+        }
+        catch (Exception e) 
+        {
             e.printStackTrace();
         }
     }

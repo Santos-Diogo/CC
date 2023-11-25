@@ -10,9 +10,9 @@ public class GetRepPacket extends TrackPacket
 {
     private long fileId;
     private Long nBlocks;
-    private Map<NetId,List<Integer>> nodeBlocks;
+    private Map<NetId,List<Long>> nodeBlocks;
 
-    public GetRepPacket (NetId self, long fileId, Long nBlocks, Map<NetId,List<Integer>> nodeBlocks)
+    public GetRepPacket (NetId self, long fileId, Long nBlocks, Map<NetId,List<Long>> nodeBlocks)
     {
         super (self, TypeMsg.GET_RESP);
         this.fileId= fileId;
@@ -30,7 +30,7 @@ public class GetRepPacket extends TrackPacket
         return this.nBlocks;
     }
 
-    public Map<NetId,List<Integer>> get_nodeBlocks()
+    public Map<NetId,List<Long>> get_nodeBlocks()
     {
         return this.nodeBlocks;
     }
