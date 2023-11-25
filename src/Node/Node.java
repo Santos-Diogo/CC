@@ -119,8 +119,6 @@ public class Node {
             trackerOutput.writeObject(new RegPacket(net_Id, new FileBlockInfo(args[0])));
             trackerOutput.flush();
 
-            // Initiate NodeHost
-
             // Handle commands
             String command;
             while (!(command = command_request()).equals("quit")) {
