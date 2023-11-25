@@ -31,12 +31,16 @@ public class ServerInfo
      */
     private class FileInfo 
     {
+        static long id_inc= 0;
         List<ServerBlockInfo> sbiList;
         Long fileSize;
+        long fileId;
 
-        FileInfo() {
+        FileInfo() 
+        {
             this.sbiList = new ArrayList<>();
             this.fileSize = null;
+            this.fileId= id_inc++;
         }
 
         void set_fileSize(Long size) {
@@ -64,6 +68,11 @@ public class ServerInfo
         Long get_fileSize() {
             return this.fileSize;
         }
+
+        long get_fileId ()
+        {
+            return this.fileId;
+        }
     }
 
     ReentrantReadWriteLock rwl;
@@ -75,7 +84,13 @@ public class ServerInfo
         this.file_nodeData = new HashMap<>();
     }
 
-    public void add_file(String fileName, NetId netId, BlockInfo bInfo) 
+    /**
+     * @param fileName
+     * @param netId
+     * @param bInfo
+     * @return Returns the inserted file's corresponding Id
+     */
+    public long add_file(String fileName, NetId netId, BlockInfo bInfo) 
     {
         try
         {
@@ -95,6 +110,9 @@ public class ServerInfo
             f.add_list(new ServerBlockInfo(bInfo, netId));
             // Set FileSize
             f.set_fileSize(bInfo.get_nBlocks());
+
+            //Return the file's id
+            return f.fileId;
         }
         finally
         {

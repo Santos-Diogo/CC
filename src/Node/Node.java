@@ -16,14 +16,18 @@ import TrackProtocol.TrackPacket.TypeMsg;
 /***
  * Main Node thread
  */
-public class Node {
+public class Node 
+{
     private static ObjectOutputStream trackerOutput;
     private static ObjectInputStream trackerInput;
     private static NetId net_Id;
     private static Scanner scanner = new Scanner(System.in);
+    private static Map<String, Long> filesId;   //Matches the files name with their id in the server context
 
-    private static void handle_avf() {
-        try {
+    private static void handle_avf() 
+    {
+        try 
+        {
             // Write Request
             trackerOutput.writeObject(new TrackPacket(net_Id, TypeMsg.AVF_REQ));
             trackerOutput.flush();
@@ -102,6 +106,20 @@ public class Node {
         return scanner.nextLine();
     }
 
+    /**
+     * @param b Info on files in the node's directory
+     * @return the input file's id in the server
+     * @throws IOException
+     */
+    private static Map<String, Long> register(FileBlockInfo b) throws IOException, ClassNotFoundException
+    {
+        // Send Reg message with Node Status collected by "FileBlockInfo"
+        trackerOutput.writeObject(new RegReqPacket(net_Id, b));
+        trackerOutput.flush();
+        RegRepPacket rep= (RegRepPacket) trackerInput.readObject();
+        return rep.get_fileId();
+    }
+
     public static void main(String[] args) throws InterruptedException {
         String serverAddress = args[1];
         int serverPort = (args.length > 2) ? Integer.parseInt(args[2]) : Shared.Defines.trackerPort;
@@ -115,8 +133,10 @@ public class Node {
             trackerOutput = new ObjectOutputStream(socket.getOutputStream());
             trackerInput = new ObjectInputStream(socket.getInputStream());
 
+            //Registers Self
+            filesId= register (new FileBlockInfo(args[0]));
             // Send Reg message with Node Status collected by "FileBlockInfo"
-            trackerOutput.writeObject(new RegPacket(net_Id, new FileBlockInfo(args[0])));
+            trackerOutput.writeObject(new RegReqPacket(net_Id, new FileBlockInfo(args[0])));
             trackerOutput.flush();
 
             // Handle commands
@@ -130,7 +150,7 @@ public class Node {
         } catch (UnknownHostException e) {
             System.out.println(serverAddress + " Is not a valid adress");
             e.printStackTrace();
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
 

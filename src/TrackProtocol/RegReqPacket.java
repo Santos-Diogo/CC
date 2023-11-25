@@ -3,7 +3,7 @@ package TrackProtocol;
 import Blocker.*;
 import Shared.NetId;
 
-public class RegPacket extends TrackPacket
+public class RegReqPacket extends TrackPacket
 {
     FileBlockInfo fileBlockInfo;
 
@@ -12,9 +12,9 @@ public class RegPacket extends TrackPacket
      * @param self self NetId
      * @param files_blocks Filename in relation to BlockInfo
      */
-    public RegPacket (NetId self, FileBlockInfo files_blocks) 
+    public RegReqPacket (NetId self, FileBlockInfo files_blocks) 
     {
-        super (self, TypeMsg.REG);
+        super (self, TypeMsg.REG_REQ);
         this.fileBlockInfo= files_blocks;
     }
 
