@@ -13,7 +13,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.io.Serializable;
 
-import Shared.*;
 
 public class FileBlockInfo implements Serializable
 {
