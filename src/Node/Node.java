@@ -3,7 +3,7 @@ package Node;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.net.Inet4Address;
+import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.*;
@@ -106,7 +106,7 @@ public class Node
             System.out.println("Nodes:");
             for (NetId n : nodes) 
             {
-                System.out.println(n.get_adr().toString());
+                System.out.println(n.getName());
             }
             //Debug end
 
@@ -172,7 +172,7 @@ public class Node
         Socket socket;
         try {
             // Define this machine IP adress
-            net_Id = new NetId(Inet4Address.getLocalHost());
+            net_Id = new NetId(InetAddress.getLocalHost().getHostName());
 
             // Connects to server
             socket = new Socket(serverAddress, serverPort);

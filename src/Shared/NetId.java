@@ -1,6 +1,8 @@
 package Shared;
 
+import java.net.Inet4Address;
 import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.io.Serializable;
 
 /**
@@ -8,16 +10,26 @@ import java.io.Serializable;
  */
 public class NetId implements Serializable
 {
-    private InetAddress adr;
+    private String name;
 
-    public NetId (InetAddress adr)
+    public NetId (String name)
     {
-        this.adr= adr;
+        this.name= name;
     }
 
-    public InetAddress get_adr ()
+    public String getName ()
     {
-        return this.adr;
+        return this.name;
+    }
+
+    public InetAddress get_IP (String host)
+    {
+        try {
+            return Inet4Address.getByName(host);
+        } catch (UnknownHostException e) {
+            System.err.println("Host não existe");
+            return null;
+        }
     }
 
     @Override
@@ -30,7 +42,7 @@ public class NetId implements Serializable
 
         NetId n= (NetId) obj;
 
-        if (!this.adr.equals(n.get_adr()))
+        if (!this.name.equals(n.getName()))
             return false;
 
         return true;
