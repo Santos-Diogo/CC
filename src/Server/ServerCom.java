@@ -128,7 +128,7 @@ public class ServerCom implements Runnable {
     }
 
     public void run() {
-        TrackPacket packet;
+        TrackPacket packet = null;
 
         while (tc.get_running() == true) {
             try {
@@ -138,5 +138,6 @@ public class ServerCom implements Runnable {
             }
             handle(packet);
         }
+        handle_DC(packet);
     }
 }

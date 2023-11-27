@@ -169,13 +169,13 @@ public class Node
     public static void main(String[] args) throws InterruptedException {
         String serverAddress = args[1];
         int serverPort = (args.length > 2) ? Integer.parseInt(args[2]) : Shared.Defines.trackerPort;
-
+        Socket socket;
         try {
             // Define this machine IP adress
             net_Id = new NetId(Inet4Address.getLocalHost());
 
             // Connects to server
-            Socket socket = new Socket(serverAddress, serverPort);
+            socket = new Socket(serverAddress, serverPort);
             trackerOutput = new ObjectOutputStream(socket.getOutputStream());
             trackerInput = new ObjectInputStream(socket.getInputStream());
 
@@ -190,11 +190,14 @@ public class Node
             handle_command("quit");
             // Close the socket when done
             socket.close();
+            
         } catch (UnknownHostException e) {
             System.out.println(serverAddress + " Is not a valid adress");
             e.printStackTrace();
         } catch (Exception e) {
             e.printStackTrace();
+        } finally {
+            
         }
 
         // Tem de ter um Node-Handler para receber os pedidos dos outros nodes e dedicar
