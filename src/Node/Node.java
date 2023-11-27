@@ -66,7 +66,7 @@ public class Node
             NetId id= null;
             for (Map.Entry<NetId, List<Long>> entry : nodeBlocks.entrySet())
             {
-                if (entry.getValue().contains(i))
+                if (entry.getValue() == null || entry.getValue().contains(i))
                 {
                     id= entry.getKey();
                     break;
@@ -187,7 +187,6 @@ public class Node
             while (!(command = command_request()).equals("quit")) {
                 handle_command(command);
             }
-            handle_command("quit");
             // Close the socket when done
             socket.close();
             
