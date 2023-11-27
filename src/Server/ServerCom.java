@@ -4,54 +4,67 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 
+import Blocker.BlockInfo;
+
 import java.lang.String;
 
-import Shared.Net_Id;
+import Shared.NetId;
 import ThreadTools.ThreadControl;
-import Track_Protocol.*;
-import Track_Protocol.TrackPacket.TypeMsg;
+import TrackProtocol.*;
 
 /**
  * Class responsible for handling communication for each independent node on the
  * server side.
  */
-public class ServerCom implements Runnable 
-{
-    
+public class ServerCom implements Runnable {
+
     private ThreadControl tc;
     private ObjectInputStream in;
     private ObjectOutputStream out;
     private ServerInfo serverInfo;
-    private Net_Id n;
+    private NetId selfId;
 
-    public ServerCom(Socket socket, ThreadControl tc, ServerInfo serverInfo, Net_Id n) throws IOException 
-    {
+    public ServerCom(Socket socket, ThreadControl tc, ServerInfo serverInfo, NetId n) throws IOException {
         this.tc = tc;
         this.serverInfo = serverInfo;
         this.in = new ObjectInputStream(socket.getInputStream());
         this.out = new ObjectOutputStream(socket.getOutputStream());
-        this.n= n;
+        this.selfId = n;
     }
 
     private void handle_REG(TrackPacket packet) 
     {
         System.out.println("REG message");
-        RegPacket p = (RegPacket) packet;
-        Net_Id node= packet.getNode();
-        // We insert each (file_name,blocks[])
-
-        for (Map.Entry<String, List<Integer>> e : p.get_files_blocks().entrySet()) 
+        RegReqPacket p = (RegReqPacket) packet;
+        NetId node = packet.getNet_Id();
+        
+        Map<String, Long> fileId= new HashMap<>();
+        BlockInfo nBlock;
+        String fileName;
+        // We insert each (file_name,blocks[]) and get a correspondig id for our files
+        for (Map.Entry<String, BlockInfo> e : p.get_fileBlockInfo().get_fileBlockInfo().entrySet()) 
         {
-            serverInfo.add_file(e.getKey(), node, e.getValue());
+            nBlock = e.getValue();
+            fileName= e.getKey();
+            fileId.put(fileName, serverInfo.add_file(fileName, node, nBlock));
+        }
+        try
+        {
+            //Write back to node the sent file's ids
+            out.writeObject(new RegRepPacket(selfId, fileId));    
+            out.flush();
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
         }
     }
 
-    private void handle_AVF_REQ() 
-    {
+    private void handle_AVF_REQ() {
         System.out.println("AVF REQ");
         try 
         {
-            out.writeObject(new AvfRepPacket (n, TypeMsg.AVF_RESP, serverInfo.get_files()));
+            out.writeObject(new AvfRepPacket(selfId, serverInfo.get_filesWithSizes()));
             out.flush();
         }
         catch (IOException e) 
@@ -60,55 +73,67 @@ public class ServerCom implements Runnable
         }
     }
 
-    private void handle(TrackPacket packet) 
-    {
-        switch (packet.getType()) 
-        {
-            case REG: 
-            {
+    private void handle_GET_REQ(TrackPacket packet) {
+        // @TODO
+        System.out.println("GET message");
+        try {
+            GetReqPacket p = (GetReqPacket) packet;
+            String file = p.getFile();
+            GetRepPacket replyP = new GetRepPacket( selfId,
+                                                    serverInfo.get_fileId(file),
+                                                    serverInfo.get_nBlocks(file),
+                                                    serverInfo.get_nodeInfoFile(file));
+            out.writeObject(replyP);
+            out.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void handle_DC(TrackPacket packet) {
+        System.out.println("DC message");
+        serverInfo.remove_infoFromNode(packet.getNet_Id());
+    }
+
+    private void handle(TrackPacket packet) {
+        switch (packet.getType()) {
+            case REG_REQ: {
                 handle_REG(packet);
                 break;
             }
-            case AVF_REQ: 
-            {
+            case AVF_REQ: {
                 handle_AVF_REQ();
                 break;
             }
-            case ADD_F: 
-            {
+            case ADD_F: {
 
                 break;
             }
-            case RM_F: 
-            {
+            case RM_F: {
 
                 break;
             }
-            case GET_REQ: 
-            {
-
+            case GET_REQ: {
+                handle_GET_REQ(packet);
                 break;
             }
-            default: 
-            {
+            case DC: {
+                handle_DC(packet);
+                break;
+            }
+            default: {
                 System.out.println("Fodeu-se");
             }
         }
     }
 
-
-    public void run()
-    {
+    public void run() {
         TrackPacket packet;
 
-        while (tc.get_running() == true) 
-        {
-            try 
-            {
+        while (tc.get_running() == true) {
+            try {
                 packet = (TrackPacket) in.readObject();
-            } 
-            catch (IOException | ClassNotFoundException e) 
-            {
+            } catch (IOException | ClassNotFoundException e) {
                 break;
             }
             handle(packet);

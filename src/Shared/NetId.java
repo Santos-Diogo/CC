@@ -1,15 +1,16 @@
 package Shared;
 
 import java.net.InetAddress;
+import java.io.Serializable;
 
 /**
  * This class is how the communicators identify each other
  */
-public class Net_Id 
+public class NetId implements Serializable
 {
     private InetAddress adr;
 
-    public Net_Id (InetAddress adr)
+    public NetId (InetAddress adr)
     {
         this.adr= adr;
     }
@@ -27,7 +28,7 @@ public class Net_Id
         if (obj== null || this.getClass()!= obj.getClass())
             return false;
 
-        Net_Id n= (Net_Id) obj;
+        NetId n= (NetId) obj;
 
         if (!this.adr.equals(n.get_adr()))
             return false;

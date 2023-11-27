@@ -1,120 +1,243 @@
 package Server;
 
-import java.net.InetAddress;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
 
-import Shared.Net_Id;
+import Blocker.BlockInfo;
+import Shared.NetId;
 
-public class ServerInfo
+public class ServerInfo 
 {
-    private class NodeBlock
+    private class ServerBlockInfo extends BlockInfo 
     {
-        private ReentrantReadWriteLock rwl;
-        private Net_Id n;
-        private List <Integer> blocks;
+        NetId netId;
 
-        /**
-         * @param node_adr adress of the node
-         * @param blocks list of blocks for the file we associate with in "file_node_blocks"
-         */
-        public NodeBlock (Net_Id n, List <Integer> blockss)
-        {
-            this.rwl= new ReentrantReadWriteLock();
-            this.n= n;
-	        this.blocks = null;
-	        if(blockss != null)
-	    	    this.blocks= new ArrayList<>(blockss);
+        public ServerBlockInfo(BlockInfo bInfo, NetId netId) {
+            super(bInfo);
+            this.netId = netId;
         }
 
-        /**
-         * add a block to the node
-         * @param block block to add
-         */
-        public void add_block (int block)
-        {
-            rwl.writeLock().lock();
-            try
-            {
-                blocks.add(block);
-            }
-            finally
-            {
-                rwl.writeLock().unlock();
-            }
+        public NetId get_netId() {
+            return this.netId;
         }
-        
-        /**
-         * @return list of blocks 
-         */
-        public List <Integer> get_blocks ()
-        {
-            rwl.readLock().lock();
-            try
-            {
-                return new ArrayList<>(this.blocks);
-            }
-            finally
-            {
-                rwl.readLock().unlock();
-            }
+
+        public boolean contains_NetID(NetId node) {
+            return this.netId.equals(node);
         }
-    }
-
-    private ReentrantReadWriteLock rwl;
-    private Map <String, List<NodeBlock>> file_node_blocks;
-
-    public ServerInfo ()
-    {
-        this.rwl= new ReentrantReadWriteLock();
-        this.file_node_blocks= new HashMap <>();
     }
 
     /**
-     * Add a file to be tracked
-     * @param file file to be tracked
-     * @param node node
-     * @param blocks list of blocks in the file (null for full file)
+     * Has to be concurrency ready
      */
-    public void add_file (String file, Net_Id node, List<Integer> blocks)
+    private class FileInfo 
     {
-        List<NodeBlock> l;
+        static long id_inc= 0;
+        List<ServerBlockInfo> sbiList;
+        Long fileSize;
+        long fileId;
 
-        this.rwl.writeLock().lock();
+        FileInfo() 
+        {
+            this.sbiList = new ArrayList<>();
+            this.fileSize = null;
+            this.fileId= id_inc++;
+        }
+
+        void set_fileSize(Long size) {
+            if (size != null)
+                this.fileSize = size;
+        }
+
+        void add_list(ServerBlockInfo sbi) {
+            this.sbiList.add(sbi);
+        }
+
+        /**
+         * Removes a ServerBlockInfo with a given netId
+         * 
+         * @param id
+         */
+        void rm_list(NetId id) {
+            this.sbiList.removeIf(element -> element.contains_NetID(id));
+        }
+
+        boolean isEmpty() {
+            return this.sbiList.isEmpty();
+        }
+
+        boolean isAvailable () {
+            for(ServerBlockInfo sbi : sbiList) 
+                if (sbi.get_nBlocks() != null)
+                    return true;
+            return false;
+        }
+
+        Long get_fileSize() {
+            return this.fileSize;
+        }
+
+        long get_fileId ()
+        {
+            return this.fileId;
+        }
+    }
+
+    ReentrantReadWriteLock rwl;
+    Map<String, FileInfo> file_nodeData;
+
+    public ServerInfo() 
+    {
+        this.rwl= new ReentrantReadWriteLock();
+        this.file_nodeData = new HashMap<>();
+    }
+
+    /**
+     * @param fileName
+     * @param netId
+     * @param bInfo
+     * @return Returns the inserted file's corresponding Id
+     */
+    public long add_file(String fileName, NetId netId, BlockInfo bInfo) 
+    {
         try
         {
+            rwl.writeLock().lock();
+            FileInfo f;
 
-            //if File not tracked
-            if (!this.file_node_blocks.containsKey(file))
-            {
-                //New Node Block List
-                l= new ArrayList<NodeBlock>();
-                //New File entry
-                this.file_node_blocks.put(file, l);
+            // No file with that name exists
+            if (!this.file_nodeData.containsKey(fileName)) {
+                this.file_nodeData.put(fileName, f = new FileInfo());
             }
-            else
-            {
-                //Find Node Block
-                l= this.file_node_blocks.get(file);
+            // Get the list to add that entry
+            else {
+                f = this.file_nodeData.get(fileName);
             }
             
-            //Add NodeBlock to the list
-            l.add (new NodeBlock(node, blocks));
+            // Add info from node about file
+            f.add_list(new ServerBlockInfo(bInfo, netId));
+            // Set FileSize
+            f.set_fileSize(bInfo.get_nBlocks());
+
+            //Return the file's id
+            return f.fileId;
         }
         finally
         {
-            this.rwl.writeLock().unlock();
+            rwl.writeLock().unlock();
+        }
+    }
+
+    public List<String> get_files() 
+    {
+        try
+        {
+            rwl.readLock().lock();
+            return this.file_nodeData.keySet().stream().toList();
+        }
+        finally
+        {
+            rwl.readLock().unlock();
+        }
+    }
+
+    public Long get_nBlocks(String file) 
+    {
+        try
+        {
+            rwl.readLock().lock();
+            return this.file_nodeData.get(file).fileSize;
+        }
+        finally
+        {
+            rwl.readLock().unlock();
         }
     }
 
     /**
-     * @return Returns the names of the files currently stored
+     * Returns a map that maps nodes to the blocks they own of a given file
+     * 
+     * @param file
+     * @return
      */
-    public List<String> get_files ()
+    public Map<NetId, List<Long>> get_nodeInfoFile(String file) 
     {
-        return new ArrayList<>(this.file_node_blocks.keySet());
+        try
+        {
+            rwl.readLock().lock();
+            List<ServerBlockInfo> l = this.file_nodeData.get(file).sbiList;
+            Map<NetId, List<Long>> m = new HashMap<>();
+            
+            // We Map each Node to a NodeList
+            for (ServerBlockInfo sbi : l) 
+            {
+                m.put(sbi.netId, sbi.get_filesBlocks());
+            }
+            return m;
+        }
+        finally
+        {
+            rwl.readLock().unlock();
+        }
+    }
+
+    public void remove_infoFromNode(NetId node) 
+    {
+        try
+        {
+            rwl.writeLock().lock();
+            Iterator<Map.Entry<String, FileInfo>> iterator = this.file_nodeData.entrySet().iterator();
+            
+            while (iterator.hasNext()) {
+                Map.Entry<String, FileInfo> entry = iterator.next();
+                FileInfo f = entry.getValue();
+                
+                f.rm_list(node);
+                
+                if (f.isEmpty()) {
+                    iterator.remove(); // Remove the current entry using the iterator
+                }
+            }
+        }
+        finally
+        {
+            rwl.writeLock().unlock();
+        }
+    }
+
+    /**
+     * @return FileSizes mapped to corresponding filenames
+     */
+    public Map<String, Long> get_filesWithSizes ()
+    {
+        try
+        {
+            rwl.readLock().lock();
+            Map<String, Long> m= new HashMap<>();
+            
+            for (Map.Entry<String, FileInfo> e : this.file_nodeData.entrySet())
+            {
+                if(e.getValue().isAvailable())
+                    m.put(e.getKey(), e.getValue().fileSize);
+            }
+            
+            return m;
+        }
+        finally
+        {
+            rwl.readLock().unlock();
+        }
+    }
+
+    public long get_fileId (String file)
+    {
+        try
+        {
+            rwl.readLock().lock();
+            return this.file_nodeData.get(file).fileId;
+        }
+        finally
+        {
+            rwl.readLock().unlock();
+        }
     }
 }
