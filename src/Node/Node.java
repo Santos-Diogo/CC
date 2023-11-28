@@ -181,7 +181,7 @@ public class Node
             trackerInput = new ObjectInputStream(socket.getInputStream());
 
             //Registers Self
-            fbInfo= new FileBlockInfo(args[0])
+            fbInfo= new FileBlockInfo(args[0]);
             filesId= register (fbInfo);
 
             /* //SetsUp UDP Server
