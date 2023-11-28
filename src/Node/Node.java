@@ -24,32 +24,7 @@ public class Node
     private static Scanner scanner = new Scanner(System.in);
     private static Map<String, Long> filesId;   //Matches the files name with their id in the server context
 
-    private static void handle_avf() 
-    {
-        try 
-        {
-            // Write Request
-            trackerOutput.writeObject(new TrackPacket(net_Id, TypeMsg.AVF_REQ));
-            trackerOutput.flush();
 
-            // Get response
-            AvfRepPacket packet = (AvfRepPacket) trackerInput.readObject();
-
-            // Write File Names
-            Map<String, Long> files = packet.get_files();
-            System.out.println("Files:");
-
-            //Can be chaged latter (Better values for bigger files)
-            for (Map.Entry<String, Long> e : files.entrySet())
-            {
-                System.out.println(e.getKey() + " Size ~ " + (e.getValue()*Shared.Defines.blockSize/1024)+ "kB");
-            }
-        } 
-        catch (Exception e) 
-        {
-            e.printStackTrace();
-        }
-    }
 
     /**
      * This only solves the transfer without scalonation
@@ -57,7 +32,7 @@ public class Node
      * @param nBlocks
      * @return
      */
-    private static Map<Long, NetId> scalonate (Map<NetId, List<Long>> nodeBlocks, long nBlocks) throws Exception
+    private static Map<Long, NetId> scalonate (Map<NetId, List<Long>> nodeBlocks, long nBlocks, Map<NetId, Integer> workload) throws Exception
     {
         Map <Long, NetId> m= new HashMap<>();
 
@@ -83,6 +58,39 @@ public class Node
 
         return m;
     }
+
+    private static void schedule ()
+    {
+        double max_perNode = 0.3;
+    }
+
+    
+    private static void handle_avf() 
+    {
+        try 
+        {
+            // Write Request
+            trackerOutput.writeObject(new TrackPacket(net_Id, TypeMsg.AVF_REQ));
+            trackerOutput.flush();
+
+            // Get response
+            AvfRepPacket packet = (AvfRepPacket) trackerInput.readObject();
+
+            // Write File Names
+            Map<String, Long> files = packet.get_files();
+            System.out.println("Files:");
+
+            //Can be chaged latter (Better values for bigger files)
+            for (Map.Entry<String, Long> e : files.entrySet())
+            {
+                System.out.println(e.getKey() + " Size ~ " + (e.getValue()*Shared.Defines.blockSize/1024)+ "kB");
+            }
+        } 
+        catch (Exception e) 
+        {
+            e.printStackTrace();
+        }
+    }    
 
     /**
      * Temporary solution
@@ -110,7 +118,7 @@ public class Node
             }
             //Debug end
 
-            Map<Long, NetId> blockNode= scalonate (resp.get_nodeBlocks(), resp.get_nBlocks());
+            Map<Long, NetId> blockNode= scalonate (resp.get_nodeBlocks(), resp.get_nBlocks(), resp.getWorkLoad());
         }
         catch (Exception e) 
         {
@@ -147,6 +155,10 @@ public class Node
         }
     }
 
+    
+    /** 
+     * @return String
+     */
     private static String command_request() {
         System.out.println("Type your desired command:\navf - available files\nquit- exit the network\n");
         return scanner.nextLine();

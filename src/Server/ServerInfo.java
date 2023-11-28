@@ -2,6 +2,7 @@ package Server;
 
 import java.util.*;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.stream.Collectors;
 
 import Blocker.BlockInfo;
 import Shared.NetId;
@@ -84,11 +85,13 @@ public class ServerInfo
 
     ReentrantReadWriteLock rwl;
     Map<String, FileInfo> file_nodeData;
+    Map<NetId, Integer> node_load;
 
     public ServerInfo() 
     {
         this.rwl= new ReentrantReadWriteLock();
         this.file_nodeData = new HashMap<>();
+        this.node_load = new HashMap<>();
     }
 
     /**
@@ -125,6 +128,42 @@ public class ServerInfo
         {
             rwl.writeLock().unlock();
         }
+    }
+
+
+    public void add_load (Map<NetId, Integer> load)
+    {
+        rwl.writeLock().lock();
+        try{
+            for(Map.Entry<NetId, Integer> e : load.entrySet())
+            {   
+                NetId node = e.getKey();
+                int old_value = this.node_load.get(node);
+                this.node_load.put(node, old_value + e.getValue());
+            }
+        } finally {
+            rwl.writeLock().unlock();
+        }
+    }
+
+    /**
+     * There is no need to use locks in this method. 
+     * As this is the first information about this node being inserted, there is no way of another thread acessing this entry of the map.
+     * This is because at this point there is no information about what files this node has.
+     * 
+     * @param node Node to be registred in the load Map
+     */
+    public void register_inLoad (NetId node)
+    {
+        this.node_load.put(node, 0);
+    }
+
+    public Map<NetId, Integer> get_workLoad (Set<NetId> nodes)
+    {
+        return this.node_load.entrySet()
+            .stream()
+            .filter((entry) -> nodes.contains(entry.getKey()))
+            .collect(Collectors.toMap(Map.Entry :: getKey, Map.Entry :: getValue));
     }
 
     public List<String> get_files() 
