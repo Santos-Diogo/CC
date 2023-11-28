@@ -7,7 +7,7 @@ public class Transfer_Packet implements Serializable {
     public enum TypeMsg {           // TypeMsg mas da transfer e não do tracker
         GETF,                       // Get file
         FT,                         // File Transfer
-        ACK,                       
+        ACK,
         ERR                         // Error 
     }
 
