@@ -23,6 +23,7 @@ public class Node
     private static NetId net_Id;
     private static Scanner scanner = new Scanner(System.in);
     private static Map<String, Long> filesId;   //Matches the files name with their id in the server context
+    private static FileBlockInfo fbInfo;
 
     private static void handle_avf() 
     {
@@ -180,7 +181,12 @@ public class Node
             trackerInput = new ObjectInputStream(socket.getInputStream());
 
             //Registers Self
-            filesId= register (new FileBlockInfo(args[0]));
+            fbInfo= new FileBlockInfo(args[0]);
+            filesId= register (fbInfo);
+
+            /* //SetsUp UDP Server
+            Thread udpServer= new Thread(new NodeUDP_Server (fbInfo));
+            udpServer.start(); */
 
             // Handle commands
             String command;
