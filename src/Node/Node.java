@@ -184,9 +184,9 @@ public class Node
             fbInfo= new FileBlockInfo(args[0])
             filesId= register (fbInfo);
 
-            //SetsUp UDP Server
+            /* //SetsUp UDP Server
             Thread udpServer= new Thread(new NodeUDP_Server (fbInfo));
-            udpServer.start();
+            udpServer.start(); */
 
             // Handle commands
             String command;
