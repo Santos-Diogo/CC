@@ -10,6 +10,7 @@ import java.util.*;
 
 import Blocker.*;
 import Shared.NetId;
+import ThreadTools.ThreadControl;
 import TrackProtocol.*;
 import TrackProtocol.TrackPacket.TypeMsg;
 
@@ -24,6 +25,7 @@ public class Node
     private static Scanner scanner = new Scanner(System.in);
     private static Map<String, Long> filesId;   //Matches the files name with their id in the server context
     private static FileBlockInfo fbInfo;
+    private static ThreadControl tc= new ThreadControl();
 
     private static void handle_avf() 
     {
@@ -171,7 +173,8 @@ public class Node
         String serverAddress = args[1];
         int serverPort = (args.length > 2) ? Integer.parseInt(args[2]) : Shared.Defines.trackerPort;
         Socket socket;
-        try {
+        try 
+        {
             // Define this machine IP adress
             net_Id = new NetId(InetAddress.getLocalHost().getHostName());
 
@@ -184,28 +187,33 @@ public class Node
             fbInfo= new FileBlockInfo(args[0]);
             filesId= register (fbInfo);
 
-            /* //SetsUp UDP Server
-            Thread udpServer= new Thread(new NodeUDP_Server (fbInfo));
-            udpServer.start(); */
+            //SetsUp UDP Server
+            Thread udpServer= new Thread(new NodeUDP_Server (fbInfo, tc));
+            udpServer.start();
 
             // Handle commands
             String command;
-            while (!(command = command_request()).equals("quit")) {
+            while (!(command = command_request()).equals("quit")) 
+            {
                 handle_command(command);
             }
             // Close the socket when done
             socket.close();
             
-        } catch (UnknownHostException e) {
+        }
+        catch (UnknownHostException e) 
+        {
             System.out.println(serverAddress + " Is not a valid adress");
             e.printStackTrace();
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            
         }
-
-        // Tem de ter um Node-Handler para receber os pedidos dos outros nodes e dedicar
-        // a cada um uma instancia de Node_Communication
+        catch (Exception e) 
+        {
+            e.printStackTrace();
+        }
+        finally 
+        {
+            //Terminate all minor threads
+            tc.set_running(false);
+        }
     }
 }
