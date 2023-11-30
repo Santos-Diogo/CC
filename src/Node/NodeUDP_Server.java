@@ -2,21 +2,22 @@ package Node;
 
 import Blocker.FileBlockInfo;
 import ThreadTools.ThreadControl;
-import TransferProtocol.*;
-
-import java.io.ByteArrayInputStream;
-import java.io.ObjectInputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.net.InetAddress;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.BlockingQueue;
 
 public class NodeUDP_Server implements Runnable
 {
-    private FileBlockInfo fbInfo;   //Info about the node
-    private ThreadControl tc;       //object that controlls NodeUDP_Server running status
-    private byte[] buf;             //byte buffer to use in the packets
-    private KeyPair keyPair;        //private/ public key pair
+    private FileBlockInfo fbInfo;                                           //Info about the node
+    private ThreadControl tc;                                               //object that controlls NodeUDP_Server running status
+    private byte[] buf;                                                     //byte buffer to use in the packets
+    private KeyPair keyPair;                                                //private/ public key pair
+    private Map<InetAddress, BlockingQueue<DatagramPacket>> handleQueue;    //Handler's Queue
 
     private static KeyPair generateKeyPair() throws Exception 
     {
@@ -30,9 +31,10 @@ public class NodeUDP_Server implements Runnable
         try
         {
             this.fbInfo= fbInfo;
-            tc= this.tc;
-            buf= new byte[Shared.Defines.transferBuffer];
-            keyPair= generateKeyPair();
+            this.tc= tc;
+            this.buf= new byte[Shared.Defines.transferBuffer];
+            this.keyPair= generateKeyPair();
+            this.handleQueue= new HashMap<>();
         }
         catch (Exception e)
         {
@@ -41,45 +43,21 @@ public class NodeUDP_Server implements Runnable
         }
     }
 
-    //@TODO
-    private void handleCON (TransferPacket packet)
+    private void handlers (DatagramPacket packet)
     {
-        return;
-    }
+        InetAddress adr= packet.getAddress();
+        BlockingQueue bq;
 
-    //@TODO
-    private void handleGET (TransferPacket packet)
-    {
-        return;
-    }
-
-    private void handle (DatagramPacket packet) throws Exception
-    {
-        byte[] rawData= packet.getData();
-        byte[] checkedData= Shared.CRC.decouple(rawData);
-
-        //If the recieved data is intact
-        if (checkedData!= null)
+        if (!this.handleQueue.containsKey(adr))
         {
-            ObjectInputStream dataStream= new ObjectInputStream(new ByteArrayInputStream(checkedData));
-            TransferPacket transferP= (TransferPacket) dataStream.readObject();
-
-            switch (transferP.getType())
-            {
-                case CON:
-                    handleCON(transferP);
-                    break;
-                case GET:
-                {
-                    handleGET(transferP);
-                    break;
-                }
-                default:
-                {
-                    System.out.println("Fodeu-se");
-                }
-            }
+            this.handleQueue.put(adr, (bq= new BlockingQueue<DatagramPacket>()));
         }
+        else
+        {
+            bq= this.handleQueue.get(adr);
+        }
+
+        bq.add(packet);
     }
 
     public void run ()
@@ -93,9 +71,8 @@ public class NodeUDP_Server implements Runnable
                 //Recieve packet
                 DatagramPacket packet= new DatagramPacket(buf, buf.length);
                 socket.receive(packet);
-                
-                //Handle Packet
-                handle (packet);
+                handlers(packet);
+                //Check if new connection and pass down to handler nodes
             }   
         }
         catch (Exception e)

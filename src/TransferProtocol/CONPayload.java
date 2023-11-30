@@ -1,5 +1,6 @@
 package TransferProtocol;
 
-public class CONPacket
+public class CONPayload
 {
+    
 }

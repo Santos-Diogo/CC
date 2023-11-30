@@ -11,22 +11,23 @@ import TransferProtocol.TransferPacket;
 public class NodeUDP_Handler implements Runnable
 {
     private ThreadControl tc;
-    private BlockingQueue<TransferPacket> tasks;
+    private BlockingQueue<DatagramPacket> tasks;
 
-    public NodeUDP_Handler (ThreadControl tc, BlockingQueue<TransferPacket> tasks)
+    public NodeUDP_Handler (ThreadControl tc, BlockingQueue<DatagramPacket> tasks)
     {
         this.tc= tc;
         this.tasks= tasks;
     }
 
-    private void handleCon (TransferPacket packet) throws Exception
+    
+      //@TODO
+    private void handleCON (TransferPacket packet)
     {
-        CONPacket p= (CONPacket) packet;
-        
+        return;
     }
 
     //@TODO
-    private void handleGet (TransferPacket packet)
+    private void handleGET (TransferPacket packet)
     {
         return;
     }
@@ -45,11 +46,11 @@ public class NodeUDP_Handler implements Runnable
             switch (transferP.getType())
             {
                 case CON:
-                    handleCon(transferP);
+                    handleCON(transferP);
                     break;
                 case GET:
                 {
-                    handleGet(transferP);
+                    handleGET(transferP);
                     break;
                 }
                 default:
@@ -58,7 +59,7 @@ public class NodeUDP_Handler implements Runnable
                 }
             }
         }
-    }
+    }  
 
     public void run ()
     {
@@ -66,7 +67,7 @@ public class NodeUDP_Handler implements Runnable
         {
             try
             {
-                TransferPacket packet = tasks.take();
+                DatagramPacket packet = tasks.take();
                 handle (packet);
             }
             catch (Exception e)
