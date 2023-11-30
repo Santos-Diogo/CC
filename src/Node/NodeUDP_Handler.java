@@ -1,29 +1,43 @@
 package Node;
 
-import ThreadTools.ThreadControl;
+import Shared.*;
+import ThreadTools.*;
+import TransferProtocol.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.ObjectInputStream;
 import java.net.DatagramPacket;
+import java.security.PublicKey;
 import java.util.concurrent.BlockingQueue;
-import TransferProtocol.TransferPacket;
+import java.security.KeyPair;
 
 public class NodeUDP_Handler implements Runnable
 {
     private ThreadControl tc;
+    private SharedSocket sharedSocket;
     private BlockingQueue<DatagramPacket> tasks;
+    private KeyPair myKeys;
+    private Crypt crypt;
 
-    public NodeUDP_Handler (ThreadControl tc, BlockingQueue<DatagramPacket> tasks)
+    public NodeUDP_Handler (ThreadControl tc, BlockingQueue<DatagramPacket> tasks, SharedSocket s)
     {
         this.tc= tc;
         this.tasks= tasks;
+        this.sharedSocket= s;
     }
-
     
-      //@TODO
-    private void handleCON (TransferPacket packet)
+    //@TODO
+    private void handleCON (TransferPacket packet) throws Exception
     {
-        return;
+        //Parse packet's payload as the other node's foreign key
+        ObjectInputStream bytes= new ObjectInputStream(new ByteArrayInputStream(packet.getPayload()));
+        PublicKey foreignKey= (PublicKey) bytes.readObject();
+        
+        //Send self's public key
+        /* sharedSocket.send(new DatagramPacket(null, 0)); */
+
+        //Get the crypt for connection
+        this.crypt= new Crypt(myKeys.getPrivate(), foreignKey.getEncoded());
     }
 
     //@TODO
@@ -46,8 +60,10 @@ public class NodeUDP_Handler implements Runnable
             switch (transferP.getType())
             {
                 case CON:
+                {
                     handleCON(transferP);
                     break;
+                }
                 case GET:
                 {
                     handleGET(transferP);
@@ -67,7 +83,7 @@ public class NodeUDP_Handler implements Runnable
         {
             try
             {
-                DatagramPacket packet = tasks.take();
+                DatagramPacket packet= tasks.take();
                 handle (packet);
             }
             catch (Exception e)

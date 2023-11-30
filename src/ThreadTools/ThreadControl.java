@@ -9,10 +9,7 @@ public class ThreadControl
 {
     private static boolean running;
     private final ReentrantReadWriteLock l = new ReentrantReadWriteLock();
-    private final ReentrantReadWriteLock.ReadLock rl = l.readLock();
-    private final ReentrantReadWriteLock.WriteLock wl = l.writeLock();
-
-
+    
     public ThreadControl ()
     {
         running= true;
@@ -20,27 +17,27 @@ public class ThreadControl
 
     public void set_running (boolean b)
     {
-        wl.lock();
+        l.writeLock().lock();
         try
         {
             running= b;
         }
         finally
         {
-            wl.unlock();
+            l.writeLock().unlock();
         }
     }
 
     public boolean get_running ()
     {
-        rl.lock();
+        l.readLock().lock();
         try
         {
             return running;
         }
         finally
         {
-            rl.unlock();
+            l.readLock().unlock();
         }
     }
 }
