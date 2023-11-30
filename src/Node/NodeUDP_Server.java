@@ -2,11 +2,9 @@ package Node;
 
 import Blocker.FileBlockInfo;
 import ThreadTools.ThreadControl;
-import Shared.*;
 import TransferProtocol.*;
 
 import java.io.ByteArrayInputStream;
-import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -15,10 +13,10 @@ import java.security.KeyPairGenerator;
 
 public class NodeUDP_Server implements Runnable
 {
-    private FileBlockInfo fbInfo;
-    private ThreadControl tc;
-    private byte[] buf;
-    private KeyPair keyPair;
+    private FileBlockInfo fbInfo;   //Info about the node
+    private ThreadControl tc;       //object that controlls NodeUDP_Server running status
+    private byte[] buf;             //byte buffer to use in the packets
+    private KeyPair keyPair;        //private/ public key pair
 
     private static KeyPair generateKeyPair() throws Exception 
     {
@@ -44,7 +42,13 @@ public class NodeUDP_Server implements Runnable
     }
 
     //@TODO
-    private void handleGet (TransferPacket packet)
+    private void handleCON (TransferPacket packet)
+    {
+        return;
+    }
+
+    //@TODO
+    private void handleGET (TransferPacket packet)
     {
         return;
     }
@@ -62,9 +66,12 @@ public class NodeUDP_Server implements Runnable
 
             switch (transferP.getType())
             {
+                case CON:
+                    handleCON(transferP);
+                    break;
                 case GET:
                 {
-                    handleGet(transferP);
+                    handleGET(transferP);
                     break;
                 }
                 default:
