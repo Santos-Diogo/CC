@@ -1,8 +1,15 @@
 package Shared;
 
+import java.security.KeyFactory;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.spec.X509EncodedKeySpec;
+
 import javax.crypto.Cipher;
+import javax.crypto.KeyAgreement;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 
 /**
  * Class responsible for encrypting and decrypting the messages using the given key
@@ -11,9 +18,22 @@ public class Crypt
 {
     private SecretKey sKey;
 
-    public Crypt (SecretKey s)
+    /**
+     * Creates a secret key and constructs the Crypt
+     * @param privateKey
+     * @param publicKeyBytes
+     * @throws Exception
+     */
+    public Crypt (PrivateKey privateKey, byte[] publicKeyBytes) throws Exception
     {
-        this.sKey= s;
+        KeyFactory keyFactory = KeyFactory.getInstance("DH");
+        PublicKey publicKey = keyFactory.generatePublic(new X509EncodedKeySpec(publicKeyBytes));
+
+        KeyAgreement keyAgreement = KeyAgreement.getInstance("DH");
+        keyAgreement.init(privateKey);
+        keyAgreement.doPhase(publicKey, true);
+
+        this.sKey= new SecretKeySpec(keyAgreement.generateSecret(), "AES");
     }
 
     public byte[] encrypt(byte[] message) throws Exception 
