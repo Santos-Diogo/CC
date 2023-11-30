@@ -22,6 +22,7 @@ public class NodeUDP_Handler implements Runnable
     private void handleCon (TransferPacket packet) throws Exception
     {
         CONPacket p= (CONPacket) packet;
+        
     }
 
     //@TODO
