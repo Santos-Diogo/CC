@@ -7,10 +7,10 @@ import Shared.NetId;
 class UDP_Job
 {
     private NetId target;
-    private String file;
+    private int file;
     private List<Long> blocks;
 
-    UDP_Job (NetId target, String file, List<Long> blocks)
+    UDP_Job (NetId target, int file, List<Long> blocks)
     {
         this.target= target;
         this.file= file;
@@ -22,7 +22,7 @@ class UDP_Job
         return this.target;
     }
 
-    String getFile ()
+    int getFile ()
     {
         return this.file;
     }

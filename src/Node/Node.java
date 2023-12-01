@@ -23,7 +23,7 @@ public class Node
 {
     private static ObjectOutputStream trackerOutput;                //Deprecated
     private static ObjectInputStream trackerInput;                  //Deprecated
-    
+
     private static NetId net_Id;                                    //Self NetId
     private static Scanner scanner = new Scanner(System.in);        //Console input
     private static Map<String, Long> filesId;                       //Matches the files name with their id in the server context
@@ -188,6 +188,8 @@ public class Node
             // Define this machine IP adress
             net_Id = new NetId(InetAddress.getLocalHost().getHostName());
 
+            
+            
             // Connects to server
             socket = new Socket(serverAddress, serverPort);
             trackerOutput = new ObjectOutputStream(socket.getOutputStream());
@@ -197,12 +199,14 @@ public class Node
             fbInfo= new FileBlockInfo(args[0]);
             filesId= register (fbInfo);
 
+            //SetsUp Connection Queue and UDP Job Queue
+            msgToTracker= new LinkedBlockingQueue<>();
+            udpJobs= new LinkedBlockingQueue<>();
+
             //SetsUp UDP_Client and UDP_Server 
             Thread t1= new Thread(new NodeUDP_Server (fbInfo, tc));
             t1.start();
-
-            udpJobs= new LinkedBlockingQueue<>();
-            Thread t2= new Thread(new NodeUDP_Client(fbi, udpJobs, msgToTracker));
+            Thread t2= new Thread(new NodeUDP_Client(fbInfo, udpJobs, msgToTracker, tc));
             t2.start();
 
             // Handle commands
@@ -211,9 +215,9 @@ public class Node
             {
                 handle_command(command);
             }
+
             // Close the socket when done
             socket.close();
-            
         }
         catch (UnknownHostException e) 
         {
