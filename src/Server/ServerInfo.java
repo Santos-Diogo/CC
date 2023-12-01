@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 
 import Blocker.BlockInfo;
 import Shared.NetId;
+import Shared.NodeBlocks;
 
 public class ServerInfo 
 {
@@ -198,7 +199,7 @@ public class ServerInfo
      * @param file
      * @return
      */
-    public Map<NetId, List<Long>> get_nodeInfoFile(String file) 
+    public NodeBlocks get_nodeInfoFile(String file) 
     {
         try
         {
@@ -211,7 +212,7 @@ public class ServerInfo
             {
                 m.put(sbi.netId, sbi.get_filesBlocks());
             }
-            return m;
+            return new NodeBlocks(m);
         }
         finally
         {

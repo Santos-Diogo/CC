@@ -7,9 +7,12 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import Blocker.*;
 import Shared.NetId;
+import Shared.NodeBlocks;
+import Shared.Tuple;
 import ThreadTools.ThreadControl;
 import TrackProtocol.*;
 import TrackProtocol.TrackPacket.TypeMsg;
@@ -35,36 +38,28 @@ public class Node
      * @param nBlocks
      * @return
      */
-    private static Map<Long, NetId> scalonate (Map<NetId, List<Long>> nodeBlocks, long nBlocks, Map<NetId, Integer> workload) throws Exception
+    private static Map<Long, NetId> scalonate (NodeBlocks nodeBlocks, long nBlocks, Map<NetId, Integer> workload) throws Exception
     {
+        double max_perNode = 0.3;
         Map <Long, NetId> m= new HashMap<>();
-
-        for (long i= 0; i< nBlocks; i++)
+        List<Tuple<Long, Integer>> rarestBlocks = nodeBlocks.rarestBlocks(nBlocks);
+        for(Tuple<Long, Integer> block : rarestBlocks)
         {
-            NetId id= null;
-            for (Map.Entry<NetId, List<Long>> entry : nodeBlocks.entrySet())
-            {
-                if (entry.getValue() == null || entry.getValue().contains(i))
-                {
-                    id= entry.getKey();
-                    break;
-                }
-            }
-
-            //Not a single Node owns a given block
-            if (id== null)
-                throw new Exception("Transfer not possible");
-
-            //Add the node to the scalonation list
-            m.put(i, id);
+            NetId node = schedule(block, (int)(nBlocks * max_perNode), nodeBlocks, workload);
+            m.put(block.fst(), node);
+            int tmp = workload.get(node);
+            workload.put(node, tmp + 1);
         }
-
         return m;
     }
 
-    private static void schedule ()
+    private static NetId schedule (Tuple<Long, Integer> block, Integer maxBlock_perNode, NodeBlocks nodeBlocks, Map<NetId, Integer> workload)
     {
-        double max_perNode = 0.3;
+        if(block.snd() == 1)
+            return nodeBlocks.get_loneBlock(block.fst());
+        List<NetId> nodes = nodeBlocks.get_nodesBlock(block.fst());
+        nodes.sort(Comparator.comparingInt(workload :: get).thenComparing(node -> new Random().nextInt()));
+        return nodes.get(0);
     }
 
     
@@ -112,7 +107,7 @@ public class Node
             GetRepPacket resp = (GetRepPacket) trackerInput.readObject();
 
             //Debug
-            Set<NetId> nodes = resp.get_nodeBlocks().keySet();
+            Set<NetId> nodes = resp.get_nodeBlocks().get_nodes();
 
             System.out.println("Nodes:");
             for (NetId n : nodes) 
@@ -226,6 +221,7 @@ public class Node
         {
             //Terminate all minor threads
             tc.set_running(false);
+            scanner.close();
         }
     }
 }

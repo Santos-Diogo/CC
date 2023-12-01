@@ -9,6 +9,7 @@ import Blocker.BlockInfo;
 import java.lang.String;
 
 import Shared.NetId;
+import Shared.NodeBlocks;
 import ThreadTools.ThreadControl;
 import TrackProtocol.*;
 
@@ -82,8 +83,8 @@ public class ServerCom implements Runnable {
             String file = p.getFile();
             long fileId = serverInfo.get_fileId(file);
             long nBlocks = serverInfo.get_nBlocks(file);
-            Map<NetId, List<Long>> nodeInfoFile = serverInfo.get_nodeInfoFile(file);
-            Map<NetId, Integer> workLoad = serverInfo.get_workLoad(nodeInfoFile.keySet());
+            NodeBlocks nodeInfoFile = serverInfo.get_nodeInfoFile(file);
+            Map<NetId, Integer> workLoad = serverInfo.get_workLoad(nodeInfoFile.get_nodes());
             GetRepPacket replyP = new GetRepPacket(selfId, fileId, nBlocks, nodeInfoFile, workLoad);
             out.writeObject(replyP);
             out.flush();
