@@ -148,15 +148,17 @@ public class ServerInfo
     }
 
     /**
-     * There is no need to use locks in this method. 
-     * As this is the first information about this node being inserted, there is no way of another thread acessing this entry of the map.
-     * This is because at this point there is no information about what files this node has.
      * 
      * @param node Node to be registred in the load Map
      */
     public void register_inLoad (NetId node)
     {
-        this.node_load.put(node, 0);
+        rwl.writeLock().lock();
+        try{
+            this.node_load.put(node, 0);
+        } finally {
+            rwl.writeLock().unlock();
+        }
     }
 
     public Map<NetId, Integer> get_workLoad (Set<NetId> nodes)
