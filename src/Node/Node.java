@@ -7,7 +7,6 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import Blocker.*;
 import Shared.NetId;
