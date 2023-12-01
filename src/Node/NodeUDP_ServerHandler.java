@@ -7,11 +7,10 @@ import TransferProtocol.*;
 import java.io.ByteArrayInputStream;
 import java.io.ObjectInputStream;
 import java.net.DatagramPacket;
-import java.security.PublicKey;
 import java.util.concurrent.BlockingQueue;
 import java.security.KeyPair;
 
-public class NodeUDP_Handler implements Runnable
+public class NodeUDP_ServerHandler implements Runnable
 {
     private ThreadControl tc;
     private SharedSocket sharedSocket;
@@ -19,7 +18,7 @@ public class NodeUDP_Handler implements Runnable
     private KeyPair myKeys;
     private Crypt crypt;
 
-    public NodeUDP_Handler (ThreadControl tc, BlockingQueue<DatagramPacket> tasks, SharedSocket s)
+    NodeUDP_ServerHandler (ThreadControl tc, BlockingQueue<DatagramPacket> tasks, SharedSocket s)
     {
         this.tc= tc;
         this.tasks= tasks;
@@ -28,16 +27,19 @@ public class NodeUDP_Handler implements Runnable
     
     //@TODO
     private void handleCON (TransferPacket packet) throws Exception
-    {
-        //Parse packet's payload as the other node's foreign key
-        ObjectInputStream bytes= new ObjectInputStream(new ByteArrayInputStream(packet.getPayload()));
-        PublicKey foreignKey= (PublicKey) bytes.readObject();
-        
-        //Send self's public key
-        /* sharedSocket.send(new DatagramPacket(null, 0)); */
+    {   
+        //Get the crypt for connection from the recieved packet
+        this.crypt= new Crypt(myKeys.getPrivate(), packet.getPayload());
 
-        //Get the crypt for connection
-        this.crypt= new Crypt(myKeys.getPrivate(), foreignKey.getEncoded());
+        //Create packet with our own public key
+        byte[] publicKey= myKeys.getPublic().getEncoded();
+        TransferPacket p= new TransferPacket(TransferPacket.TypeMsg.CON, publicKey);
+
+        //add bit check to the serialized packet
+        byte[] pBytes= CRC.couple(p.serialize());
+
+        sharedSocket.send(new DatagramPacket(pBytes, pBytes.length));
+
     }
 
     //@TODO

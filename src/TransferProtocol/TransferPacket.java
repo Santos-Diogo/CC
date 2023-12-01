@@ -1,6 +1,11 @@
 package TransferProtocol;
 
-public class TransferPacket 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
+
+public class TransferPacket implements Serializable
 {
     public enum TypeMsg
     {
@@ -11,7 +16,19 @@ public class TransferPacket
     private TypeMsg type;   //Message's type    
     private byte[] payload; //Packet's payload
 
-    public TransferPacket (TypeMsg type, byte[] payload)
+    /**
+     * @return returns packet object written in bytes
+     * @throws Exception failure in internall streams
+     */
+    public byte[] serialize () throws Exception
+    {
+        ByteArrayOutputStream bs;
+        ObjectOutputStream stream= new ObjectOutputStream(bs= new ByteArrayOutputStream());
+        stream.writeObject(this);
+        return bs.toByteArray();
+    }
+
+    public TransferPacket (TransferPacket.TypeMsg type, byte[] payload)
     {
         this.type= type;
         this.payload= payload;

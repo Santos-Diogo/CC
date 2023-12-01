@@ -26,6 +26,8 @@ public class Node
     private static Map<String, Long> filesId;   //Matches the files name with their id in the server context
     private static FileBlockInfo fbInfo;
     private static ThreadControl tc= new ThreadControl();
+    private static NodeUDP_Server udpServer;
+    private static NodeUDP_Client udpClient;
 
     private static void handle_avf() 
     {
@@ -113,7 +115,11 @@ public class Node
             }
             //Debug end
 
+            //Scalonate nodes
             Map<Long, NetId> blockNode= scalonate (resp.get_nodeBlocks(), resp.get_nBlocks());
+
+            //Send scalonation to UDP Task Queue
+
         }
         catch (Exception e) 
         {
@@ -187,9 +193,13 @@ public class Node
             fbInfo= new FileBlockInfo(args[0]);
             filesId= register (fbInfo);
 
-            //SetsUp UDP Server
-            Thread udpServer= new Thread(new NodeUDP_Server (fbInfo, tc));
-            udpServer.start();
+            //SetsUp UDP_Server
+            Thread t1= new Thread(udpServer= new NodeUDP_Server (fbInfo, tc));
+            t1.start();
+
+            /* //StartUp UDP_Client
+            Thread t2= new Thread(udpClient= new NodeUDP_Client (fbInfo, tc));
+            t2.start(); */
 
             // Handle commands
             String command;

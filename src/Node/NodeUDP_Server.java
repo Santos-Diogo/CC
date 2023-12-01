@@ -30,7 +30,7 @@ public class NodeUDP_Server implements Runnable
         return keyPairGenerator.generateKeyPair();
     }
 
-    public NodeUDP_Server (FileBlockInfo fbInfo, ThreadControl tc)
+    NodeUDP_Server (FileBlockInfo fbInfo, ThreadControl tc)
     {
         try
         {
@@ -64,7 +64,7 @@ public class NodeUDP_Server implements Runnable
             this.handleQueue.put(adr, (bq));
 
             //Create thread to handle the queue sharing the same thread controll for cascading termination signaling
-            Thread t= new Thread(new NodeUDP_Handler(this.tc, bq, sharedSocket));
+            Thread t= new Thread(new NodeUDP_ServerHandler(this.tc, bq, sharedSocket));
 
             //Start the thread
             t.start();
