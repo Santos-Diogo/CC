@@ -1,26 +1,29 @@
 package Node;
 
 import Blocker.FileBlockInfo;
+import ThreadTools.SharedSocket;
 import ThreadTools.ThreadControl;
-import Shared.*;
-import TransferProtocol.*;
-
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.io.ObjectInputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.net.InetAddress;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+
+
 
 public class NodeUDP_Server implements Runnable
 {
-    private FileBlockInfo fbInfo;
-    private ThreadControl tc;
-    private byte[] buf;
-    private KeyPair keyPair;
+    private FileBlockInfo fbInfo;                                           //Info about the node
+    private ThreadControl tc;                                               //object that controlls NodeUDP_Server running status
+    private KeyPair keyPair;                                                //private/ public key pair
+    private Map<InetAddress, BlockingQueue<DatagramPacket>> handleQueue;    //Handler's Queue
+    private SharedSocket sharedSocket;                                      //Socket manager class
 
-    private static KeyPair generateKeyPair() throws Exception 
+    private KeyPair generateKeyPair() throws Exception 
     {
         KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("DH");
         keyPairGenerator.initialize(Shared.Defines.securityKeySize);
@@ -32,9 +35,10 @@ public class NodeUDP_Server implements Runnable
         try
         {
             this.fbInfo= fbInfo;
-            tc= this.tc;
-            buf= new byte[Shared.Defines.transferBuffer];
-            keyPair= generateKeyPair();
+            this.tc= tc;
+            this.keyPair= generateKeyPair();
+            this.handleQueue= new HashMap<>();
+            this.sharedSocket= new SharedSocket(new DatagramSocket (Shared.Defines.transferPort));
         }
         catch (Exception e)
         {
@@ -43,52 +47,52 @@ public class NodeUDP_Server implements Runnable
         }
     }
 
-    //@TODO
-    private void handleGet (TransferPacket packet)
-    {
-        return;
-    }
 
-    private void handle (DatagramPacket packet) throws Exception
+    /**
+     * Adds the packet to a corresponding queue handled by a given thread creted with that porpose
+     * @param packet packet to handle
+     */
+    private void handlers (DatagramPacket packet)
     {
-        byte[] rawData= packet.getData();
-        byte[] checkedData= Shared.CRC.decouple(rawData);
+        InetAddress adr= packet.getAddress();
+        BlockingQueue<DatagramPacket> bq;
 
-        //If the recieved data is intact
-        if (checkedData!= null)
+        if (!this.handleQueue.containsKey(adr))
         {
-            ObjectInputStream dataStream= new ObjectInputStream(new ByteArrayInputStream(checkedData));
-            TransferPacket transferP= (TransferPacket) dataStream.readObject();
+            //Create queue
+            bq= new LinkedBlockingQueue<>();
+            this.handleQueue.put(adr, (bq));
 
-            switch (transferP.getType())
-            {
-                case GET:
-                {
-                    handleGet(transferP);
-                    break;
-                }
-                default:
-                {
-                    System.out.println("Fodeu-se");
-                }
-            }
+            //Create thread to handle the queue sharing the same thread controll for cascading termination signaling
+            Thread t= new Thread(new NodeUDP_Handler(this.tc, bq, sharedSocket));
+
+            //Start the thread
+            t.start();
         }
+        else
+        {
+            //Store the already existent queue as bq.
+            bq= this.handleQueue.get(adr);
+        }
+
+        //Add the packet to the assigned queue
+        bq.add(packet);
     }
 
     public void run ()
     {
-        DatagramSocket socket= null;
         try
         {
-            socket= new DatagramSocket (Shared.Defines.transferPort);
             while (tc.get_running())
             {
+                //Create a new recieving packet with a new buffer
+                DatagramPacket packet= new DatagramPacket(new byte[Shared.Defines.transferBuffer], Shared.Defines.transferBuffer);
+
                 //Recieve packet
-                DatagramPacket packet= new DatagramPacket(buf, buf.length);
-                socket.receive(packet);
-                
-                //Handle Packet
-                handle (packet);
+                this.sharedSocket.receive(packet);
+
+                //"send" packet to handlers
+                handlers(packet);
             }   
         }
         catch (Exception e)
@@ -98,7 +102,7 @@ public class NodeUDP_Server implements Runnable
         }
         finally
         {
-            socket.close();
+            this.sharedSocket.close();
         }
     }
 }
