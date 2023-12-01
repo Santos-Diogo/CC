@@ -9,6 +9,7 @@ import Blocker.BlockInfo;
 import java.lang.String;
 
 import Shared.NetId;
+import Shared.NodeBlocks;
 import ThreadTools.ThreadControl;
 import TrackProtocol.*;
 
@@ -41,6 +42,7 @@ public class ServerCom implements Runnable {
         Map<String, Long> fileId= new HashMap<>();
         BlockInfo nBlock;
         String fileName;
+        serverInfo.register_inLoad(node);
         // We insert each (file_name,blocks[]) and get a correspondig id for our files
         for (Map.Entry<String, BlockInfo> e : p.get_fileBlockInfo().get_fileBlockInfo().entrySet()) 
         {
@@ -79,10 +81,11 @@ public class ServerCom implements Runnable {
         try {
             GetReqPacket p = (GetReqPacket) packet;
             String file = p.getFile();
-            GetRepPacket replyP = new GetRepPacket( selfId,
-                                                    serverInfo.get_fileId(file),
-                                                    serverInfo.get_nBlocks(file),
-                                                    serverInfo.get_nodeInfoFile(file));
+            long fileId = serverInfo.get_fileId(file);
+            long nBlocks = serverInfo.get_nBlocks(file);
+            NodeBlocks nodeInfoFile = serverInfo.get_nodeInfoFile(file);
+            Map<NetId, Integer> workLoad = serverInfo.get_workLoad(nodeInfoFile.get_nodes());
+            GetRepPacket replyP = new GetRepPacket(selfId, fileId, nBlocks, nodeInfoFile, workLoad);
             out.writeObject(replyP);
             out.flush();
         } catch (IOException e) {

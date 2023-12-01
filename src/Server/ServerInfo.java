@@ -2,9 +2,11 @@ package Server;
 
 import java.util.*;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.stream.Collectors;
 
 import Blocker.BlockInfo;
 import Shared.NetId;
+import Shared.NodeBlocks;
 
 public class ServerInfo 
 {
@@ -84,11 +86,13 @@ public class ServerInfo
 
     ReentrantReadWriteLock rwl;
     Map<String, FileInfo> file_nodeData;
+    Map<NetId, Integer> node_load;
 
     public ServerInfo() 
     {
         this.rwl= new ReentrantReadWriteLock();
         this.file_nodeData = new HashMap<>();
+        this.node_load = new HashMap<>();
     }
 
     /**
@@ -127,6 +131,44 @@ public class ServerInfo
         }
     }
 
+
+    public void add_load (Map<NetId, Integer> load)
+    {
+        rwl.writeLock().lock();
+        try{
+            for(Map.Entry<NetId, Integer> e : load.entrySet())
+            {   
+                NetId node = e.getKey();
+                int old_value = this.node_load.get(node);
+                this.node_load.put(node, old_value + e.getValue());
+            }
+        } finally {
+            rwl.writeLock().unlock();
+        }
+    }
+
+    /**
+     * 
+     * @param node Node to be registred in the load Map
+     */
+    public void register_inLoad (NetId node)
+    {
+        rwl.writeLock().lock();
+        try{
+            this.node_load.put(node, 0);
+        } finally {
+            rwl.writeLock().unlock();
+        }
+    }
+
+    public Map<NetId, Integer> get_workLoad (Set<NetId> nodes)
+    {
+        return this.node_load.entrySet()
+            .stream()
+            .filter((entry) -> nodes.contains(entry.getKey()))
+            .collect(Collectors.toMap(Map.Entry :: getKey, Map.Entry :: getValue));
+    }
+
     public List<String> get_files() 
     {
         try
@@ -159,7 +201,7 @@ public class ServerInfo
      * @param file
      * @return
      */
-    public Map<NetId, List<Long>> get_nodeInfoFile(String file) 
+    public NodeBlocks get_nodeInfoFile(String file) 
     {
         try
         {
@@ -172,7 +214,7 @@ public class ServerInfo
             {
                 m.put(sbi.netId, sbi.get_filesBlocks());
             }
-            return m;
+            return new NodeBlocks(m);
         }
         finally
         {
