@@ -1,5 +1,7 @@
 package Node;
 
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -17,17 +19,18 @@ import TrackProtocol.TrackPacket.TypeMsg;
 /***
  * Main Node thread
  */
-public class Node 
+public class Node
 {
-    private static ObjectOutputStream trackerOutput;
-    private static ObjectInputStream trackerInput;
-    private static NetId net_Id;
-    private static Scanner scanner = new Scanner(System.in);
-    private static Map<String, Long> filesId;   //Matches the files name with their id in the server context
-    private static FileBlockInfo fbInfo;
-    private static ThreadControl tc= new ThreadControl();
-    private static NodeUDP_Server udpServer;
-    private static NodeUDP_Client udpClient;
+    private static ObjectOutputStream trackerOutput;                //Deprecated
+    private static ObjectInputStream trackerInput;                  //Deprecated
+    
+    private static NetId net_Id;                                    //Self NetId
+    private static Scanner scanner = new Scanner(System.in);        //Console input
+    private static Map<String, Long> filesId;                       //Matches the files name with their id in the server context
+    private static FileBlockInfo fbInfo;                            //Info on the node
+    private static ThreadControl tc= new ThreadControl();           //Object used to terminate minor threads
+    private static BlockingQueue<TrackPacket> msgToTracker;         //Queue of packets to send to the Server
+    private static BlockingQueue<UDP_Job> udpJobs;                  //Queue of jobs to be filled by the node
 
     private static void handle_avf() 
     {
@@ -175,7 +178,8 @@ public class Node
         return rep.get_fileId();
     }
 
-    public static void main(String[] args) throws InterruptedException {
+    public static void main(String[] args) throws InterruptedException 
+    {
         String serverAddress = args[1];
         int serverPort = (args.length > 2) ? Integer.parseInt(args[2]) : Shared.Defines.trackerPort;
         Socket socket;
@@ -193,13 +197,13 @@ public class Node
             fbInfo= new FileBlockInfo(args[0]);
             filesId= register (fbInfo);
 
-            //SetsUp UDP_Server
-            Thread t1= new Thread(udpServer= new NodeUDP_Server (fbInfo, tc));
+            //SetsUp UDP_Client and UDP_Server 
+            Thread t1= new Thread(new NodeUDP_Server (fbInfo, tc));
             t1.start();
 
-            /* //StartUp UDP_Client
-            Thread t2= new Thread(udpClient= new NodeUDP_Client (fbInfo, tc));
-            t2.start(); */
+            udpJobs= new LinkedBlockingQueue<>();
+            Thread t2= new Thread(new NodeUDP_Client(fbi, udpJobs, msgToTracker));
+            t2.start();
 
             // Handle commands
             String command;
