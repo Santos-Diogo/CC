@@ -12,7 +12,8 @@ import java.util.*;
 
 import Blocker.*;
 import Shared.NetId;
-import ThreadTools.ThreadControl;
+import ThreadTools.ConcurrentInputStream;
+import ThreadTools.*;
 import TrackProtocol.*;
 import TrackProtocol.TrackPacket.TypeMsg;
 
@@ -21,9 +22,8 @@ import TrackProtocol.TrackPacket.TypeMsg;
  */
 public class Node
 {
-    private static ObjectOutputStream trackerOutput;                //Deprecated
-    private static ObjectInputStream trackerInput;                  //Deprecated
-
+    private static ConcurrentInputStream trackerInput;
+    private static ConcurrentOutputStream trackerOutput;
     private static NetId net_Id;                                    //Self NetId
     private static Scanner scanner = new Scanner(System.in);        //Console input
     private static Map<String, Long> filesId;                       //Matches the files name with their id in the server context
@@ -130,12 +130,15 @@ public class Node
         }
     }
 
-    private static void handle_quit() {
-        try {
+    private static void handle_quit() 
+    {
+        try 
+        {
             trackerOutput.writeObject(new TrackPacket(net_Id, TypeMsg.DC));
             trackerOutput.flush();
-
-        } catch (IOException e) {
+        }
+        catch (IOException e) 
+        {
             e.printStackTrace();
         }
     }
@@ -188,12 +191,10 @@ public class Node
             // Define this machine IP adress
             net_Id = new NetId(InetAddress.getLocalHost().getHostName());
 
-            
-            
             // Connects to server
             socket = new Socket(serverAddress, serverPort);
-            trackerOutput = new ObjectOutputStream(socket.getOutputStream());
-            trackerInput = new ObjectInputStream(socket.getInputStream());
+            trackerOutput = new ConcurrentOutputStream(new ObjectOutputStream(socket.getOutputStream()));
+            trackerInput = new ConcurrentInputStream(new ObjectInputStream(socket.getInputStream()));
 
             //Registers Self
             fbInfo= new FileBlockInfo(args[0]);
@@ -204,10 +205,11 @@ public class Node
             udpJobs= new LinkedBlockingQueue<>();
 
             //SetsUp UDP_Client and UDP_Server 
-            Thread t1= new Thread(new NodeUDP_Server (fbInfo, tc));
-            t1.start();
-            Thread t2= new Thread(new NodeUDP_Client(fbInfo, udpJobs, msgToTracker, tc));
-            t2.start();
+            Thread udpC= new Thread(new UDP_Client());
+            Thread udpS= new Thread(new UDP_Server());
+            udpC.start();
+            udpS.start();
+
 
             // Handle commands
             String command;
