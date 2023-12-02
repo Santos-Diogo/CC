@@ -42,6 +42,7 @@ public class Node
         double max_perNode = 0.3;
         Map <Long, NetId> m= new HashMap<>();
         List<Tuple<Long, Integer>> rarestBlocks = nodeBlocks.rarestBlocks(nBlocks);
+	System.out.println(rarestBlocks);
         for(Tuple<Long, Integer> block : rarestBlocks)
         {
             NetId node = schedule(block, (int)(nBlocks * max_perNode), nodeBlocks, workload);

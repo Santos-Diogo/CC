@@ -6,8 +6,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.io.Serializable;
 
-public class NodeBlocks {
+public class NodeBlocks implements Serializable{
     
     private Map<NetId, List<Long>> nodeblocks;
 

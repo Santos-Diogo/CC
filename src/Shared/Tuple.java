@@ -1,6 +1,8 @@
 package Shared;
 
-public class Tuple<T1, T2> {
+import java.io.Serializable;
+
+public class Tuple<T1, T2> implements Serializable{
     private final T1 first;
     private final T2 second;
 
