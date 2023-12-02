@@ -3,18 +3,18 @@ package Node;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.util.concurrent.BlockingQueue;
-
 import Shared.CRC;
 import ThreadTools.ThreadControl;
+import TransferProtocol.TransferPacket;
 
 public class UDP_Reciever implements Runnable
 {
     private DatagramSocket s;
-    private BlockingQueue<DatagramPacket> inputPacketServer;                    //Packets recieved to give to server
-    private BlockingQueue<DatagramPacket> inputPacketClient;                    //Packets recieved to give to client
+    private BlockingQueue<TransferPacket> inputPacketServer;                    //Packets recieved to give to server
+    private BlockingQueue<TransferPacket> inputPacketClient;                    //Packets recieved to give to client
     private ThreadControl tc;
 
-    UDP_Reciever (DatagramSocket s, BlockingQueue<DatagramPacket> inputServer, BlockingQueue<DatagramPacket> inputClient, ThreadControl tc)
+    UDP_Reciever (DatagramSocket s, BlockingQueue<TransferPacket> inputServer, BlockingQueue<TransferPacket> inputClient, ThreadControl tc)
     {
         this.s= s;
         this.inputPacketClient= inputClient;
@@ -29,7 +29,26 @@ public class UDP_Reciever implements Runnable
         //If the packet is valid
         if (checked!= null)
         {
-            
+            try
+            {
+                TransferPacket parsed= new TransferPacket(checked);
+
+                //If a packet is from a client we send it to a server
+                if (parsed.isFromClient)
+                {
+                    this.inputPacketServer.add(parsed);
+                }
+                //Reversed proceedure
+                else
+                {
+                    this.inputPacketClient.add(parsed);
+                }
+
+            }
+            catch (Exception e)
+            {
+                e.printStackTrace();
+            }
         }
     }
 
