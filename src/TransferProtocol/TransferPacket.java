@@ -1,6 +1,8 @@
 package TransferProtocol;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 
@@ -25,6 +27,15 @@ public class TransferPacket implements Serializable
         ObjectOutputStream stream= new ObjectOutputStream(bs= new ByteArrayOutputStream());
         stream.writeObject(this);
         return bs.toByteArray();
+    }
+
+    public TransferPacket (byte[] b) throws Exception
+    {
+        ByteArrayInputStream bs;
+        ObjectInputStream stream= new ObjectInputStream(bs= new ByteArrayInputStream(b));
+        TransferPacket p= (TransferPacket) stream.readObject();
+        this.type= p.type;
+        this.payload= p.payload;
     }
 
     public TransferPacket (TransferPacket.TypeMsg type, byte[] payload)
