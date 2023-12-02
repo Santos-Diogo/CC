@@ -3,7 +3,6 @@ package UDP;
 public class Wrapper 
 {
     private SocketManager socketManager;
-    private 
 
     public Wrapper ()
     {

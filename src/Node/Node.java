@@ -30,7 +30,7 @@ public class Node
     private static FileBlockInfo fbInfo;                            //Info on the node
     private static ThreadControl tc= new ThreadControl();           //Object used to terminate minor threads
     private static BlockingQueue<TrackPacket> msgToTracker;         //Queue of packets to send to the Server
-    private static BlockingQueue<UDP_Job> udpJobs;                  //Queue of jobs to be filled by the node
+    private static BlockingQueue<TransferJob> udpJobs;              //Queue of jobs to be filled by the node
 
     private static void handle_avf() 
     {
