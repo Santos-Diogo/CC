@@ -21,6 +21,6 @@ public class Tuple<T1, T2> implements Serializable{
 
     @Override
     public String toString() {
-        return "( " + this.first.toString() + ", " + this.second.toString() + ")";
+        return "(" + this.first.toString() + ", " + this.second.toString() + ")";
     }
 }

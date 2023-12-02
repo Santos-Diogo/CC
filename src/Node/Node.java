@@ -44,6 +44,8 @@ public class Node
         List<Tuple<Long, Integer>> rarestBlocks = nodeBlocks.rarestBlocks(nBlocks);
 
         //Debug start
+        for(Map.Entry<NetId, Integer> wkl: workload.entrySet())
+            System.out.println(wkl.getKey().toString() + ", " + wkl.getKey());
 	    for(Tuple<Long, Integer> tpl : rarestBlocks)
             System.out.println(tpl.toString());
         //Debug end
@@ -54,6 +56,12 @@ public class Node
             int tmp = workload.get(node);
             workload.put(node, tmp + 1);
         }
+        //Debug start
+        for(Map.Entry<NetId, Integer> wkl: workload.entrySet())
+            System.out.println(wkl.getKey().toString() + ", " + wkl.getKey());
+        for(Map.Entry<Long, NetId> asd: m.entrySet())
+            System.out.println(asd.getKey() + ", " + asd.getKey().toString());
+        //Debug end
         return m;
     }
 
@@ -121,6 +129,10 @@ public class Node
             //Debug end
 
             Map<Long, NetId> blockNode= scalonate (resp.get_nodeBlocks(), resp.get_nBlocks(), resp.getWorkLoad());
+            //Debug start
+            for (Map.Entry<NetId, Integer> wkl : resp.getWorkLoad().entrySet())
+                System.out.println(wkl.getKey().toString() + ", " + wkl.getKey());
+            //Debug end
         }
         catch (Exception e) 
         {

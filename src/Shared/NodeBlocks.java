@@ -56,7 +56,7 @@ public class NodeBlocks implements Serializable{
     {
         List<NetId> nodes = new ArrayList<>();
         for(Map.Entry<NetId, List<Long>> nb : nodeblocks.entrySet())
-            if (nb.getValue().contains(block))
+            if (nb.getValue() == null || nb.getValue().contains(block))
                 nodes.add(nb.getKey());
         return nodes;
     }
