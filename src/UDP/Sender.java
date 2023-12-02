@@ -1,15 +1,16 @@
-package Node;
+package UDP;
 
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.util.Map;
 import ThreadTools.ThreadControl;
+import UDP.SocketManager;
 
-public class UDP_Sender implements Runnable
+public class Sender implements Runnable
 {
     private DatagramSocket socket;
-    private Map<InetAddress, UDP_SocketManager.UDP_Out> ipToOutput;
+    private Map<InetAddress, SocketManager.UDP_Out> ipToOutput;
     private ThreadControl tc;
 
     /**
@@ -18,7 +19,7 @@ public class UDP_Sender implements Runnable
      * @param ipToOutput maps a given target ip with information and packets to be sent
      * @param tc controlls the thread
      */
-    UDP_Sender (DatagramSocket socket, Map<InetAddress, UDP_SocketManager.UDP_Out> ipToOutput, ThreadControl tc)
+    Sender (DatagramSocket socket, Map<InetAddress, SocketManager.UDP_Out> ipToOutput, ThreadControl tc)
     {
         this.socket= socket;
         this.ipToOutput= ipToOutput;
@@ -30,9 +31,9 @@ public class UDP_Sender implements Runnable
         while (tc.get_running())
         {
             //Iterate over all possible sending locations
-            for (Map.Entry<InetAddress, UDP_SocketManager.UDP_Out> entry : ipToOutput.entrySet())
+            for (Map.Entry<InetAddress, SocketManager.UDP_Out> entry : ipToOutput.entrySet())
             {
-                UDP_SocketManager.UDP_Out udpOut= entry.getValue();
+                SocketManager.UDP_Out udpOut= entry.getValue();
 
                 int n= udpOut.connectionInfo.getAvailableToTransfer();
                 DatagramPacket p;

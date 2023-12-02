@@ -8,7 +8,7 @@ public class ConnectionInfo
     private int availableToTransfer;
 
     
-    ConnectionInfo (int availableToTransfer)
+    public ConnectionInfo (int availableToTransfer)
     {
         this.availableToTransfer= availableToTransfer;
     }

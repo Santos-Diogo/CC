@@ -1,4 +1,4 @@
-package Node;
+package UDP;
 
 import java.net.InetAddress;
 import java.net.DatagramSocket;
@@ -15,7 +15,7 @@ import UDP.*;
 /**
  * Class responsible for handling UDP Socket's IO and answering to some methods (?)
  */
-class UDP_SocketManager
+class SocketManager
 {
     /**
      * Class that combines a Q of packets to transmit to a given Node with the know information on that Connection
@@ -28,7 +28,7 @@ class UDP_SocketManager
         UDP_Out (BlockingQueue<DatagramPacket> outPackets)
         {
             this.outPackets= outPackets;
-            this.connectionInfo= new ConnectionInfo();
+            this.connectionInfo= new ConnectionInfo(1);                         //
         }
 
         void add_packet (DatagramPacket p)
@@ -50,15 +50,15 @@ class UDP_SocketManager
      * @param inputClient Q where to write Client's input
      * @param tc Thread Controll
      */
-    UDP_SocketManager (DatagramSocket s, BlockingQueue<TransferPacket> inputServer, BlockingQueue<TransferPacket> inputClient, ThreadControl tc)
+    SocketManager (DatagramSocket s, BlockingQueue<TransferPacket> inputServer, BlockingQueue<TransferPacket> inputClient, ThreadControl tc)
     {
         this.socket= s;
         this.ipToOutput= new HashMap<>();
 
         //Start recieving and sending minions
-        this.sender= new Thread(new UDP_Sender(socket, ipToOutput, tc));
+        this.sender= new Thread(new Sender(socket, ipToOutput, tc));
         sender.start();
-        this.reciever= new Thread(new UDP_Reciever(socket, inputServer, inputClient, tc));
+        this.reciever= new Thread(new Receiver(socket, inputServer, inputClient, tc));
         reciever.start();
 
 

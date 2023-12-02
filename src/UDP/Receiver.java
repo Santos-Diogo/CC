@@ -1,4 +1,4 @@
-package Node;
+package UDP;
 
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -7,14 +7,14 @@ import Shared.CRC;
 import ThreadTools.ThreadControl;
 import TransferProtocol.TransferPacket;
 
-public class UDP_Reciever implements Runnable
+public class Receiver implements Runnable
 {
     private DatagramSocket s;
     private BlockingQueue<TransferPacket> inputPacketServer;                    //Packets recieved to give to server
     private BlockingQueue<TransferPacket> inputPacketClient;                    //Packets recieved to give to client
     private ThreadControl tc;
 
-    UDP_Reciever (DatagramSocket s, BlockingQueue<TransferPacket> inputServer, BlockingQueue<TransferPacket> inputClient, ThreadControl tc)
+    Receiver (DatagramSocket s, BlockingQueue<TransferPacket> inputServer, BlockingQueue<TransferPacket> inputClient, ThreadControl tc)
     {
         this.s= s;
         this.inputPacketClient= inputClient;
