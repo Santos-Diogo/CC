@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import ThreadTools.*;
+import TransferProtocol.TransferPacket;
 import UDP.*;
 
 /**
@@ -19,7 +20,7 @@ class UDP_SocketManager
     /**
      * Class that combines a Q of packets to transmit to a given Node with the know information on that Connection
      */
-    private class UDP_Out
+    class UDP_Out
     {
         BlockingQueue<DatagramPacket> outPackets;
         ConnectionInfo connectionInfo;
@@ -37,27 +38,30 @@ class UDP_SocketManager
     }
 
     private DatagramSocket socket;                                              //UDP Socket to use
-    private BlockingQueue<DatagramPacket> inputPacketServer;                    //Packets recieved to give to server
-    private BlockingQueue<DatagramPacket> inputPacketClient;                    //Packets recieved to give to client
     private Map<InetAddress, UDP_Out> ipToOutput;                               //Maps a node to packets to transmit and connection info
     private Thread sender;                                                      //Thread to send nodes
     private Thread reciever;                                                    //Thread to recieve nodes
     private ThreadControl tc;                                                   //Thread controller to be passed down to workers
     
-    UDP_SocketManager (DatagramSocket s, BlockingQueue<DatagramPacket> inputServer, BlockingQueue<DatagramPacket> inputClient, ThreadControl tc)
+    /**
+     * 
+     * @param s UDP Socket to use
+     * @param inputServer Q where to write Server's input
+     * @param inputClient Q where to write Client's input
+     * @param tc Thread Controll
+     */
+    UDP_SocketManager (DatagramSocket s, BlockingQueue<TransferPacket> inputServer, BlockingQueue<TransferPacket> inputClient, ThreadControl tc)
     {
         this.socket= s;
-        this.inputPacketServer= inputServer;
-        this.inputPacketClient= inputClient;
         this.ipToOutput= new HashMap<>();
 
         //Start recieving and sending minions
-        this.sender= new Thread();
+        this.sender= new Thread(new UDP_Sender(socket, ipToOutput, tc));
         sender.start();
-        this.reciever= new Thread();
+        this.reciever= new Thread(new UDP_Reciever(socket, inputServer, inputClient, tc));
         reciever.start();
 
-        
+
         this.tc= tc;
     }
 
