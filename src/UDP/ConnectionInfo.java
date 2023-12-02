@@ -5,5 +5,22 @@ package UDP;
  */
 public class ConnectionInfo 
 {
+    private int availableToTransfer;
+
+    
+    ConnectionInfo (int availableToTransfer)
+    {
+        this.availableToTransfer= availableToTransfer;
+    }
+    
+    public int getAvailableToTransfer() 
+    {
+        return availableToTransfer;
+    }
+
+    public void setAvailableToTransfer(int availableToTransfer) 
+    {
+        this.availableToTransfer = availableToTransfer;
+    }
     
 }
