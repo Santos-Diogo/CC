@@ -2,6 +2,7 @@ package TransferProtocol;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 
@@ -13,8 +14,9 @@ public class TransferPacket implements Serializable
         GET
     };
 
-    private TypeMsg type;   //Message's type    
-    private byte[] payload; //Packet's payload
+    public TypeMsg type;                       //Message's type
+    public boolean isFromClient;               //True if is from client. False if it is from server
+    public byte[] payload;                     //Packet's payload
 
     /**
      * @return returns packet object written in bytes
@@ -28,19 +30,19 @@ public class TransferPacket implements Serializable
         return bs.toByteArray();
     }
 
-    public TransferPacket (TransferPacket.TypeMsg type, byte[] payload)
+    public TransferPacket (byte[] b) throws Exception
+    {
+        ObjectInputStream stream= new ObjectInputStream(new ByteArrayInputStream(b));
+        TransferPacket p= (TransferPacket) stream.readObject();
+        this.type= p.type;
+        this.isFromClient= p.isFromClient;
+        this.payload= p.payload;
+    }
+
+    public TransferPacket (TransferPacket.TypeMsg type, boolean isFromClient, byte[] payload)
     {
         this.type= type;
+        this.isFromClient= isFromClient;
         this.payload= payload;
-    }
-
-    public TypeMsg getType ()
-    {
-        return this.type;
-    }
-
-    public byte[] getPayload ()
-    {
-        return this.payload;
     }
 }
