@@ -33,6 +33,10 @@ public class NetId implements Serializable
     }
 
     @Override
+    public String toString() {
+        return name;
+    }
+    @Override
     public boolean equals (Object obj)
     {
         if (this== obj)
