@@ -133,6 +133,8 @@ public class Node
             for (Map.Entry<NetId, Integer> wkl : resp.getWorkLoad().entrySet())
                 System.out.println(wkl.getKey().toString() + ", " + wkl.getValue());
             //Debug end
+
+            //Here we need to update tracker about the workload thats being issued on the nodes and to start the transfer process
         }
         catch (Exception e) 
         {

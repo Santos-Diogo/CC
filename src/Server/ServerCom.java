@@ -62,11 +62,11 @@ public class ServerCom implements Runnable {
         }
     }
 
-    private void handle_AVF_REQ() {
+    private void handle_AVF_REQ(NetId requesting_node) {
         System.out.println("AVF REQ");
         try 
         {
-            out.writeObject(new AvfRepPacket(selfId, serverInfo.get_filesWithSizes()));
+            out.writeObject(new AvfRepPacket(selfId, serverInfo.get_filesWithSizes(requesting_node)));
             out.flush();
         }
         catch (IOException e) 
@@ -83,7 +83,7 @@ public class ServerCom implements Runnable {
             String file = p.getFile();
             long fileId = serverInfo.get_fileId(file);
             long nBlocks = serverInfo.get_nBlocks(file);
-            NodeBlocks nodeInfoFile = serverInfo.get_nodeInfoFile(file);
+            NodeBlocks nodeInfoFile = serverInfo.get_nodeInfoFile(file, p.getNet_Id());
             Map<NetId, Integer> workLoad = serverInfo.get_workLoad(nodeInfoFile.get_nodes());
             GetRepPacket replyP = new GetRepPacket(selfId, fileId, nBlocks, nodeInfoFile, workLoad);
             out.writeObject(replyP);
@@ -105,7 +105,7 @@ public class ServerCom implements Runnable {
                 break;
             }
             case AVF_REQ: {
-                handle_AVF_REQ();
+                handle_AVF_REQ(packet.getNet_Id());
                 break;
             }
             case ADD_F: {

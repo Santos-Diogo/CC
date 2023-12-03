@@ -67,4 +67,9 @@ public class BlockInfo implements Serializable
             lock_rw.writeLock().unlock();
         }
     }
+
+    public boolean has_entireFile ()
+    {
+        return (this.filesBlocks == null) ? true : false;
+    }
 }

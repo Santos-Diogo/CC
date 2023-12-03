@@ -82,6 +82,13 @@ public class ServerInfo
         {
             return this.fileId;
         }
+
+        boolean nodeHasFile(NetId node) {
+            for(ServerBlockInfo sbi : sbiList)
+                if(sbi.contains_NetID(node) && sbi.has_entireFile())
+                    return true;
+            return false;
+        }
     }
 
     ReentrantReadWriteLock rwl;
@@ -147,6 +154,17 @@ public class ServerInfo
         }
     }
 
+    public void rm_load (NetId node)
+    {
+        rwl.writeLock().lock();
+        try{
+            int old_value = this.node_load.get(node);
+            this.node_load.put(node, old_value - 1);
+        } finally {
+            rwl.writeLock().unlock();
+        }
+    }
+
     /**
      * 
      * @param node Node to be registred in the load Map
@@ -201,7 +219,7 @@ public class ServerInfo
      * @param file
      * @return
      */
-    public NodeBlocks get_nodeInfoFile(String file) 
+    public NodeBlocks get_nodeInfoFile(String file, NetId requesting_node) 
     {
         try
         {
@@ -212,6 +230,8 @@ public class ServerInfo
             // We Map each Node to a NodeList
             for (ServerBlockInfo sbi : l) 
             {
+                if(sbi.netId.equals(requesting_node)) 
+                    continue;
                 m.put(sbi.netId, sbi.get_filesBlocks());
             }
             return new NodeBlocks(m);
@@ -249,7 +269,7 @@ public class ServerInfo
     /**
      * @return FileSizes mapped to corresponding filenames
      */
-    public Map<String, Long> get_filesWithSizes ()
+    public Map<String, Long> get_filesWithSizes (NetId requesting_node)
     {
         try
         {
@@ -258,8 +278,9 @@ public class ServerInfo
             
             for (Map.Entry<String, FileInfo> e : this.file_nodeData.entrySet())
             {
-                if(e.getValue().isAvailable())
-                    m.put(e.getKey(), e.getValue().fileSize);
+                FileInfo file = e.getValue();
+                if(file.isAvailable() && !file.nodeHasFile(requesting_node))
+                    m.put(e.getKey(), file.fileSize);
             }
             
             return m;
