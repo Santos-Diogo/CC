@@ -18,7 +18,7 @@ class TransferClientHandle implements Runnable
     private InetAddress target;                                             //Node to send packets to
     private BlockingQueue<TransferJob> jobs;                                //Job Input
     private BlockingQueue<TransferPacket> input;                            //Input from socket
-    private BlockingQueue<DatagramPacket> output;                           //Output from socket
+    private BlockingQueue<TransferPacket> output;                           //Output from socket
     private ThreadControl tc;                                               //Thread Controll
     private KeyPair keyPair;                                                //Own Security KeyPair
     private long sentMessage;                                               //Number of sent Message for Ack matching
@@ -28,7 +28,7 @@ class TransferClientHandle implements Runnable
     TransferClientHandle (  InetAddress target,
                             BlockingQueue<TransferJob> jobs,
                             BlockingQueue<TransferPacket> input,
-                            BlockingQueue<DatagramPacket> output,
+                            BlockingQueue<TransferPacket> output,
                             ThreadControl tc,
                             KeyPair keyPair)
     {

@@ -24,8 +24,8 @@ public class SocketManager
             TransferPacket packet;
         }
 
-        BlockingQueue<TransferPacket> out;         //Packets sent
-        BlockingQueue<OutPacket> in;               //Packets recieved
+        BlockingQueue<OutPacket> out;         //Packets sent
+        BlockingQueue<TransferPacket> in;               //Packets recieved
 
         IOQueue ()
         {
@@ -37,6 +37,8 @@ public class SocketManager
     private ReentrantReadWriteLock rwl;
     private long nUser;
     private Map<Long, IOQueue> userToQueue;
+    private Receiver receiver;
+    private Sender sender;
 
     public SocketManager (ThreadControl tc)
     {
@@ -47,8 +49,8 @@ public class SocketManager
             this.userToQueue= new HashMap<>();
             
             //Initiate Sender and Receiver
-            Thread t1= new Thread(new Receiver(this, tc));
-            Thread t2= new Thread(new Sender(this, tc));
+            Thread t1= new Thread(receiver= new Receiver(this, tc));
+            Thread t2= new Thread(sender= new Sender(this, tc));
             t1.start();
             t2.start();
         }
@@ -67,8 +69,12 @@ public class SocketManager
         try
         {
             this.rwl.writeLock().lock();
+            
             //Register a user creating a new q and assigning him a number
-            this.userToQueue.put(this.nUser, new IOQueue());
+            IOQueue q= new IOQueue();
+            this.sender.getSenderMinion(q.out);
+            this.userToQueue.put(this.nUser, q);
+
             return nUser;
         }
         finally
