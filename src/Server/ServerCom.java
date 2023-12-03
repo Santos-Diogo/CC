@@ -5,11 +5,13 @@ import java.net.*;
 import java.util.*;
 
 import Blocker.BlockInfo;
+import Blocker.FileBlockInfo;
 import Network.TCP.TrackProtocol.*;
 
 import java.lang.String;
 
 import Shared.NetId;
+import Shared.NodeBlocks;
 import ThreadTools.ThreadControl;
 
 /**
@@ -36,17 +38,22 @@ public class ServerCom implements Runnable
     {
         System.out.println("REG message");
         RegReqPacket p = (RegReqPacket) packet;
-        NetId node = packet.net_Id;
-        
+        NetId node = packet.getNet_Id();
+        FileBlockInfo fbi = p.get_fileBlockInfo();
         Map<String, Long> fileId= new HashMap<>();
-        BlockInfo nBlock;
+        BlockInfo blockInfo;
         String fileName;
+        serverInfo.register_inLoad(node);
         // We insert each (file_name,blocks[]) and get a correspondig id for our files
-        for (Map.Entry<String, BlockInfo> e : p.get_fileBlockInfo().get_fileBlockInfo().entrySet()) 
+        for (Map.Entry<String, BlockInfo> e : fbi.get_fileBlockInfo().entrySet()) 
         {
-            nBlock = e.getValue();
+            blockInfo = e.getValue();
             fileName= e.getKey();
-            fileId.put(fileName, serverInfo.add_file(fileName, node, nBlock));
+            Long filesize = fbi.get_filesize(fileName);
+            if (filesize != null)
+                fileId.put(fileName, serverInfo.add_file(fileName, node, blockInfo, filesize));
+            else
+                fileId.put(fileName, serverInfo.add_file(fileName, node, blockInfo));
         }
         try
         {
@@ -60,11 +67,11 @@ public class ServerCom implements Runnable
         }
     }
 
-    private void handle_AVF_REQ() {
+    private void handle_AVF_REQ(NetId requesting_node) {
         System.out.println("AVF REQ");
         try 
         {
-            out.writeObject(new AvfRepPacket(selfId, serverInfo.get_filesWithSizes()));
+            out.writeObject(new AvfRepPacket(selfId, serverInfo.get_filesWithSizes(requesting_node)));
             out.flush();
         }
         catch (IOException e) 
@@ -79,10 +86,12 @@ public class ServerCom implements Runnable
         try {
             GetReqPacket p = (GetReqPacket) packet;
             String file = p.getFile();
-            GetRepPacket replyP = new GetRepPacket( selfId,
-                                                    serverInfo.get_fileId(file),
-                                                    serverInfo.get_nBlocks(file),
-                                                    serverInfo.get_nodeInfoFile(file));
+            long fileId = serverInfo.get_fileId(file);
+            long nBlocks = serverInfo.get_nBlocks(file);
+            List<Long> ownedBlocks = new ArrayList<>();
+            NodeBlocks nodeInfoFile = serverInfo.get_nodeInfoFile(file, p.getNet_Id(), ownedBlocks);
+            Map<NetId, Integer> workLoad = serverInfo.get_workLoad(nodeInfoFile.get_nodes());
+            GetRepPacket replyP = new GetRepPacket(selfId, fileId, nBlocks, nodeInfoFile, ownedBlocks, workLoad);
             out.writeObject(replyP);
             out.flush();
         } catch (IOException e) {
@@ -102,7 +111,7 @@ public class ServerCom implements Runnable
                 break;
             }
             case AVF_REQ: {
-                handle_AVF_REQ();
+                handle_AVF_REQ(packet.getNet_Id());
                 break;
             }
             case ADD_F: {
