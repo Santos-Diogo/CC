@@ -8,9 +8,9 @@ public class RegRepPacket extends TrackPacket
 {
     Map<String, Long> fileId;
 
-    public RegRepPacket (NetId n, Map<String, Long> fileId)
+    public RegRepPacket (NetId n, long from, long to, Map<String, Long> fileId)
     {
-        super(n, TypeMsg.REG_REP);
+        super(n, TypeMsg.REG_REP, from, to);
         this.fileId= fileId;
     }
 

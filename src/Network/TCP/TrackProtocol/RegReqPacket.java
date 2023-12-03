@@ -12,9 +12,9 @@ public class RegReqPacket extends TrackPacket
      * @param self self NetId
      * @param files_blocks Filename in relation to BlockInfo
      */
-    public RegReqPacket (NetId self, FileBlockInfo files_blocks) 
+    public RegReqPacket (NetId self, long from, long to, FileBlockInfo files_blocks) 
     {
-        super (self, TypeMsg.REG_REQ);
+        super (self, TypeMsg.REG_REQ, from, to);
         this.fileBlockInfo= files_blocks;
     }
 

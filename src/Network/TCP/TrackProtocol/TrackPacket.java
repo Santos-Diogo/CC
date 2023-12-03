@@ -18,27 +18,14 @@ public class TrackPacket implements Serializable
         GET_RESP,   // Get files response
     }
 
-    private NetId Net_Id;
-    private TypeMsg type;
+    public NetId net_Id;
+    public TypeMsg type;
+    public long from;
+    public long to;
 
-    public TrackPacket(TrackPacket p)
-    {
-        this.Net_Id= p.Net_Id;
-        this.type= p.type;
-    }
-
-    public TrackPacket(NetId n, TypeMsg type) 
+    public TrackPacket(NetId n, TypeMsg type, long from, long to) 
     {
         this.Net_Id= n;
         this.type= type;
-    }
-
-    public NetId getNet_Id() 
-    {
-        return this.Net_Id;
-    }
-
-    public TypeMsg getType() {
-        return type;
     }
 }

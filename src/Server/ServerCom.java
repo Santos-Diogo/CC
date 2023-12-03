@@ -36,7 +36,7 @@ public class ServerCom implements Runnable {
     {
         System.out.println("REG message");
         RegReqPacket p = (RegReqPacket) packet;
-        NetId node = packet.getNet_Id();
+        NetId node = packet.net_Id;
         
         Map<String, Long> fileId= new HashMap<>();
         BlockInfo nBlock;
@@ -92,11 +92,11 @@ public class ServerCom implements Runnable {
 
     private void handle_DC(TrackPacket packet) {
         System.out.println("DC message");
-        serverInfo.remove_infoFromNode(packet.getNet_Id());
+        serverInfo.remove_infoFromNode(packet.net_Id);
     }
 
     private void handle(TrackPacket packet) {
-        switch (packet.getType()) {
+        switch (packet.type) {
             case REG_REQ: {
                 handle_REG(packet);
                 break;

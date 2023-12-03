@@ -1,16 +1,23 @@
 package Network.TCP.Socket;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.net.Socket;
+
+import Network.TCP.TrackProtocol.TrackPacket;
+import ThreadTools.ThreadControl;
+
 public class Receiver implements Runnable
 {
-    private DatagramSocket socket;
+    private ObjectInputStream in;
     private SocketManager manager;
     private ThreadControl tc;
 
-    Receiver (SocketManager manager, ThreadControl tc)
+    Receiver (SocketManager manager, Socket s, ThreadControl tc)
     {
         try
         {
-            this.socket= new DatagramSocket(Shared.Defines.transferPort);
+            this.in= new ObjectInputStream (s.getInputStream());
             this.manager= manager;
             this.tc= tc;
         }
@@ -20,27 +27,9 @@ public class Receiver implements Runnable
         }
     }
 
-    private void handle (DatagramPacket p)
+    private void handle (TrackPacket p)
     {
-        byte[] crude= p.getData();
-        byte[] checked= CRC.decouple(crude);
-
-        //If the packet is valid
-        if (checked!= null)
-        {
-            try
-            {
-                TransferPacket parsed= new TransferPacket(checked);
-
-                //Send package to correspondig ID
-                IOQueue q= this.manager.getQueue(parsed.to);
-                q.in.add(parsed);
-            }
-            catch (Exception e)
-            {
-                e.printStackTrace();
-            }
-        }
+        
     }
 
     public void run ()
@@ -49,9 +38,8 @@ public class Receiver implements Runnable
         {
             try
             {
-                DatagramPacket p= new DatagramPacket(new byte[Shared.Defines.transferBuffer], Shared.Defines.transferBuffer);
-                this.socket.receive(p);
-                handle(p);
+                TrackPacket p= (TrackPacket) in.readObject();
+                handle (p);
             }
             catch (Exception e)
             {

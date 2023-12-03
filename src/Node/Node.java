@@ -29,8 +29,6 @@ public class Node
     private static Map<String, Long> filesId;                       //Matches the files name with their id in the server context
     private static FileBlockInfo fbInfo;                            //Info on the node
     private static ThreadControl tc= new ThreadControl();           //Object used to terminate minor threads
-    private static BlockingQueue<TrackPacket> msgToTracker;         //Queue of packets to send to the Server
-    private static BlockingQueue<TransferJob> udpJobs;              //Queue of jobs to be filled by the node
 
     private static void handle_avf() 
     {
@@ -190,6 +188,8 @@ public class Node
         {
             // Define this machine IP adress
             net_Id = new NetId(InetAddress.getLocalHost().getHostName());
+            
+            //Sets up Connection Managers
 
             // Connects to server
             socket = new Socket(serverAddress, serverPort);
@@ -200,9 +200,6 @@ public class Node
             fbInfo= new FileBlockInfo(args[0]);
             filesId= register (fbInfo);
 
-            //SetsUp Connection Queue and UDP Job Queue
-            msgToTracker= new LinkedBlockingQueue<>();
-            udpJobs= new LinkedBlockingQueue<>();
 
             //SetsUp UDP_Client and UDP_Server 
             Thread udpC= new Thread(new UDP_Client());
