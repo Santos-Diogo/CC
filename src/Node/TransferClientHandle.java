@@ -6,7 +6,11 @@ import java.util.concurrent.BlockingQueue;
 import java.security.KeyPair;
 
 import TransferProtocol.*;
+import TransferProtocol.TransferPayload.CONPayload;
+import TransferProtocol.TransferPayload.GETPayload;
 import ThreadTools.ThreadControl;
+import TrackProtocol.TrackPacket.TypeMsg;
+import Shared.Crypt;
 
 class TransferClientHandle implements Runnable
 {
@@ -16,6 +20,9 @@ class TransferClientHandle implements Runnable
     private BlockingQueue<DatagramPacket> output;                           //Output from socket
     private ThreadControl tc;                                               //Thread Controll
     private KeyPair keyPair;                                                //Own Security KeyPair
+    private long sentMessage;                                               //Number of sent Message for Ack matching
+    private long receivedMessage;                                           //Number of received Message for Ack matching
+    private Crypt connectionCrypt;                                          //Key calculated in the connect proceedure
 
     TransferClientHandle (  InetAddress target,
                             BlockingQueue<TransferJob> jobs,
@@ -30,16 +37,30 @@ class TransferClientHandle implements Runnable
         this.output= output;
         this.tc= tc;
         this.keyPair= keyPair;
+        this.sentMessage= 0;
+        this.receivedMessage= 0;
     }
 
-    private void connect ()
+    private void connect () throws Exception
     {
+        CONPayload payload= new CONPayload(this.keyPair.getPublic());
+        output.add(PacketWrapper.datagramMaker(target, Shared.Defines.transferPort, payload.serialize(), true, TransferPacket.TypeMsg.CON));
+    }
+
+    
+
+    private void handle (TransferJob j) throws Exception
+    {
+        //Ask for blocks
+        GETPayload payload= new GETPayload(j.file, j.blocks);
+        byte[] encryptedPayload= connectionCrypt.encrypt(payload.serialize());
+
+        //Add the packet created by the datagramMaker
+        output.add(PacketWrapper.datagramMaker(target, Shared.Defines.transferPort, encryptedPayload, true, TransferPacket.TypeMsg.GET));
+
+        //Recieve blocks
         
-    }
-
-    private void handle (TransferJob j)
-    {
-
+        
     }
 
     public void run ()
