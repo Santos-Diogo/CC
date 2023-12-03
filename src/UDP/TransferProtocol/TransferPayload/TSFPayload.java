@@ -1,4 +1,4 @@
-package TransferProtocol.TransferPayload;
+package UDP.TransferProtocol.TransferPayload;
 
 public class TSFPayload
 {

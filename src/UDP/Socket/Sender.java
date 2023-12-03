@@ -1,11 +1,11 @@
-package UDP;
+package UDP.Socket;
 
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.util.Map;
 import ThreadTools.ThreadControl;
-import UDP.SocketManager;
+import UDP.Socket.SocketManager.UDP_Out;
 
 public class Sender implements Runnable
 {

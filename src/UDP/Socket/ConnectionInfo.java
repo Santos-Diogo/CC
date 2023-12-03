@@ -1,4 +1,4 @@
-package UDP;
+package UDP.Socket;
 
 /**
  * Class with paramenters relevant to store in the context of a given UDP connection

@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 
 import ThreadTools.ThreadControl;
-import TransferProtocol.TransferPacket;
+import UDP.TransferProtocol.TransferPacket;
 
 public class TransferClient implements Runnable
 {

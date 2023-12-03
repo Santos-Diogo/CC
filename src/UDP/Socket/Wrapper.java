@@ -1,4 +1,4 @@
-package UDP;
+package UDP.Socket;
 
 public class Wrapper 
 {

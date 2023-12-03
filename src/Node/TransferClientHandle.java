@@ -6,11 +6,11 @@ import java.util.concurrent.BlockingQueue;
 import java.security.KeyPair;
 import java.security.PublicKey;
 
-import TransferProtocol.*;
-import TransferProtocol.TransferPayload.CONPayload;
-import TransferProtocol.TransferPayload.GETPayload;
 import ThreadTools.ThreadControl;
 import TrackProtocol.TrackPacket.TypeMsg;
+import UDP.TransferProtocol.*;
+import UDP.TransferProtocol.TransferPayload.CONPayload;
+import UDP.TransferProtocol.TransferPayload.GETPayload;
 import Shared.Crypt;
 
 class TransferClientHandle implements Runnable

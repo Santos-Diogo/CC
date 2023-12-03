@@ -4,7 +4,7 @@ import java.net.DatagramPacket;
 import java.net.InetAddress;
 
 import Shared.CRC;
-import TransferProtocol.TransferPacket;
+import UDP.TransferProtocol.TransferPacket;
 
 public class PacketWrapper 
 {
