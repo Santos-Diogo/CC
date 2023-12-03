@@ -1,91 +1,94 @@
 package UDP.Socket;
 
-import java.net.InetAddress;
 import java.net.DatagramSocket;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.net.DatagramPacket;
+import java.net.InetAddress;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import ThreadTools.*;
-import UDP.TransferProtocol.TransferPacket;
+import ThreadTools.ThreadControl;
+import UDP.TransferProtocol.*;
 
 /**
  * Class responsible for handling UDP Socket's IO and answering to some methods (?)
  */
-class SocketManager
+public class SocketManager
 {
-    /**
-     * Class that combines a Q of packets to transmit to a given Node with the know information on that Connection
-     */
-    class UDP_Out
+    public class IOQueue
     {
-        BlockingQueue<DatagramPacket> outPackets;
-        ConnectionInfo connectionInfo;
-
-        UDP_Out (BlockingQueue<DatagramPacket> outPackets)
+        public class OutPacket
         {
-            this.outPackets= outPackets;
-            this.connectionInfo= new ConnectionInfo(1);                         //
+            InetAddress destination;
+            TransferPacket packet;
         }
 
-        void add_packet (DatagramPacket p)
+        BlockingQueue<TransferPacket> out;         //Packets sent
+        BlockingQueue<OutPacket> in;               //Packets recieved
+
+        IOQueue ()
         {
-            outPackets.add(p);
+            this.in= new LinkedBlockingQueue<>();
+            this.out= new LinkedBlockingQueue<>();
         }
     }
-
-    private DatagramSocket socket;                                              //UDP Socket to use
-    private Map<InetAddress, UDP_Out> ipToOutput;                               //Maps a node to packets to transmit and connection info
-    private Thread sender;                                                      //Thread to send nodes
-    private Thread reciever;                                                    //Thread to recieve nodes
-    private ThreadControl tc;                                                   //Thread controller to be passed down to workers
     
-    /**
-     * 
-     * @param s UDP Socket to use
-     * @param inputServer Q where to write Server's input
-     * @param inputClient Q where to write Client's input
-     * @param tc Thread Controll
-     */
-    SocketManager (DatagramSocket s, BlockingQueue<TransferPacket> inputServer, BlockingQueue<TransferPacket> inputClient, ThreadControl tc)
+    private ReentrantReadWriteLock rwl;
+    private long nUser;
+    private Map<Long, IOQueue> userToQueue;
+
+    public SocketManager (ThreadControl tc)
     {
-        this.socket= s;
-        this.ipToOutput= new HashMap<>();
-
-        //Start recieving and sending minions
-        this.sender= new Thread(new Sender(socket, ipToOutput, tc));
-        sender.start();
-        this.reciever= new Thread(new Receiver(socket, inputServer, inputClient, tc));
-        reciever.start();
-
-
-        this.tc= tc;
+        try
+        {
+            this.rwl= new ReentrantReadWriteLock();
+            this.nUser= 0;
+            this.userToQueue= new HashMap<>();
+            
+            //Initiate Sender and Receiver
+            Thread t1= new Thread(new Receiver(this, tc));
+            Thread t2= new Thread(new Sender(this, tc));
+            t1.start();
+            t2.start();
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
     }
 
     /**
-     * Send a packet to a given Adress
-     * @param p packet to send
-     * @param target target node
+     * creates IO chanels with a corresponding id
+     * @return returns the id assotiated with the chanels
      */
-    void send (DatagramPacket p, InetAddress target)
+    public long register ()
     {
-        BlockingQueue<DatagramPacket> q;
-
-        // if there is already a map entry to that node
-        if (this.ipToOutput.containsKey(target))
+        try
         {
-            q= this.ipToOutput.get(target).outPackets;
+            this.rwl.writeLock().lock();
+            //Register a user creating a new q and assigning him a number
+            this.userToQueue.put(this.nUser, new IOQueue());
+            return nUser;
         }
-        // if this is the first connection to the specific node
-        else
+        finally
         {
-            q= new LinkedBlockingQueue<>();
-            this.ipToOutput.put(target, new UDP_Out(q));
+            //Increment nUser
+            this.nUser+= 1;
+            this.rwl.writeLock().unlock();
         }
+    }
 
-        // Add the packet to the corresponding send Q
-        q.add(p);
+    public IOQueue getQueue (long id)
+    {
+        try
+        {
+            this.rwl.readLock().lock();
+            return this.userToQueue.get(id);
+        }
+        finally
+        {
+            this.rwl.readLock().unlock();
+        }
     }
 }

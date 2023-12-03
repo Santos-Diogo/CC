@@ -3,61 +3,56 @@ package UDP.Socket;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+
 import ThreadTools.ThreadControl;
-import UDP.Socket.SocketManager.UDP_Out;
 
 public class Sender implements Runnable
 {
+    private ReentrantReadWriteLock rwl;
     private DatagramSocket socket;
-    private Map<InetAddress, SocketManager.UDP_Out> ipToOutput;
+    private SocketManager manager;
+    private Map<InetAddress, BlockingQueue<DatagramPacket>> outputQueue;    //Minions add their packets here "remotely"
+    private Map<InetAddress, ConnectionInfo> connectionInfo;                //Should be accessed for consultation via some method that doesn't break Concurrence
     private ThreadControl tc;
 
-    /**
-     * 
-     * @param socket socket to use to send packets
-     * @param ipToOutput maps a given target ip with information and packets to be sent
-     * @param tc controlls the thread
-     */
-    Sender (DatagramSocket socket, Map<InetAddress, SocketManager.UDP_Out> ipToOutput, ThreadControl tc)
+    Sender (SocketManager manager, ThreadControl tc)
     {
-        this.socket= socket;
-        this.ipToOutput= ipToOutput;
-        this.tc= tc;
+        try
+        {
+            this.socket= new DatagramSocket(Shared.Defines.transferPort);
+            this.manager= manager;
+            this.outputQueue= new HashMap<>();
+            this.connectionInfo= new HashMap<>();
+            this.tc= tc;
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
+    }
+
+    public void getSenderMinion ()
+    {
+
     }
 
     public void run ()
     {
         while (tc.get_running())
         {
-            //Iterate over all possible sending locations
-            for (Map.Entry<InetAddress, SocketManager.UDP_Out> entry : ipToOutput.entrySet())
+            try
             {
-                SocketManager.UDP_Out udpOut= entry.getValue();
+                this.rwl.readLock().lock();
+                //Iterate over all possible sending locations
 
-                int n= udpOut.connectionInfo.getAvailableToTransfer();
-                DatagramPacket p;
-
-                //Send packets available to be sent corresponding to a given node
-                for (; n> 0; n--)
-                {
-                    try
-                    {
-                        //Q is empty before capacity is elapsed
-                        if ((p= udpOut.outPackets.peek())== null)
-                        {
-                            break;
-                        }
-                        this.socket.send(p);
-                    }
-                    catch (Exception e)
-                    {
-                        e.printStackTrace();
-                    }
-                }
-
-                //Update available after consuming in the sending cycle
-                udpOut.connectionInfo.setAvailableToTransfer(n);
+            }
+            finally
+            {
+                this.rwl.readLock().unlock();
             }
         }
     }

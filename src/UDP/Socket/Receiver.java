@@ -1,24 +1,31 @@
 package UDP.Socket;
 
+import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.util.concurrent.BlockingQueue;
 import Shared.CRC;
 import ThreadTools.ThreadControl;
+import UDP.Socket.SocketManager.IOQueue;
 import UDP.TransferProtocol.TransferPacket;
 
 public class Receiver implements Runnable
 {
-    private DatagramSocket s;
-    private BlockingQueue<TransferPacket> inputPacketServer;                    //Packets recieved to give to server
-    private BlockingQueue<TransferPacket> inputPacketClient;                    //Packets recieved to give to client
+    private DatagramSocket socket;
+    private SocketManager manager;
     private ThreadControl tc;
 
-    Receiver (DatagramSocket s, BlockingQueue<TransferPacket> inputServer, BlockingQueue<TransferPacket> inputClient, ThreadControl tc)
+    Receiver (SocketManager manager, ThreadControl tc)
     {
-        this.s= s;
-        this.inputPacketClient= inputClient;
-        this.inputPacketServer= inputServer;
+        try
+        {
+            this.socket= new DatagramSocket(Shared.Defines.transferPort);
+            this.manager= manager;
+            this.tc= tc;
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
+        }
     }
 
     private void handle (DatagramPacket p)
@@ -33,17 +40,9 @@ public class Receiver implements Runnable
             {
                 TransferPacket parsed= new TransferPacket(checked);
 
-                //If a packet is from a client we send it to a server
-                if (parsed.isFromClient)
-                {
-                    this.inputPacketServer.add(parsed);
-                }
-                //Reversed proceedure
-                else
-                {
-                    this.inputPacketClient.add(parsed);
-                }
-
+                //Send package to correspondig ID
+                IOQueue q= this.manager.getQueue(parsed.to);
+                q.in.add(parsed);
             }
             catch (Exception e)
             {
@@ -59,7 +58,7 @@ public class Receiver implements Runnable
             try
             {
                 DatagramPacket p= new DatagramPacket(new byte[Shared.Defines.transferBuffer], Shared.Defines.transferBuffer);
-                this.s.receive(p);
+                this.socket.receive(p);
                 handle(p);
             }
             catch (Exception e)
