@@ -5,6 +5,7 @@ import java.net.*;
 import java.util.*;
 
 import Blocker.BlockInfo;
+import Blocker.FileBlockInfo;
 
 import java.lang.String;
 
@@ -38,17 +39,21 @@ public class ServerCom implements Runnable {
         System.out.println("REG message");
         RegReqPacket p = (RegReqPacket) packet;
         NetId node = packet.getNet_Id();
-        
+        FileBlockInfo fbi = p.get_fileBlockInfo();
         Map<String, Long> fileId= new HashMap<>();
-        BlockInfo nBlock;
+        BlockInfo blockInfo;
         String fileName;
         serverInfo.register_inLoad(node);
         // We insert each (file_name,blocks[]) and get a correspondig id for our files
-        for (Map.Entry<String, BlockInfo> e : p.get_fileBlockInfo().get_fileBlockInfo().entrySet()) 
+        for (Map.Entry<String, BlockInfo> e : fbi.get_fileBlockInfo().entrySet()) 
         {
-            nBlock = e.getValue();
+            blockInfo = e.getValue();
             fileName= e.getKey();
-            fileId.put(fileName, serverInfo.add_file(fileName, node, nBlock));
+            Long filesize = fbi.get_filesize(fileName);
+            if (filesize != null)
+                fileId.put(fileName, serverInfo.add_file(fileName, node, blockInfo));
+            else
+                fileId.put(fileName, serverInfo.add_file(fileName, node, blockInfo, filesize));
         }
         try
         {

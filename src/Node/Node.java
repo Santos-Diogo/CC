@@ -52,7 +52,6 @@ public class Node
      */
     private static Map<Long, NetId> scalonate (NodeBlocks nodeBlocks, long nBlocks, Map<NetId, Integer> workload, List<Long> ownedBlocks)
     {
-        double max_perNode = 0.3;
         Map <Long, NetId> m= new HashMap<>();
         List<Tuple<Long, Integer>> rarestBlocks = nodeBlocks.rarestBlocks(nBlocks);
         remove_ownedBlocks(rarestBlocks, ownedBlocks);
@@ -64,7 +63,7 @@ public class Node
         //Debug end
         for(Tuple<Long, Integer> block : rarestBlocks)
         {
-            NetId node = schedule(block, (int)(nBlocks * max_perNode), nodeBlocks, workload);
+            NetId node = schedule(block, nodeBlocks, workload);
             m.put(block.fst(), node);
             int tmp = workload.get(node);
             workload.put(node, tmp + 1);
@@ -78,7 +77,7 @@ public class Node
         return m;
     }
 
-    private static NetId schedule (Tuple<Long, Integer> block, Integer maxBlock_perNode, NodeBlocks nodeBlocks, Map<NetId, Integer> workload)
+    private static NetId schedule (Tuple<Long, Integer> block, NodeBlocks nodeBlocks, Map<NetId, Integer> workload)
     {
         if(block.snd() == 1)
             return nodeBlocks.get_loneBlock(block.fst());
@@ -224,10 +223,6 @@ public class Node
             //Registers Self
             fbInfo= new FileBlockInfo(args[0]);
             filesId= register (fbInfo);
-
-            //SetsUp UDP Server
-            Thread udpServer= new Thread(new NodeUDP_Server (fbInfo, tc));
-            udpServer.start();
 
             // Handle commands
             String command;
