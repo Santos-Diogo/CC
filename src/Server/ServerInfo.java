@@ -219,7 +219,7 @@ public class ServerInfo
      * @param file
      * @return
      */
-    public NodeBlocks get_nodeInfoFile(String file, NetId requesting_node) 
+    public NodeBlocks get_nodeInfoFile(String file, NetId requesting_node, List<Long> ownedBlocks) 
     {
         try
         {
@@ -230,8 +230,11 @@ public class ServerInfo
             // We Map each Node to a NodeList
             for (ServerBlockInfo sbi : l) 
             {
-                if(sbi.contains_NetID(requesting_node)) 
+                if(sbi.contains_NetID(requesting_node))
+                {
+                    ownedBlocks.addAll(sbi.get_filesBlocks());
                     continue;
+                } 
                 m.put(sbi.netId, sbi.get_filesBlocks());
             }
             return new NodeBlocks(m);

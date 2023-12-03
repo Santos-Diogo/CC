@@ -31,18 +31,31 @@ public class Node
 
 
 
+    public static void remove_ownedBlocks(List<Tuple<Long, Integer>> blocks, List<Long> ownedBlocks) {
+        
+        Iterator<Tuple<Long, Integer>> iterator = blocks.iterator();
+
+        while (iterator.hasNext()) {
+            Tuple<Long, Integer> block = iterator.next();
+
+            if (ownedBlocks.contains(block.fst())) {
+                iterator.remove(); // Remove the element from the list
+            }
+        }
+    }
+
     /**
      * This only solves the transfer without scalonation
      * @param nodeBlocks
      * @param nBlocks
      * @return
      */
-    private static Map<Long, NetId> scalonate (NodeBlocks nodeBlocks, long nBlocks, Map<NetId, Integer> workload) throws Exception
+    private static Map<Long, NetId> scalonate (NodeBlocks nodeBlocks, long nBlocks, Map<NetId, Integer> workload, List<Long> ownedBlocks)
     {
         double max_perNode = 0.3;
         Map <Long, NetId> m= new HashMap<>();
         List<Tuple<Long, Integer>> rarestBlocks = nodeBlocks.rarestBlocks(nBlocks);
-
+        remove_ownedBlocks(rarestBlocks, ownedBlocks);
         //Debug start
         for(Map.Entry<NetId, Integer> wkl: workload.entrySet())
             System.out.println(wkl.getKey().toString() + ", " + wkl.getValue());
@@ -128,7 +141,7 @@ public class Node
             }
             //Debug end
 
-            Map<Long, NetId> blockNode= scalonate (resp.get_nodeBlocks(), resp.get_nBlocks(), resp.getWorkLoad());
+            Map<Long, NetId> blockNode= scalonate (resp.get_nodeBlocks(), resp.get_nBlocks(), resp.getWorkLoad(), resp.getOwnedBlocks());
             //Debug start
             for (Map.Entry<NetId, Integer> wkl : resp.getWorkLoad().entrySet())
                 System.out.println(wkl.getKey().toString() + ", " + wkl.getValue());

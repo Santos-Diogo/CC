@@ -83,10 +83,10 @@ public class ServerCom implements Runnable {
             String file = p.getFile();
             long fileId = serverInfo.get_fileId(file);
             long nBlocks = serverInfo.get_nBlocks(file);
-            NodeBlocks nodeInfoFile = serverInfo.get_nodeInfoFile(file, p.getNet_Id());
-
+            List<Long> ownedBlocks = new ArrayList<>();
+            NodeBlocks nodeInfoFile = serverInfo.get_nodeInfoFile(file, p.getNet_Id(), ownedBlocks);
             Map<NetId, Integer> workLoad = serverInfo.get_workLoad(nodeInfoFile.get_nodes());
-            GetRepPacket replyP = new GetRepPacket(selfId, fileId, nBlocks, nodeInfoFile, workLoad);
+            GetRepPacket replyP = new GetRepPacket(selfId, fileId, nBlocks, nodeInfoFile, ownedBlocks, workLoad);
             out.writeObject(replyP);
             out.flush();
         } catch (IOException e) {
