@@ -51,9 +51,9 @@ public class ServerCom implements Runnable {
             fileName= e.getKey();
             Long filesize = fbi.get_filesize(fileName);
             if (filesize != null)
-                fileId.put(fileName, serverInfo.add_file(fileName, node, blockInfo));
-            else
                 fileId.put(fileName, serverInfo.add_file(fileName, node, blockInfo, filesize));
+            else
+                fileId.put(fileName, serverInfo.add_file(fileName, node, blockInfo));
         }
         try
         {
