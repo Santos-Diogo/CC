@@ -4,6 +4,7 @@ import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.util.concurrent.BlockingQueue;
 import java.security.KeyPair;
+import java.security.PublicKey;
 
 import TransferProtocol.*;
 import TransferProtocol.TransferPayload.CONPayload;
@@ -43,11 +44,17 @@ class TransferClientHandle implements Runnable
 
     private void connect () throws Exception
     {
+        //Send own public key
         CONPayload payload= new CONPayload(this.keyPair.getPublic());
         output.add(PacketWrapper.datagramMaker(target, Shared.Defines.transferPort, payload.serialize(), true, TransferPacket.TypeMsg.CON));
-    }
 
-    
+        //Get target's public key
+        TransferPacket received= this.input.take();
+        byte[] keyBytes= received.payload;
+
+        //Produce SharedSecret via the Crypt
+        this.connectionCrypt= new Crypt(this.keyPair.getPrivate(), keyBytes);
+    }
 
     private void handle (TransferJob j) throws Exception
     {
@@ -65,8 +72,15 @@ class TransferClientHandle implements Runnable
 
     public void run ()
     {
-        //Connect with target node
-        connect ();
+        try
+        {
+            //Connect with target node
+            connect ();
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
 
         while (this.tc.get_running())
         {

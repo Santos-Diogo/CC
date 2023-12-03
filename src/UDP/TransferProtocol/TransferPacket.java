@@ -1,4 +1,4 @@
-package TransferProtocol;
+package UDP.TransferProtocol;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -16,9 +16,10 @@ public class TransferPacket implements Serializable
         ACK     //Ack
     };
 
-    public TypeMsg type;                       //Message's type
-    public boolean isFromClient;               //True if is from client. False if it is from server
-    public byte[] payload;                     //Packet's payload (Encrypted)
+    public TypeMsg type;                        //Message's type
+    public long from;                           //From id
+    public long to;                             //Destination id
+    public byte[] payload;                      //Packet's payload (Encrypted)
 
     /**
      * @return returns packet object written in bytes
@@ -37,14 +38,16 @@ public class TransferPacket implements Serializable
         ObjectInputStream stream= new ObjectInputStream(new ByteArrayInputStream(b));
         TransferPacket p= (TransferPacket) stream.readObject();
         this.type= p.type;
-        this.isFromClient= p.isFromClient;
+        this.from= p.from;
+        this.to= p.to;
         this.payload= p.payload;
     }
 
-    public TransferPacket (TransferPacket.TypeMsg type, boolean isFromClient, byte[] payload)
+    public TransferPacket (TransferPacket.TypeMsg type, long from, long to, byte[] payload)
     {
         this.type= type;
-        this.isFromClient= isFromClient;
+        this.from= from;
+        this.to= to;
         this.payload= payload;
     }
 }
