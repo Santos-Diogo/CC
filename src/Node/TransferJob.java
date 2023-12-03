@@ -6,6 +6,6 @@ import java.util.List;
 public class TransferJob
 {
     InetAddress target;
-    String file;
-    List<Long> nodes;
+    Long file;
+    List<Long> blocks;
 }
