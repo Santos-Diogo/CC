@@ -13,6 +13,7 @@ import java.util.*;
 import Blocker.*;
 import Network.TCP.TrackProtocol.*;
 import Network.TCP.TrackProtocol.TrackPacket.TypeMsg;
+import Network.UDP.TransferProtocol.TransferPacket;
 import Shared.NetId;
 import ThreadTools.ConcurrentInputStream;
 import ThreadTools.*;
@@ -23,10 +24,13 @@ import Network.TCP.Socket.SocketManager;
  */
 public class Node
 {
-    private static BlockingQueue<TrackPacket> trackerInput;
-    private static BlockingQueue<TrackPacket> trackerOutput;
+    private static long trackerId;                                      //Id assigned by the manager
+    private static BlockingQueue<TrackPacket> trackerInput;             //TCP Input
+    private static BlockingQueue<TrackPacket> trackerOutput;            //TCP Output
     private static Network.TCP.Socket.SocketManager tcpSocketManager;   //TCP socket manager
+
     private static Network.UDP.Socket.SocketManager udpSocketManager;   //UDP socket manager
+
     private static NetId net_Id;                                        //Self NetId
     private static Scanner scanner = new Scanner(System.in);            //Console input
     private static Map<String, Long> filesId;                           //Matches the files name with their id in the server context
@@ -189,24 +193,25 @@ public class Node
             // Define this machine IP adress
             net_Id = new NetId(InetAddress.getLocalHost().getHostName());
 
-            // Creates UDP Manager
-
-
             // Creates TCP Manager
-            socket = new Socket(serverAddress, serverPort);
-            trackerOutput = new ConcurrentOutputStream(new ObjectOutputStream(socket.getOutputStream()));
-            trackerInput = new ConcurrentInputStream(new ObjectInputStream(socket.getInputStream()));
+            socket= new Socket(serverAddress, serverPort);
+            tcpSocketManager= new SocketManager(socket, tc);
+            trackerId= tcpSocketManager.register();
+            trackerInput= tcpSocketManager.getInputQueue(trackerId);
+            trackerOutput= tcpSocketManager.getOutpuQueue();
+
+            // Creates UDP Manager
+            udpSocketManager= new Network.UDP.Socket.SocketManager(tc);
+
+            //SetsUp UDP_Client and UDP_Server 
+            Thread udpC= new Thread(new TransferRequests());
+            Thread udpS= new Thread(new TransferServer());
+            udpC.start();
+            udpS.start();
 
             //Registers Self
             fbInfo= new FileBlockInfo(args[0]);
             filesId= register (fbInfo);
-
-
-            //SetsUp UDP_Client and UDP_Server 
-            Thread udpC= new Thread(new UDP_Client());
-            Thread udpS= new Thread(new UDP_Server());
-            udpC.start();
-            udpS.start();
 
 
             // Handle commands

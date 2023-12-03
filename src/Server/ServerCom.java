@@ -16,8 +16,8 @@ import ThreadTools.ThreadControl;
  * Class responsible for handling communication for each independent node on the
  * server side.
  */
-public class ServerCom implements Runnable {
-
+public class ServerCom implements Runnable 
+{
     private ThreadControl tc;
     private ObjectInputStream in;
     private ObjectOutputStream out;

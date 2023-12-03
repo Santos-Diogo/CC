@@ -3,8 +3,6 @@ package Node;
 import ThreadTools.ThreadControl;
 import java.util.concurrent.BlockingQueue;
 
-import Network.UDP.*;
-
 /**
  * Thread that handles transfer requests from the node
  */
