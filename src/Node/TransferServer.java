@@ -1,15 +1,19 @@
 package Node;
 
 import Blocker.FileBlockInfo;
+import ThreadTools.ThreadControl;
 
 public class TransferServer implements Runnable
 {
     private FileBlockInfo fbi;
-    private 
+    private long udpID;
+    private ThreadControl tc;
 
-    TransferServer ()
+    TransferServer (FileBlockInfo fbi, Network.UDP.Socket.SocketManager manager, ThreadControl tc)
     {
-
+        this.fbi= fbi;
+        this.udpID= manager.register();
+        this.tc= tc;
     }
 
     public void run ()
