@@ -83,7 +83,6 @@ public class ServerCom implements Runnable {
             String file = p.getFile();
             long fileId = serverInfo.get_fileId(file);
             long nBlocks = serverInfo.get_nBlocks(file);
-            System.out.println(p.getNet_Id().toString());
             NodeBlocks nodeInfoFile = serverInfo.get_nodeInfoFile(file, p.getNet_Id());
 
             Map<NetId, Integer> workLoad = serverInfo.get_workLoad(nodeInfoFile.get_nodes());

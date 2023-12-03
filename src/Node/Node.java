@@ -112,7 +112,7 @@ public class Node
         try 
         {
             // Send Repply
-            trackerOutput.writeObject(new GetReqPacket(null, file));
+            trackerOutput.writeObject(new GetReqPacket(net_Id, file));
             trackerOutput.flush();
 
             //Get Response
