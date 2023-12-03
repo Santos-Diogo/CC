@@ -47,9 +47,10 @@ public class NodeBlocks implements Serializable{
     public NetId get_loneBlock (Long block)
     {
         for(Map.Entry<NetId, List<Long>> entry : nodeblocks.entrySet())
-            if (entry.getValue().contains(block))
+            if (entry.getValue() == null || entry.getValue().contains(block))
                 return entry.getKey();
-        return null;
+        
+        return null; // This should never be reached, because if this function is called, there is certainly a result.
     }
 
     public List<NetId> get_nodesBlock (Long block)
