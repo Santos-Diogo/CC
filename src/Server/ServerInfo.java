@@ -230,7 +230,7 @@ public class ServerInfo
             // We Map each Node to a NodeList
             for (ServerBlockInfo sbi : l) 
             {
-                if(sbi.netId.equals(requesting_node)) 
+                if(sbi.contains_NetID(requesting_node)) 
                     continue;
                 m.put(sbi.netId, sbi.get_filesBlocks());
             }
