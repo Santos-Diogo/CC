@@ -16,30 +16,32 @@ import Network.TCP.TrackProtocol.TrackPacket.TypeMsg;
 import Shared.NetId;
 import ThreadTools.ConcurrentInputStream;
 import ThreadTools.*;
+import Network.TCP.Socket.SocketManager;
 
 /***
  * Main Node thread
  */
 public class Node
 {
-    private static ConcurrentInputStream trackerInput;
-    private static ConcurrentOutputStream trackerOutput;
-    private static NetId net_Id;                                    //Self NetId
-    private static Scanner scanner = new Scanner(System.in);        //Console input
-    private static Map<String, Long> filesId;                       //Matches the files name with their id in the server context
-    private static FileBlockInfo fbInfo;                            //Info on the node
-    private static ThreadControl tc= new ThreadControl();           //Object used to terminate minor threads
+    private static BlockingQueue<TrackPacket> trackerInput;
+    private static BlockingQueue<TrackPacket> trackerOutput;
+    private static Network.TCP.Socket.SocketManager tcpSocketManager;   //TCP socket manager
+    private static Network.UDP.Socket.SocketManager udpSocketManager;   //UDP socket manager
+    private static NetId net_Id;                                        //Self NetId
+    private static Scanner scanner = new Scanner(System.in);            //Console input
+    private static Map<String, Long> filesId;                           //Matches the files name with their id in the server context
+    private static FileBlockInfo fbInfo;                                //Info on the node
+    private static ThreadControl tc= new ThreadControl();               //Object used to terminate minor threads
 
     private static void handle_avf() 
     {
         try 
         {
             // Write Request
-            trackerOutput.writeObject(new TrackPacket(net_Id, TypeMsg.AVF_REQ));
-            trackerOutput.flush();
+            trackerOutput.add();
 
             // Get response
-            AvfRepPacket packet = (AvfRepPacket) trackerInput.readObject();
+            AvfRepPacket packet = trackerInput.take();
 
             // Write File Names
             Map<String, Long> files = packet.get_files();
@@ -100,11 +102,10 @@ public class Node
         try 
         {
             // Send Repply
-            trackerOutput.writeObject(new GetReqPacket(null, file));
-            trackerOutput.flush();
+            trackerOutput.add();
 
             //Get Response
-            GetRepPacket resp = (GetRepPacket) trackerInput.readObject();
+            GetRepPacket resp = trackerInput.take();
 
             //Debug
             Set<NetId> nodes = resp.get_nodeBlocks().keySet();
@@ -132,8 +133,7 @@ public class Node
     {
         try 
         {
-            trackerOutput.writeObject(new TrackPacket(net_Id, TypeMsg.DC));
-            trackerOutput.flush();
+            trackerOutput.add();
         }
         catch (IOException e) 
         {
@@ -160,7 +160,8 @@ public class Node
         }
     }
 
-    private static String command_request() {
+    private static String command_request() 
+    {
         System.out.println("Type your desired command:\navf - available files\nquit- exit the network\n");
         return scanner.nextLine();
     }
@@ -173,9 +174,8 @@ public class Node
     private static Map<String, Long> register(FileBlockInfo b) throws IOException, ClassNotFoundException
     {
         // Send Reg message with Node Status collected by "FileBlockInfo"
-        trackerOutput.writeObject(new RegReqPacket(net_Id, b));
-        trackerOutput.flush();
-        RegRepPacket rep= (RegRepPacket) trackerInput.readObject();
+        trackerOutput.add();
+        RegRepPacket rep= trackerInput.take();
         return rep.get_fileId();
     }
 
@@ -188,10 +188,11 @@ public class Node
         {
             // Define this machine IP adress
             net_Id = new NetId(InetAddress.getLocalHost().getHostName());
-            
-            //Sets up Connection Managers
 
-            // Connects to server
+            // Creates UDP Manager
+
+
+            // Creates TCP Manager
             socket = new Socket(serverAddress, serverPort);
             trackerOutput = new ConcurrentOutputStream(new ObjectOutputStream(socket.getOutputStream()));
             trackerInput = new ConcurrentInputStream(new ObjectInputStream(socket.getInputStream()));
