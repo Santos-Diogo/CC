@@ -15,7 +15,7 @@ public class ServerInfo
         NetId netId;
 
         public ServerBlockInfo(BlockInfo bInfo, NetId netId) {
-            super(bInfo);
+            super(bInfo.get_filesBlocks());
             this.netId = netId;
         }
 
@@ -35,19 +35,12 @@ public class ServerInfo
     {
         static long id_inc= 0;
         List<ServerBlockInfo> sbiList;
-        Long fileSize;
         long fileId;
 
         FileInfo() 
         {
             this.sbiList = new ArrayList<>();
-            this.fileSize = null;
             this.fileId= id_inc++;
-        }
-
-        void set_fileSize(Long size) {
-            if (size != null)
-                this.fileSize = size;
         }
 
         void add_list(ServerBlockInfo sbi) {
@@ -67,31 +60,43 @@ public class ServerInfo
             return this.sbiList.isEmpty();
         }
 
-        boolean isAvailable () {
+        boolean isAvailable (Long nBlocks) {
+            Set<Long> available_blocks = new HashSet<>();
             for(ServerBlockInfo sbi : sbiList) 
-                if (sbi.get_nBlocks() != null)
+            {
+                List<Long> blocks = sbi.get_filesBlocks();
+                if (blocks == null)
                     return true;
+                available_blocks.addAll(blocks);
+            }
+            if (available_blocks.size() == nBlocks)
+                return true;
             return false;
-        }
-
-        Long get_fileSize() {
-            return this.fileSize;
         }
 
         long get_fileId ()
         {
             return this.fileId;
         }
+
+        boolean nodeHasFile(NetId node) {
+            for(ServerBlockInfo sbi : sbiList)
+                if(sbi.contains_NetID(node) && sbi.has_entireFile())
+                    return true;
+            return false;
+        }
     }
 
     ReentrantReadWriteLock rwl;
     Map<String, FileInfo> file_nodeData;
+    FileHistory fileHistory;
     Map<NetId, Integer> node_load;
 
     public ServerInfo() 
     {
         this.rwl= new ReentrantReadWriteLock();
         this.file_nodeData = new HashMap<>();
+        this.fileHistory = new FileHistory();
         this.node_load = new HashMap<>();
     }
 
@@ -119,14 +124,63 @@ public class ServerInfo
             
             // Add info from node about file
             f.add_list(new ServerBlockInfo(bInfo, netId));
-            // Set FileSize
-            f.set_fileSize(bInfo.get_nBlocks());
+        
+            //Return the file's id
+            return f.fileId;
+        }
+        finally
+        {
+            rwl.writeLock().unlock();
+        }
+    }
+
+    /**
+     * This function is called with extra argument 'filesize'. 
+     * It is used when a complete file is detected in a node's shared directory
+     * 
+     * @param fileName
+     * @param netId
+     * @param bInfo
+     * @param filesize 
+     * @return Returns the inserted file's corresponding Id
+     */
+    public long add_file(String fileName, NetId netId, BlockInfo bInfo, Long filesize) 
+    {
+        try
+        {
+            rwl.writeLock().lock();
+            FileInfo f;
+
+            // No file with that name exists
+            if (!this.file_nodeData.containsKey(fileName)) {
+                this.file_nodeData.put(fileName, f = new FileInfo());
+            }
+            // Get the list to add that entry
+            else {
+                f = this.file_nodeData.get(fileName);
+            }
+            
+            // Add info from node about file
+            f.add_list(new ServerBlockInfo(bInfo, netId));
+            
+            //
+            fileHistory.add_fileHistory(fileName, filesize);
 
             //Return the file's id
             return f.fileId;
         }
         finally
         {
+            rwl.writeLock().unlock();
+        }
+    }
+
+    public void addTo_fileHistory (String file, Long filesize)
+    {
+        rwl.writeLock().lock();
+        try {
+            fileHistory.add_fileHistory(file, filesize);
+        } finally {
             rwl.writeLock().unlock();
         }
     }
@@ -142,6 +196,17 @@ public class ServerInfo
                 int old_value = this.node_load.get(node);
                 this.node_load.put(node, old_value + e.getValue());
             }
+        } finally {
+            rwl.writeLock().unlock();
+        }
+    }
+
+    public void rm_load (NetId node)
+    {
+        rwl.writeLock().lock();
+        try{
+            int old_value = this.node_load.get(node);
+            this.node_load.put(node, old_value - 1);
         } finally {
             rwl.writeLock().unlock();
         }
@@ -187,7 +252,7 @@ public class ServerInfo
         try
         {
             rwl.readLock().lock();
-            return this.file_nodeData.get(file).fileSize;
+            return this.fileHistory.get_fileNBlocks(file);
         }
         finally
         {
@@ -201,7 +266,7 @@ public class ServerInfo
      * @param file
      * @return
      */
-    public NodeBlocks get_nodeInfoFile(String file) 
+    public NodeBlocks get_nodeInfoFile(String file, NetId requesting_node, List<Long> ownedBlocks) 
     {
         try
         {
@@ -212,6 +277,11 @@ public class ServerInfo
             // We Map each Node to a NodeList
             for (ServerBlockInfo sbi : l) 
             {
+                if(sbi.contains_NetID(requesting_node))
+                {
+                    ownedBlocks.addAll(sbi.get_filesBlocks());
+                    continue;
+                } 
                 m.put(sbi.netId, sbi.get_filesBlocks());
             }
             return new NodeBlocks(m);
@@ -249,7 +319,7 @@ public class ServerInfo
     /**
      * @return FileSizes mapped to corresponding filenames
      */
-    public Map<String, Long> get_filesWithSizes ()
+    public Map<String, Long> get_filesWithSizes (NetId requesting_node)
     {
         try
         {
@@ -258,8 +328,10 @@ public class ServerInfo
             
             for (Map.Entry<String, FileInfo> e : this.file_nodeData.entrySet())
             {
-                if(e.getValue().isAvailable())
-                    m.put(e.getKey(), e.getValue().fileSize);
+                FileInfo file = e.getValue();
+                String fileName = e.getKey();
+                if(fileHistory.contains_file(fileName) && file.isAvailable(fileHistory.get_fileNBlocks(fileName)) && !file.nodeHasFile(requesting_node))
+                    m.put(fileName, fileHistory.get_fileNBlocks(fileName));
             }
             
             return m;

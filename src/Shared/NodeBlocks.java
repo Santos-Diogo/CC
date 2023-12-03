@@ -6,8 +6,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.io.Serializable;
 
-public class NodeBlocks {
+public class NodeBlocks implements Serializable{
     
     private Map<NetId, List<Long>> nodeblocks;
 
@@ -46,16 +47,17 @@ public class NodeBlocks {
     public NetId get_loneBlock (Long block)
     {
         for(Map.Entry<NetId, List<Long>> entry : nodeblocks.entrySet())
-            if (entry.getValue().contains(block))
+            if (entry.getValue() == null || entry.getValue().contains(block))
                 return entry.getKey();
-        return null;
+        
+        return null; // This should never be reached, because if this function is called, there is certainly a result.
     }
 
     public List<NetId> get_nodesBlock (Long block)
     {
         List<NetId> nodes = new ArrayList<>();
         for(Map.Entry<NetId, List<Long>> nb : nodeblocks.entrySet())
-            if (nb.getValue().contains(block))
+            if (nb.getValue() == null || nb.getValue().contains(block))
                 nodes.add(nb.getKey());
         return nodes;
     }

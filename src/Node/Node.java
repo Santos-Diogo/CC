@@ -31,28 +31,53 @@ public class Node
 
 
 
+    public static void remove_ownedBlocks(List<Tuple<Long, Integer>> blocks, List<Long> ownedBlocks) {
+        
+        Iterator<Tuple<Long, Integer>> iterator = blocks.iterator();
+
+        while (iterator.hasNext()) {
+            Tuple<Long, Integer> block = iterator.next();
+
+            if (ownedBlocks.contains(block.fst())) {
+                iterator.remove(); // Remove the element from the list
+            }
+        }
+    }
+
     /**
      * This only solves the transfer without scalonation
      * @param nodeBlocks
      * @param nBlocks
      * @return
      */
-    private static Map<Long, NetId> scalonate (NodeBlocks nodeBlocks, long nBlocks, Map<NetId, Integer> workload) throws Exception
+    private static Map<Long, NetId> scalonate (NodeBlocks nodeBlocks, long nBlocks, Map<NetId, Integer> workload, List<Long> ownedBlocks)
     {
-        double max_perNode = 0.3;
         Map <Long, NetId> m= new HashMap<>();
         List<Tuple<Long, Integer>> rarestBlocks = nodeBlocks.rarestBlocks(nBlocks);
+        remove_ownedBlocks(rarestBlocks, ownedBlocks);
+        //Debug start
+        for(Map.Entry<NetId, Integer> wkl: workload.entrySet())
+            System.out.println(wkl.getKey().toString() + ", " + wkl.getValue());
+	    for(Tuple<Long, Integer> tpl : rarestBlocks)
+            System.out.println(tpl.toString());
+        //Debug end
         for(Tuple<Long, Integer> block : rarestBlocks)
         {
-            NetId node = schedule(block, (int)(nBlocks * max_perNode), nodeBlocks, workload);
+            NetId node = schedule(block, nodeBlocks, workload);
             m.put(block.fst(), node);
             int tmp = workload.get(node);
             workload.put(node, tmp + 1);
         }
+        //Debug start
+        for(Map.Entry<NetId, Integer> wkl: workload.entrySet())
+            System.out.println(wkl.getKey().toString() + ", " + wkl.getValue());
+        for(Map.Entry<Long, NetId> asd: m.entrySet())
+            System.out.println(asd.getKey() + ", " + asd.getValue().toString());
+        //Debug end
         return m;
     }
 
-    private static NetId schedule (Tuple<Long, Integer> block, Integer maxBlock_perNode, NodeBlocks nodeBlocks, Map<NetId, Integer> workload)
+    private static NetId schedule (Tuple<Long, Integer> block, NodeBlocks nodeBlocks, Map<NetId, Integer> workload)
     {
         if(block.snd() == 1)
             return nodeBlocks.get_loneBlock(block.fst());
@@ -99,7 +124,7 @@ public class Node
         try 
         {
             // Send Repply
-            trackerOutput.writeObject(new GetReqPacket(null, file));
+            trackerOutput.writeObject(new GetReqPacket(net_Id, file));
             trackerOutput.flush();
 
             //Get Response
@@ -115,7 +140,13 @@ public class Node
             }
             //Debug end
 
-            Map<Long, NetId> blockNode= scalonate (resp.get_nodeBlocks(), resp.get_nBlocks(), resp.getWorkLoad());
+            Map<Long, NetId> blockNode= scalonate (resp.get_nodeBlocks(), resp.get_nBlocks(), resp.getWorkLoad(), resp.getOwnedBlocks());
+            //Debug start
+            for (Map.Entry<NetId, Integer> wkl : resp.getWorkLoad().entrySet())
+                System.out.println(wkl.getKey().toString() + ", " + wkl.getValue());
+            //Debug end
+
+            //Here we need to update tracker about the workload thats being issued on the nodes and to start the transfer process
         }
         catch (Exception e) 
         {
@@ -192,10 +223,6 @@ public class Node
             //Registers Self
             fbInfo= new FileBlockInfo(args[0]);
             filesId= register (fbInfo);
-
-            //SetsUp UDP Server
-            Thread udpServer= new Thread(new NodeUDP_Server (fbInfo, tc));
-            udpServer.start();
 
             // Handle commands
             String command;
