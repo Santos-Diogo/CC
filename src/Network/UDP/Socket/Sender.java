@@ -1,4 +1,4 @@
-package UDP.Socket;
+package Network.UDP.Socket;
 
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -9,9 +9,9 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import Network.UDP.Socket.SocketManager.IOQueue.OutPacket;
 import Shared.CRC;
 import ThreadTools.ThreadControl;
-import UDP.Socket.SocketManager.IOQueue.OutPacket;
 
 public class Sender implements Runnable
 {

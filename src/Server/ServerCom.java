@@ -5,12 +5,12 @@ import java.net.*;
 import java.util.*;
 
 import Blocker.BlockInfo;
+import Network.TCP.TrackProtocol.*;
 
 import java.lang.String;
 
 import Shared.NetId;
 import ThreadTools.ThreadControl;
-import TrackProtocol.*;
 
 /**
  * Class responsible for handling communication for each independent node on the

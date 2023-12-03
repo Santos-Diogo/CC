@@ -1,4 +1,4 @@
-package UDP.TransferProtocol;
+package Network.UDP.TransferProtocol;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;

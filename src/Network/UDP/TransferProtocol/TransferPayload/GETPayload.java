@@ -1,4 +1,4 @@
-package UDP.TransferProtocol.TransferPayload;
+package Network.UDP.TransferProtocol.TransferPayload;
 
 import java.io.ByteArrayInputStream;
 import java.io.ObjectInputStream;

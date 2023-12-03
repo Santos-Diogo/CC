@@ -2,7 +2,8 @@ package Node;
 
 import ThreadTools.ThreadControl;
 import java.util.concurrent.BlockingQueue;
-import UDP.*;
+
+import Network.UDP.*;
 
 /**
  * Thread that handles transfer requests from the node
@@ -16,7 +17,7 @@ class TransferRequests implements Runnable
     {
         long file;
         ThreadControl tc;
-        UDP.Socket.SocketManager udpManager;
+        Network.UDP.Socket.SocketManager udpManager;
         //TCP socket Manager
 
         FileGetter (long file, ThreadControl tc)

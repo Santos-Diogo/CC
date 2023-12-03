@@ -1,12 +1,13 @@
-package UDP.Socket;
+package Network.UDP.Socket;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+
+import Network.UDP.Socket.SocketManager.IOQueue;
+import Network.UDP.TransferProtocol.TransferPacket;
 import Shared.CRC;
 import ThreadTools.ThreadControl;
-import UDP.Socket.SocketManager.IOQueue;
-import UDP.TransferProtocol.TransferPacket;
 
 public class Receiver implements Runnable
 {

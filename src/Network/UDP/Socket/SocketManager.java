@@ -1,6 +1,5 @@
-package UDP.Socket;
+package Network.UDP.Socket;
 
-import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.util.HashMap;
 import java.util.Map;
@@ -9,7 +8,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import ThreadTools.ThreadControl;
-import UDP.TransferProtocol.*;
+import Network.UDP.TransferProtocol.*;
 
 /**
  * Class responsible for handling UDP Socket's IO and answering to some methods (?)
@@ -20,18 +19,24 @@ public class SocketManager
     {
         public class OutPacket
         {
-            InetAddress destination;
-            TransferPacket packet;
+            public InetAddress destination;
+            public TransferPacket packet;
         }
 
-        BlockingQueue<OutPacket> out;         //Packets sent
-        BlockingQueue<TransferPacket> in;               //Packets recieved
+        public BlockingQueue<OutPacket> out;         //Packets sent
+        public BlockingQueue<TransferPacket> in;     //Packets recieved
 
         IOQueue ()
         {
             this.in= new LinkedBlockingQueue<>();
             this.out= new LinkedBlockingQueue<>();
         }
+    }
+
+    public enum SocketType
+    {
+        UDP,
+        TCP
     }
     
     private ReentrantReadWriteLock rwl;

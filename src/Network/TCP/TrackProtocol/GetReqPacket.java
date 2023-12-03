@@ -1,4 +1,4 @@
-package TrackProtocol;
+package Network.TCP.TrackProtocol;
 
 import Shared.NetId;
 

@@ -11,11 +11,11 @@ import java.net.UnknownHostException;
 import java.util.*;
 
 import Blocker.*;
+import Network.TCP.TrackProtocol.*;
+import Network.TCP.TrackProtocol.TrackPacket.TypeMsg;
 import Shared.NetId;
 import ThreadTools.ConcurrentInputStream;
 import ThreadTools.*;
-import TrackProtocol.*;
-import TrackProtocol.TrackPacket.TypeMsg;
 
 /***
  * Main Node thread
