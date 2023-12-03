@@ -11,12 +11,14 @@ public class TransferPacket implements Serializable
     public enum TypeMsg
     {
         CON,    //Connect to node
-        GET
+        GET,    //Get a file Request
+        TSF,    //Transfer packet
+        ACK     //Ack
     };
 
     public TypeMsg type;                       //Message's type
     public boolean isFromClient;               //True if is from client. False if it is from server
-    public byte[] payload;                     //Packet's payload
+    public byte[] payload;                     //Packet's payload (Encrypted)
 
     /**
      * @return returns packet object written in bytes
