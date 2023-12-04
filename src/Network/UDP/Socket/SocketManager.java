@@ -27,11 +27,6 @@ public class SocketManager
         }
     }
 
-    public enum SocketType
-    {
-        UDP,
-        TCP
-    }
     
     private ReentrantReadWriteLock rwl;
     private long nUser;

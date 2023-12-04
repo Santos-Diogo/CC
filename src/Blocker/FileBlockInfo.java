@@ -17,6 +17,7 @@ import java.io.Serializable;
 public class FileBlockInfo implements Serializable
 {
     private Map<String, BlockInfo> fileBlockInfo;
+    private Map<String, Long> files_filesize;
 
 
     /**
@@ -41,15 +42,13 @@ public class FileBlockInfo implements Serializable
                     fileName = matcher.group(1);
 
                     if (!fileBlockInfo.containsKey(fileName))
-                        fileBlockInfo.put(fileName, new BlockInfo(null, new ArrayList<>()));
+                        fileBlockInfo.put(fileName, new BlockInfo(new ArrayList<>()));
                     fileBlockInfo.get(fileName).add_block(Long.parseLong(matcher.group(2)));
                 }
                 else 
                 {
-                    Long fileSize = Files.size(filePath);
-                    // If the fileSize % blockSize is not 0 we must add another block otherwise we lose information about the file.
-                    Long nBlocks= (fileSize % Shared.Defines.blockSize == 0 ) ? fileSize/ Shared.Defines.blockSize : (fileSize/ Shared.Defines.blockSize) + 1;
-                    fileBlockInfo.put(fileName, new BlockInfo(nBlocks, null));
+                    files_filesize.put(fileName, Files.size(filePath));
+                    fileBlockInfo.put(fileName, new BlockInfo(null));
                 }
             }
         } 
@@ -57,18 +56,6 @@ public class FileBlockInfo implements Serializable
         {
             e.printStackTrace();
         }
-    }
-
-    /**
-     * Add a file to the Structure
-     * 
-     * @param name   name of the file
-     * @param size   size of the file in blocks
-     * @param blocks blocks owned. (null for all blocks)
-     */
-    public void add_file(String name, long size, List<Long> blocks) 
-    {
-        fileBlockInfo.put(name, new BlockInfo(size, blocks));
     }
 
     /**
@@ -87,6 +74,11 @@ public class FileBlockInfo implements Serializable
     public List<String> get_files() 
     {
         return fileBlockInfo.keySet().stream().toList();
+    }
+
+    public Long get_filesize (String file)
+    {
+        return (files_filesize.containsKey(file)) ? files_filesize.get(file) : null;
     }
 
     public BlockInfo get_blockInfo (String file)
