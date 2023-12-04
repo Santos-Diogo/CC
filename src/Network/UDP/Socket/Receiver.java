@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 
-import Network.UDP.Socket.SocketManager.IOQueue;
 import Network.UDP.TransferProtocol.TransferPacket;
 import Shared.CRC;
 import ThreadTools.ThreadControl;
@@ -15,7 +14,7 @@ public class Receiver implements Runnable
     private SocketManager manager;
     private ThreadControl tc;
 
-    Receiver (SocketManager manager, ThreadControl tc)
+    Receiver (DatagramSocket socket, SocketManager manager, ThreadControl tc)
     {
         try
         {
