@@ -19,6 +19,7 @@ import Network.UDP.Packet.UDP_Packet.Type;
 import Network.UDP.Socket.SocketManager.ConnectionByIP;
 import Network.UDP.TransferProtocol.TransferPacket;
 import ThreadTools.ThreadControl;
+import Shared.CRC;
 import Shared.Crypt;
 
 public class Sender implements Runnable
@@ -42,8 +43,11 @@ public class Sender implements Runnable
         //Serialize packet
         byte[] serializeUDP= udp.serialize();
 
+        //Add checksum
+        byte[] checksummed= CRC.couple(serializeUDP);
+
         //Make Datagram
-        DatagramPacket datagramPacket= new DatagramPacket(serializeUDP, serializeUDP.length, targetAddr, Shared.Defines.transferPort);
+        DatagramPacket datagramPacket= new DatagramPacket(checksummed, checksummed.length, targetAddr, Shared.Defines.transferPort);
 
         //Send Packet
         socket.send(datagramPacket);

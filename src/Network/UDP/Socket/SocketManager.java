@@ -351,6 +351,11 @@ public class SocketManager
         {
             return this.map.get(addr).getRetrans();
         }
+
+        public BlockingQueue<TransferPacket> getUserInput (long userId)
+        {
+            return this.input.get(userId);
+        }
     }
 
     public class UserIO
