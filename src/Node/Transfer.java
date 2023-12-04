@@ -1,23 +1,35 @@
 package Node;
 
+import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.util.List;
+import java.util.concurrent.BlockingQueue;
 
+import Network.TCP.TrackProtocol.TrackPacket;
 import Network.UDP.Socket.SocketManager.IOQueue;
+import Network.UDP.TransferProtocol.TransferPacket;
+import Network.UDP.TransferProtocol.TransferPacket.TypeMsg;
+import Network.UDP.TransferProtocol.TransferPayload.GETPayload;
+import Network.UDP.TransferProtocol.TransferPayload.TSFPayload;
+import Shared.Crypt;
 
 public class Transfer implements Runnable{
 
     private InetAddress node_toRequest; 
-    private long id;
+    private long udpId;
     private IOQueue udpQueue;
+    private BlockingQueue<TrackPacket> tcpQueue;
     private long fileid;
     private List<Long> blocks;
+    private Crypt crypt;
+    private long target_id;
 
-    public Transfer (Network.UDP.Socket.SocketManager udpManager, InetAddress node, long fileid, List<Long> blocks)
+    public Transfer (Network.UDP.Socket.SocketManager udpManager, Network.TCP.Socket.SocketManager tcpManager, InetAddress node, long fileid, List<Long> blocks)
     {
         this.node_toRequest = node;
-        this.id = udpManager.register();
-        this.udpQueue = udpManager.getQueue(this.id);
+        this.udpId = udpManager.register();
+        this.udpQueue = udpManager.getQueue(this.udpId);
+        this.tcpQueue = tcpManager.getOutpuQueue();
         this.fileid = fileid;
         this.blocks = blocks;
     }
@@ -25,7 +37,23 @@ public class Transfer implements Runnable{
 
     public void run ()
     {
-        
+        GETPayload payload = new GETPayload(fileid, blocks);
+        try {
+            TransferPacket packet = new TransferPacket(TypeMsg.GET, udpId, target_id, crypt.encrypt(payload.serialize()));
+            byte[] serialized_packet = packet.serialize(); 
+            DatagramPacket packet2 = new DatagramPacket(serialized_packet, serialized_packet.length, node_toRequest, Shared.Defines.transferPort);
+            udpQueue.out.add(packet2);
+            int blocks_size = blocks.size();
+            for(int i = 0; i < blocks_size; i++)
+            {
+                TransferPacket repPacket = udpQueue.in.take();
+                TSFPayload file_block = new TSFPayload(crypt.decrypt(repPacket.payload));
+
+            }
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
     }
     
