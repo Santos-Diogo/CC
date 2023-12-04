@@ -5,11 +5,14 @@ import ThreadTools.ThreadControl;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import Network.UDP.Socket.SocketManager.IOQueue;
+import Network.UDP.Socket.SocketManager.UserInfo;
 import Network.UDP.TransferProtocol.TransferPacket;
+import Network.UDP.TransferProtocol.TransferPacket.TypeMsg;
 import Network.UDP.TransferProtocol.TransferPayload.GETPayload;
+import Network.UDP.TransferProtocol.TransferPayload.TSFPayload;
 import Shared.Crypt;
 
 import java.security.KeyPair;
@@ -27,7 +30,7 @@ public class TransferServerHandle implements Runnable
     private InetAddress target;
     private long targetId;
     private long selfId;
-    private IOQueue ioQueue;
+    private UserInfo userInfo;
     private KeyPair keyPair;
     private Crypt crypt;
     private FileBlockInfo fbi;
@@ -53,7 +56,7 @@ public class TransferServerHandle implements Runnable
         {
             this.tc= tc;
             this.target= p.source;
-            this.ioQueue= manager.getQueue(manager.register());
+            this.userInfo= manager.register(target);
             this.keyPair= keyPair;
             this.fbi = fbi;
             this.dir = dir;
@@ -93,14 +96,23 @@ public class TransferServerHandle implements Runnable
                         {
                             byte[] block = new byte[Shared.Defines.blockSize];
                             fileInputStream.read(block);
-                            
+                            TSFPayload payload = new TSFPayload(b, block);
+                            TransferPacket tsfpacket = new TransferPacket(TypeMsg.TSF, payload.serialize());
+                            userInfo.out.add(tsfpacket);
                         }
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
             } else {
-                
+                for(Long b : blocks)
+                {
+                    String blockFileDir = fileDir + ".fsblk." + b;
+                    byte[] block = Files.readAllBytes(Path.of(blockFileDir));
+                    TSFPayload payload = new TSFPayload(b, block);
+                    TransferPacket tsfpacket = new TransferPacket(TypeMsg.TSF, payload.serialize());
+                    userInfo.out.add(tsfpacket);
+                }
             }
         }
         catch (Exception e)
