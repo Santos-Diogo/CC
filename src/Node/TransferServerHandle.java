@@ -5,7 +5,6 @@ import ThreadTools.ThreadControl;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import Network.UDP.Socket.SocketManager.IOQueue;
@@ -15,7 +14,11 @@ import Shared.Crypt;
 
 import java.security.KeyPair;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
+import java.util.Map;
+
+import Blocker.FileBlockInfo;
+
+import java.io.FileInputStream;
 import java.io.InputStream;
 
 public class TransferServerHandle implements Runnable
@@ -27,7 +30,7 @@ public class TransferServerHandle implements Runnable
     private IOQueue ioQueue;
     private KeyPair keyPair;
     private Crypt crypt;
-    private String file;
+    private FileBlockInfo fbi;
     private String dir;
 
     public void connect (TransferPacket p) throws Exception
@@ -44,7 +47,7 @@ public class TransferServerHandle implements Runnable
         this.ioQueue.out.add(datagramPacket);
     }
 
-    TransferServerHandle (ThreadControl tc, TransferPacket p, Network.UDP.Socket.SocketManager manager, KeyPair keyPair)
+    TransferServerHandle (ThreadControl tc, TransferPacket p, Network.UDP.Socket.SocketManager manager, KeyPair keyPair, FileBlockInfo fbi, String dir)
     {
         try
         {
@@ -52,6 +55,8 @@ public class TransferServerHandle implements Runnable
             this.target= p.source;
             this.ioQueue= manager.getQueue(manager.register());
             this.keyPair= keyPair;
+            this.fbi = fbi;
+            this.dir = dir;
 
             //connect to client that sent 1st packet
             connect(p);
@@ -69,17 +74,32 @@ public class TransferServerHandle implements Runnable
             GETPayload getPacket= new GETPayload(packet.payload);
 
             //File and Blocks to send
-            long file= getPacket.file;
+            long fileID= getPacket.file;
+            String file = fbi.getFile_byID(fileID);
             List<Long> blocks= getPacket.blocks;
+            blocks.sort(null);
 
             //Send all the blocks
 
-            String fileDir= file+ dir;
-            InputStream inputStream= Files.newInputStream(Paths.get(fileDir));
+            String fileDir= dir + file;
             
-            long currentOffset= 0;
-            for (Long b : blocks)
+            if (fbi.hasWholeFile(file))
             {
+                try (FileInputStream fileInputStream = new FileInputStream(fileDir)){
+                    for (Long b : blocks)
+                    {
+                        long skipBytes = (long) b * Shared.Defines.blockSize;
+                        if (fileInputStream.skip(skipBytes) == skipBytes) 
+                        {
+                            byte[] block = new byte[Shared.Defines.blockSize];
+                            fileInputStream.read(block);
+                            
+                        }
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            } else {
                 
             }
         }
@@ -104,8 +124,13 @@ public class TransferServerHandle implements Runnable
     {
         while (this.tc.get_running())
         {
-            TransferPacket p= this.ioQueue.in.take()
-            handle (p);
+            try {
+                TransferPacket p= this.ioQueue.in.take();
+                handle (p);
+                
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }       
 }

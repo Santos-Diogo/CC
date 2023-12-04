@@ -35,7 +35,6 @@ public class Node
 
     private static NetId net_Id;                                        //Self NetId
     private static Scanner scanner = new Scanner(System.in);            //Console input
-    private static Map<String, Long> filesId;                           //Matches the files name with their id in the server context
     private static FileBlockInfo fbInfo;                                //Info on the node
     private static ThreadControl tc= new ThreadControl();               //Object used to terminate minor threads
     public static DNScache dnscache = new DNScache();
@@ -154,12 +153,12 @@ public class Node
      * @return the input file's id in the server
      * @throws IOException
      */
-    private static Map<String, Long> register(FileBlockInfo b) throws IOException, ClassNotFoundException
+    private static void register(FileBlockInfo b) throws IOException, ClassNotFoundException
     {
         // Send Reg message with Node Status collected by "FileBlockInfo"
         trackerOutput.add();
         RegRepPacket rep= trackerInput.take();
-        return rep.get_fileId();
+        b.set_FilesID(rep.get_fileId());
     }
 
     public static void main(String[] args) throws InterruptedException 
@@ -182,15 +181,15 @@ public class Node
             // Creates UDP Manager
             udpSocketManager= new Network.UDP.Socket.SocketManager(tc);
 
-            //SetsUp UDP_Client and UDP_Server 
-            Thread udpC= new Thread(new TransferRequests());
-            Thread udpS= new Thread(new TransferServer());
-            udpC.start();
-            udpS.start();
-
             //Registers Self
             fbInfo= new FileBlockInfo(args[0]);
-            filesId= register (fbInfo);
+            register (fbInfo);
+
+            //SetsUp UDP_Client and UDP_Server 
+            Thread udpC= new Thread(new TransferRequests());
+            Thread udpS= new Thread(new TransferServer(fbInfo, udpSocketManager, tc, args[0]));
+            udpC.start();
+            udpS.start();
 
 
             // Handle commands
