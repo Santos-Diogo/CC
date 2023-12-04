@@ -80,7 +80,7 @@ public class TransferServerHandle implements Runnable
             long currentOffset= 0;
             for (Long b : blocks)
             {
-                 //ATE> AMANAHA    
+                
             }
         }
         catch (Exception e)
