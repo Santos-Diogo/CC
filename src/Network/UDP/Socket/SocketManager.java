@@ -1,5 +1,6 @@
 package Network.UDP.Socket;
 
+import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.util.HashMap;
 import java.util.Map;
@@ -17,13 +18,7 @@ public class SocketManager
 {
     public class IOQueue
     {
-        public class OutPacket
-        {
-            public InetAddress destination;
-            public TransferPacket packet;
-        }
-
-        public BlockingQueue<OutPacket> out;         //Packets sent
+        public BlockingQueue<DatagramPacket> out;         //Packets sent
         public BlockingQueue<TransferPacket> in;     //Packets recieved
 
         IOQueue ()
@@ -50,7 +45,7 @@ public class SocketManager
         try
         {
             this.rwl= new ReentrantReadWriteLock();
-            this.nUser= 0;
+            this.nUser= 1;
             this.userToQueue= new HashMap<>();
             
             //Initiate Sender and Receiver
@@ -86,6 +81,25 @@ public class SocketManager
         {
             //Increment nUser
             this.nUser+= 1;
+            this.rwl.writeLock().unlock();
+        }
+    }
+
+    public long registerServer ()
+    {
+        try
+        {
+            this.rwl.writeLock().lock();
+            
+            //Register a user creating a new q and assigning him a number
+            IOQueue q= new IOQueue();
+            this.sender.getSenderMinion(q.out);
+            this.userToQueue.put((long) 0, q);
+
+            return nUser;
+        }
+        finally
+        {
             this.rwl.writeLock().unlock();
         }
     }
