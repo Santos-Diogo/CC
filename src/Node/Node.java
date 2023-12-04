@@ -39,63 +39,7 @@ public class Node
     private static FileBlockInfo fbInfo;                                //Info on the node
     private static ThreadControl tc= new ThreadControl();               //Object used to terminate minor threads
 
-
-
-    public static void remove_ownedBlocks(List<Tuple<Long, Integer>> blocks, List<Long> ownedBlocks) {
-        
-        Iterator<Tuple<Long, Integer>> iterator = blocks.iterator();
-
-        while (iterator.hasNext()) {
-            Tuple<Long, Integer> block = iterator.next();
-
-            if (ownedBlocks.contains(block.fst())) {
-                iterator.remove(); // Remove the element from the list
-            }
-        }
-    }
-
-    /**
-     * This only solves the transfer without scalonation
-     * @param nodeBlocks
-     * @param nBlocks
-     * @return
-     */
-    private static Map<Long, NetId> scalonate (NodeBlocks nodeBlocks, long nBlocks, Map<NetId, Integer> workload, List<Long> ownedBlocks)
-    {
-        Map <Long, NetId> m= new HashMap<>();
-        List<Tuple<Long, Integer>> rarestBlocks = nodeBlocks.rarestBlocks(nBlocks);
-        remove_ownedBlocks(rarestBlocks, ownedBlocks);
-        //Debug start
-        for(Map.Entry<NetId, Integer> wkl: workload.entrySet())
-            System.out.println(wkl.getKey().toString() + ", " + wkl.getValue());
-	    for(Tuple<Long, Integer> tpl : rarestBlocks)
-            System.out.println(tpl.toString());
-        //Debug end
-        for(Tuple<Long, Integer> block : rarestBlocks)
-        {
-            NetId node = schedule(block, nodeBlocks, workload);
-            m.put(block.fst(), node);
-            int tmp = workload.get(node);
-            workload.put(node, tmp + 1);
-        }
-        //Debug start
-        for(Map.Entry<NetId, Integer> wkl: workload.entrySet())
-            System.out.println(wkl.getKey().toString() + ", " + wkl.getValue());
-        for(Map.Entry<Long, NetId> asd: m.entrySet())
-            System.out.println(asd.getKey() + ", " + asd.getValue().toString());
-        //Debug end
-        return m;
-    }
-
-    private static NetId schedule (Tuple<Long, Integer> block, NodeBlocks nodeBlocks, Map<NetId, Integer> workload)
-    {
-        if(block.snd() == 1)
-            return nodeBlocks.get_loneBlock(block.fst());
-        List<NetId> nodes = nodeBlocks.get_nodesBlock(block.fst());
-        nodes.sort(Comparator.comparingInt(workload :: get).thenComparing(node -> new Random().nextInt()));
-        return nodes.get(0);
-    }
-
+    
     
     private static void handle_avf() 
     {

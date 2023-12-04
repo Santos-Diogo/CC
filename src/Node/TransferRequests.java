@@ -1,7 +1,20 @@
 package Node;
 
 import ThreadTools.ThreadControl;
+
+import java.io.ByteArrayOutputStream;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
 import java.util.concurrent.BlockingQueue;
+
+import Shared.NetId;
+import Shared.NodeBlocks;
+import Shared.Tuple;
 
 /**
  * Thread that handles transfer requests from the node
@@ -18,19 +31,89 @@ class TransferRequests implements Runnable
         Network.UDP.Socket.SocketManager udpManager;
         //TCP socket Manager
 
-        FileGetter (long file, ThreadControl tc)
+        FileGetter (long file, ThreadControl tc, Network.UDP.Socket.SocketManager udpManager)
         {
             this.file= file;
             this.tc= tc;
+            this.udpManager = udpManager;
+        }
+
+        public static void remove_ownedBlocks(List<Tuple<Long, Integer>> blocks, List<Long> ownedBlocks) {
+        
+            Iterator<Tuple<Long, Integer>> iterator = blocks.iterator();
+
+            while (iterator.hasNext()) {
+                Tuple<Long, Integer> block = iterator.next();
+
+                if (ownedBlocks.contains(block.fst())) {
+                    iterator.remove(); // Remove the element from the list
+                }
+            }
+        }
+
+        /**
+         * This only solves the transfer without scalonation
+         * @param nodeBlocks
+         * @param nBlocks
+         * @return
+         */
+        private static Map<NetId, List<Long>> scalonate (NodeBlocks nodeBlocks, long nBlocks, Map<NetId, Integer> workload, List<Long> ownedBlocks)
+        {
+            Map <NetId, List<Long>> m= new HashMap<>();
+            List<Tuple<Long, Integer>> rarestBlocks = nodeBlocks.rarestBlocks(nBlocks);
+            remove_ownedBlocks(rarestBlocks, ownedBlocks);
+            for(Tuple<Long, Integer> block : rarestBlocks)
+            {
+                NetId node = schedule(block, nodeBlocks, workload);
+                if (m.containsKey(node))
+                    m.get(node).add(block.fst());
+                else
+                {
+                    List<Long> blocks = new ArrayList<>();
+                    blocks.add(block.fst());
+                    m.put(node, blocks);
+                }
+                int tmp = workload.get(node);
+                workload.put(node, tmp + 1);
+            }
+            return m;
+        }
+
+        private static NetId schedule (Tuple<Long, Integer> block, NodeBlocks nodeBlocks, Map<NetId, Integer> workload)
+        {
+            if(block.snd() == 1)
+                return nodeBlocks.get_loneBlock(block.fst());
+            List<NetId> nodes = nodeBlocks.get_nodesBlock(block.fst());
+            nodes.sort(Comparator.comparingInt(workload :: get).thenComparing(node -> new Random().nextInt()));
+            return nodes.get(0);
+        }
+
+        public byte[] assembleFile (byte[][] blocks, long nBlocks)
+        {
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            for(int i = 0; i < nBlocks; i++)
+                outputStream.write(blocks[i], 0, blocks[i].length);
+            return outputStream.toByteArray();
         }
 
         public void run ()
         {
             //Send escalonate Request to TrackerServer -> Requires TCP Socket
-
+            NodeBlocks nodeblocks;
+            long nBlocks;
+            Map<NetId, Integer> workload;
+            List<Long> ownedBlocks;
+            Map<NetId, List<Long>> scalonated_blocks = scalonate(nodeblocks, nBlocks, workload, ownedBlocks);
             //Create threads for each node to get the packet -> Requeires UDP Socket
+            try {
+                for(int i = 0; i < scalonated_blocks.keySet().size(); i++)
+                    Thread t = new Thread();
 
-            //Assemble the packet
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            byte[][] blocks;
+            escrever_ficheiro(filename, assembleFile(blocks, nBlocks));
         }
     }
 

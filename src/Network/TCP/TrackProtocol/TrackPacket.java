@@ -25,7 +25,7 @@ public class TrackPacket implements Serializable
 
     public TrackPacket(NetId n, TypeMsg type, long from, long to) 
     {
-        this.Net_Id= n;
+        this.net_Id= n;
         this.type= type;
     }
 }
