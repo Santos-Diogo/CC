@@ -48,7 +48,6 @@ public class Transfer implements Runnable{
             {
                 TransferPacket repPacket = udpQueue.in.take();
                 TSFPayload file_block = new TSFPayload(crypt.decrypt(repPacket.payload));
-
             }
             
         } catch (Exception e) {

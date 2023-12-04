@@ -6,48 +6,43 @@ import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import Network.UDP.Socket.SocketManager.UserInfo;
 import Network.UDP.TransferProtocol.TransferPacket;
 import Network.UDP.TransferProtocol.TransferPacket.TypeMsg;
 import Network.UDP.TransferProtocol.TransferPayload.GETPayload;
 import Network.UDP.TransferProtocol.TransferPayload.TSFPayload;
-import Shared.Crypt;
 
 import java.security.KeyPair;
 import java.util.List;
-import java.util.Map;
 
 import Blocker.FileBlockInfo;
 
 import java.io.FileInputStream;
-import java.io.InputStream;
 
 public class TransferServerHandle implements Runnable
 {
     private ThreadControl tc;
     private InetAddress target;
-    private long targetId;
-    private long selfId;
     private UserInfo userInfo;
     private KeyPair keyPair;
-    private Crypt crypt;
     private FileBlockInfo fbi;
     private String dir;
 
+
+    //E para cagar em ti
     public void connect (TransferPacket p) throws Exception
     {
         //Create crypt from first packet
-        this.targetId= p.from;
-        this.crypt= new Crypt(this.keyPair.getPrivate(), p.payload);
+        //this.targetId= p.from;
+        //this.crypt= new Crypt(this.keyPair.getPrivate(), p.payload);
 
         TransferPacket packet= new TransferPacket(this.keyPair.getPublic().getEncoded());
         byte[] serializedPacket= packet.serialize();
         DatagramPacket datagramPacket= new DatagramPacket(serializedPacket, serializedPacket.length, this.target, Shared.Defines.transferPort);
 
         //Send packet with own public key
-        this.ioQueue.out.add(datagramPacket);
+        //this.ioQueue.out.add(datagramPacket);
     }
 
     TransferServerHandle (ThreadControl tc, TransferPacket p, Network.UDP.Socket.SocketManager manager, KeyPair keyPair, FileBlockInfo fbi, String dir)
@@ -137,7 +132,7 @@ public class TransferServerHandle implements Runnable
         while (this.tc.get_running())
         {
             try {
-                TransferPacket p= this.ioQueue.in.take();
+                TransferPacket p= this.userInfo.in.take();
                 handle (p);
                 
             } catch (Exception e) {
