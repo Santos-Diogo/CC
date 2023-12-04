@@ -5,12 +5,15 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import ThreadTools.ThreadControl;
 import Network.UDP.TransferProtocol.*;
+import Shared.Crypt;
 
 /**
  * Class responsible for handling UDP Socket's IO and answering to some methods (?)
@@ -28,10 +31,44 @@ public class SocketManager
          */
         public class Connection
         {
+            public class Packet
+            {
+                public TransferPacket packet;
+                public long from;
+                public long packetNum;
+                private static long inc= 0;
+
+                Packet (TransferPacket packet, long from)
+                {
+                    this.packet= packet;
+                    this.from= from;
+                    this.packetNum= inc;
+                    inc++;
+                }
+                Packet (Packet p)
+                {
+                    this.packet= p.packet;
+                    this.from= p.from;
+                }
+            }
+
+            public class RePacket extends Packet
+            {
+                public long createTime;//Cena de tempo
+
+                RePacket (Packet p)
+                {
+                    super (p);
+                    this.createTime= System.currentTimeMillis();
+                }
+            }
+
             ReentrantReadWriteLock rwl;
             int window;
             Map<Long, Long> userConnectedTo;
-            BlockingQueue<TransferPacket> packetsToTransfer;        //output for the nodes transmiting to a given IP 
+            Crypt crypt;
+            Map<Long, RePacket> packetNumToRetransfer;      //make that associates packets to be retransmited with their IDs
+            BlockingQueue<Packet> packetsToTransfer;        //output for the nodes transmiting to a given IP 
             //Other Parameters
             
             public Connection ()
@@ -39,7 +76,22 @@ public class SocketManager
                 this.rwl= new ReentrantReadWriteLock();
                 this.window= 1;
                 this.userConnectedTo= new HashMap<>();
-                this.packetsToTransfer= new LinkedBlockingQueue<>();   
+                this.crypt= null;
+                this.packetsToTransfer= new LinkedBlockingQueue<>();
+            }
+
+            public void addRetransfer (Packet p)
+            {
+                try
+                {
+                    this.rwl.writeLock().lock();
+                    RePacket reP= new RePacket(p);
+                    this.packetNumToRetransfer.put(reP.packetNum, reP);
+                }
+                finally
+                {
+                    this.rwl.writeLock().unlock();
+                }
             }
             
             public void addUser (long user)
@@ -68,7 +120,7 @@ public class SocketManager
                 }
             }
             
-            public BlockingQueue<TransferPacket> getOutput ()
+            public BlockingQueue<Connection.Packet> getOutput ()
             {
                 return this.packetsToTransfer;
             }
@@ -79,6 +131,47 @@ public class SocketManager
                 {
                     this.rwl.readLock().unlock();
                     return this.userConnectedTo.get(user);
+                }
+                finally
+                {
+                    this.rwl.readLock().unlock();
+                }
+            }
+
+            public void incWindow (int value)
+            {
+                try
+                {
+                    this.rwl.writeLock().lock();
+                    this.window+= value;
+
+                }
+                finally
+                {
+                    this.rwl.writeLock().unlock();;
+                }
+            }
+
+            public void decWindow (int value)
+            {
+                try
+                {
+                    this.rwl.writeLock().lock();
+                    if (this.window-value> 1)
+                        this.window= value;
+                }
+                finally
+                {
+                    this.rwl.writeLock().unlock();
+                }
+            }
+
+            public int getWindow ()
+            {
+                try
+                {
+                    this.rwl.readLock().lock();
+                    return this.window;
                 }
                 finally
                 {
@@ -133,21 +226,122 @@ public class SocketManager
             }
         }
 
+        /**
+         * @return Returns server's IO channels
+         */
         UserIO addServer ()
         {
             try
             {
-
+                this.rwl.readLock().lock();
+                LinkedBlockingQueue<TransferPacket> serverInput= new LinkedBlockingQueue<>();
+                this.input.put((long) 0, serverInput);
+                return new UserIO(serverInput, null);
             }
+            finally
+            {
+                this.rwl.readLock().unlock();
+            }
+        }
+
+        Set<InetAddress> getTargetsIp ()
+        {
+            try
+            {
+                this.rwl.writeLock().lock();
+                return this.map.keySet();
+            }
+            finally
+            {
+                this.rwl.writeLock().unlock();
+            }
+        }
+
+        public void incWindow (InetAddress adr, int value)
+        {
+            try
+            {
+                this.rwl.readLock().lock();
+                Connection c= this.map.get(adr);
+                c.incWindow(value);
+            }
+            finally
+            {
+                this.rwl.readLock().unlock();
+            }
+        }
+
+        public void decWindow (InetAddress adr, int value)
+        {
+            try
+            {
+                this.rwl.readLock().lock();
+                Connection c= this.map.get(adr);
+                c.decWindow(value);
+            }
+            finally
+            {
+                this.rwl.readLock().unlock();
+            }
+        }
+
+        public int getWindow (InetAddress adr)
+        {
+            try
+            {
+                this.rwl.readLock().lock();
+                Connection c= this.map.get(adr);
+                return c.getWindow();
+            }
+            finally
+            {
+                this.rwl.readLock().unlock();
+            }
+        }
+
+        public BlockingQueue<Connection.Packet> getOutput(InetAddress adr)
+        {
+            try
+            {
+                this.rwl.readLock().lock();
+                return this.map.get(adr).packetsToTransfer;
+            }
+            finally
+            {
+                this.rwl.readLock().unlock();
+            }
+        }
+
+        public long getTargetUserId (InetAddress addr, long from)
+        {
+            try
+            {
+                this.rwl.readLock().lock();
+                return this.map.get(addr).getUserConnectedTo(from);
+            }
+            finally
+            {
+                this.rwl.readLock().unlock();
+            }
+        }
+
+        public Crypt getCrypt (InetAddress addr)
+        {
+            return this.map.get(addr).crypt;
+        }
+
+        public void addRetransfer (InetAddress addr, ConnectionByIP.Connection.Packet p)
+        {
+
         }
     }
 
     public class UserIO
     {
         public BlockingQueue<TransferPacket> in;
-        public BlockingQueue<TransferPacket> out;
+        public BlockingQueue<ConnectionByIP.Connection.Packet> out;
 
-        UserIO (BlockingQueue<TransferPacket> in, BlockingQueue<TransferPacket> out)
+        UserIO (BlockingQueue<TransferPacket> in, BlockingQueue<ConnectionByIP.Connection.Packet> out)
         {
             this.in= in;
             this.out= out;
@@ -164,7 +358,7 @@ public class SocketManager
     {  
         public long id;
 
-        UserInfo (long id, BlockingQueue<TransferPacket> in, BlockingQueue<TransferPacket> out)
+        UserInfo (long id, BlockingQueue<TransferPacket> in, BlockingQueue<ConnectionByIP.Connection.Packet> out)
         {
             super (in, out);
             this.id= id;
@@ -194,7 +388,7 @@ public class SocketManager
             DatagramSocket socket= new DatagramSocket(Shared.Defines.transferPort);
 
             //Initiate Sender and Receiver
-            Thread t1= new Thread(receiver= new Receiver(socket, this, tc));
+            Thread t1= new Thread(receiver= new Receiver(socket, this.connectivity, tc));
             Thread t2= new Thread(sender= new Sender(socket, this.connectivity, tc));
             t1.start();
             t2.start();
@@ -233,7 +427,7 @@ public class SocketManager
             //Set Input
             
 
-            return new UserInfo(0, this.connectivity.addServer(), null);
+            return new UserInfo(0, this.connectivity.addServer());
         }
         finally
         {
