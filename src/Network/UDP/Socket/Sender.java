@@ -16,6 +16,7 @@ import Network.UDP.Packet.UDP_Packet;
 import Network.UDP.Socket.SocketManager.ConnectionByIP;
 import Network.UDP.TransferProtocol.TransferPacket;
 import ThreadTools.ThreadControl;
+import Shared.Crypt;
 
 public class Sender implements Runnable
 {
@@ -34,23 +35,39 @@ public class Sender implements Runnable
      * Proceedure to send out a packet
      * @param packet
      */
-    public void send (TransferPacket packet) throws Exception
+    public void send (InetAddress targetAddr, ConnectionByIP.Connection.Packet fatPacket, Crypt crypt) throws Exception
     {
-        //Serialize packet
-        byte[] serializesTP= packet.serialize();
-
-        //Make UDP packet
-        UDP_Packet udp= new Message(from, to, serializesTP);
-
-        //Serialize packet
-        
-        //Encrypt packet with Connection Key
-        
-        //Make Datagram
-        
         //Add packet to retransmission List (With a timestamp)
         
+
+        //Serialize packet
+        TransferPacket packet= fatPacket.packet;
+        long from= fatPacket.from;
+        byte[] serializeTP= packet.serialize();
+
+        //Make UDP packet
+        Message udp= new Message(from, this.connections.getTargetUserId(targetAddr, from), serializeTP);
+
+        //Serialize packet
+        byte[] serializeUDP= udp.serialize();
+
+        //Encrypt packet with Connection Key
+        byte[] encrypted= crypt.encrypt(serializeUDP);
+
+        //Make Datagram
+        DatagramPacket datagramPacket= new DatagramPacket(encrypted, encrypted.length, targetAddr, Shared.Defines.transferPort);
+        
+
+        //@TODO
+
         //Send Packet
+        socket.send(datagramPacket);
+    }
+
+    //@TODO!
+    Crypt connect (InetAddress addr)
+    {
+        return null;
     }
 
     public void run ()
@@ -67,11 +84,20 @@ public class Sender implements Runnable
                 int n= this.connections.getWindow(adr);
                 int i= 0;
 
-                BlockingQueue<TransferPacket> outputQ= this.connections.getOutput(adr);
+                BlockingQueue<ConnectionByIP.Connection.Packet> outputQ= this.connections.getOutput(adr);
 
                 //Need to check the retransmission Queue First
 
-                TransferPacket packet;
+                //Check if crypt is null and if so, connect
+                Crypt crypt;
+                if ((crypt= this.connections.getCrypt(adr))== null)
+                {
+                    //Create and set crypt
+                    crypt= connect (adr);
+
+                }
+
+                ConnectionByIP.Connection.Packet packet;
                 for (; i< n; i++)
                 {
                     //No more blocks to take
@@ -81,7 +107,7 @@ public class Sender implements Runnable
                     try
                     {
                         packet= outputQ.take();
-                        send(packet);
+                        send(adr, packet, crypt);
                     }
                     catch (Exception e)
                     {
