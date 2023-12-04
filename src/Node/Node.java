@@ -17,7 +17,6 @@ import Network.UDP.TransferProtocol.TransferPacket;
 import Shared.NetId;
 import Shared.NodeBlocks;
 import Shared.Tuple;
-import ThreadTools.ConcurrentInputStream;
 import ThreadTools.*;
 import Network.TCP.Socket.SocketManager;
 
@@ -46,10 +45,10 @@ public class Node
         try 
         {
             // Write Request
-            trackerOutput.add();
+            trackerOutput.add(new TrackPacket(net_Id, TypeMsg.AVF_REQ, trackerId, trackerId)); //From e to pelo q percebi são removidos
 
             // Get response
-            AvfRepPacket packet = trackerInput.take();
+            AvfRepPacket packet = (AvfRepPacket) trackerInput.take();
 
             // Write File Names
             Map<String, Long> files = packet.get_files();
@@ -69,6 +68,7 @@ public class Node
 
     /**
      * Temporary solution
+     * Mudado para o TransferServerHandle (?)
      */
     private static void handle_get(String file) 
     {
@@ -106,14 +106,7 @@ public class Node
 
     private static void handle_quit() 
     {
-        try 
-        {
-            trackerOutput.add();
-        }
-        catch (IOException e) 
-        {
-            e.printStackTrace();
-        }
+        trackerOutput.add(new TrackPacket(net_Id, TypeMsg.DC, trackerId, trackerId)); //From e to pelo q percebi são removidos
     }
 
     /**
