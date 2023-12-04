@@ -12,10 +12,10 @@ public class ACKPayload implements TransferPayload
         this.ackNumber= ackNumber;
     }
 
-    public TransferPayload deserialize (byte[] b) throws Exception
+    public ACKPayload (byte[] b) throws Exception
     {
         ObjectInputStream stream= new ObjectInputStream(new ByteArrayInputStream(b));
         ACKPayload p= (ACKPayload) stream.readObject();
-        return p;
+        this.ackNumber= p.ackNumber;
     }
 }

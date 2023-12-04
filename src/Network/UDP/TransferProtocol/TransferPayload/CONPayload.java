@@ -13,10 +13,10 @@ public class CONPayload implements TransferPayload
         this.key= key;
     }
 
-    public TransferPayload deserialize (byte[] b) throws Exception
+    public CONPayload (byte[] b) throws Exception
     {
         ObjectInputStream stream= new ObjectInputStream(new ByteArrayInputStream(b));
         CONPayload p= (CONPayload) stream.readObject();
-        return p;
+        this.key= p.key;
     }
 }
