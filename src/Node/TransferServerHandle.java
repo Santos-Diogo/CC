@@ -2,6 +2,7 @@ package Node;
 
 import ThreadTools.ThreadControl;
 
+import java.net.DatagramPacket;
 import java.net.InetAddress;
 
 import Network.UDP.Socket.SocketManager.IOQueue;
@@ -23,12 +24,19 @@ public class TransferServerHandle implements Runnable
         //Create crypt from first packet
         this.crypt= new Crypt(this.keyPair.getPrivate(), p.payload);
 
+        //Send Ack
+        TransferPacket packet= new TransferPacket(this.keyPair.getPublic().getEncoded());
+        byte[] serializedPacket= packet.serialize();
+        DatagramPacket datagramPacket= new DatagramPacket(serializedPacket, serializedPacket.length, this.target, Shared.Defines.transferPort);
 
-        
-        //Send packet with own public key
-        this.ioQueue.out.add(this.ioQueue.new OutPacket(this.target, new TransferPacket(this.keyPair.getPublic().getEncoded())));
+        while (true)
+        {
 
-        
+            //Ciclo de receber ack e mandar chave pública
+            
+            //Send packet with own public key
+            this.ioQueue.out.add();
+        }
     }
 
     TransferServerHandle (ThreadControl tc, TransferPacket p, Network.UDP.Socket.SocketManager manager, KeyPair keyPair)
