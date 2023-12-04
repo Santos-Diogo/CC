@@ -4,6 +4,9 @@ import ThreadTools.ThreadControl;
 
 import java.net.DatagramPacket;
 import java.net.InetAddress;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import Network.UDP.Socket.SocketManager.IOQueue;
 import Network.UDP.TransferProtocol.TransferPacket;
@@ -13,6 +16,7 @@ import Shared.Crypt;
 import java.security.KeyPair;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.io.InputStream;
 
 public class TransferServerHandle implements Runnable
 {
@@ -23,7 +27,8 @@ public class TransferServerHandle implements Runnable
     private IOQueue ioQueue;
     private KeyPair keyPair;
     private Crypt crypt;
-
+    private String file;
+    private String dir;
 
     public void connect (TransferPacket p) throws Exception
     {
@@ -68,7 +73,15 @@ public class TransferServerHandle implements Runnable
             List<Long> blocks= getPacket.blocks;
 
             //Send all the blocks
-        
+
+            String fileDir= file+ dir;
+            InputStream inputStream= Files.newInputStream(Paths.get(fileDir));
+            
+            long currentOffset= 0;
+            for (Long b : blocks)
+            {
+                 //ATE> AMANAHA    
+            }
         }
         catch (Exception e)
         {
