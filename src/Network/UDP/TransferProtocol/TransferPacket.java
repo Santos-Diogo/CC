@@ -45,11 +45,9 @@ public class TransferPacket implements Serializable
         this.payload= p.payload;
     }
 
-    public TransferPacket (TransferPacket.TypeMsg type, long from, long to, byte[] payload)
+    public TransferPacket (TransferPacket.TypeMsg type, byte[] payload)
     {
         this.type= type;
-        this.from= from;
-        this.to= to;
         this.payload= payload;
     }
 }
