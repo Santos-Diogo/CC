@@ -1,11 +1,13 @@
-package Shared;
+package Node;
 
 import java.net.InetAddress;
 import java.util.HashMap;
 import java.util.Map;
 
+import Shared.NetId;
+
 public class DNScache {
-    Map<NetId, InetAddress> name_resolution;
+    private Map<NetId, InetAddress> name_resolution;
 
     public DNScache ()
     {

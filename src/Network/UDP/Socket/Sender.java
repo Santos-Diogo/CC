@@ -9,19 +9,17 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import Network.UDP.Socket.SocketManager.IOQueue.OutPacket;
-import Shared.CRC;
 import ThreadTools.ThreadControl;
 
 public class Sender implements Runnable
 {
     private class Minion implements Runnable
     {
-        private BlockingQueue<OutPacket> packets;                           //Packets to pass down to IP->Packet map in the Sender
+        private BlockingQueue<DatagramPacket> packets;                           //Packets to pass down to IP->Packet map in the Sender
         private ThreadControl tc;
         private Sender sender;
 
-        Minion (Sender sender, BlockingQueue<OutPacket> packets)
+        Minion (Sender sender, BlockingQueue<DatagramPacket> packets)
         {
             this.packets= packets;
         }
@@ -33,21 +31,18 @@ public class Sender implements Runnable
                 try
                 {
                     //Take input packet
-                    OutPacket packet= packets.take();
-                
-                    //Serialize packet and checksum it
-                    byte[] serialized= packet.packet.serialize();
-                    byte[] checksum= CRC.couple(serialized);    
+                    DatagramPacket packet= packets.take();
+                    InetAddress adr= packet.getAddress();
                     
                     //Get correct Queue to insert Datagram
-                    BlockingQueue<DatagramPacket> queue= sender.getPacketQueue(packet.destination);
+                    BlockingQueue<DatagramPacket> queue= sender.getPacketQueue(adr);
                     if (queue== null)
                     {
-                        queue= sender.newPacketQueue(packet.destination);
+                        queue= sender.newPacketQueue(adr);
                     }
 
                     //Insert Ready to send Datagram into the correct Sender's Queue
-                    queue.add(new DatagramPacket(checksum, checksum.length));
+                    queue.add(packet);
                 }
                 catch (Exception e)
                 {
@@ -94,7 +89,7 @@ public class Sender implements Runnable
      * Initiate a sender thread to recieve new packets from "packets"
      * @param packets Queue to recieve packets from
      */
-    public void getSenderMinion (BlockingQueue<OutPacket> packets)
+    public void getSenderMinion (BlockingQueue<DatagramPacket> packets)
     {
         Thread t= new Thread(new Minion(this, packets));
         t.start();

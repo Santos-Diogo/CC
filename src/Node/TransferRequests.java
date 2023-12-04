@@ -3,6 +3,7 @@ package Node;
 import ThreadTools.ThreadControl;
 
 import java.io.ByteArrayOutputStream;
+import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -105,9 +106,18 @@ class TransferRequests implements Runnable
             List<Long> ownedBlocks;
             Map<NetId, List<Long>> scalonated_blocks = scalonate(nodeblocks, nBlocks, workload, ownedBlocks);
             //Create threads for each node to get the packet -> Requeires UDP Socket
+            
             try {
-                for(int i = 0; i < scalonated_blocks.keySet().size(); i++)
-                    Thread t = new Thread();
+                for(Map.Entry<NetId, List<Long>> nodes : scalonated_blocks.entrySet())
+                {
+                    InetAddress node_Address;
+                    if(Node.dnscache.contains_NodeAdress(nodes.getKey()))
+                        node_Address = Node.dnscache.get_AddressFromCache(nodes.getKey());
+                    else
+                        node_Address = InetAddress.getByName(nodes.getKey().getName());
+
+                    Thread t = new Thread(new Transfer(udpManager, node_Address, file, nodes.getValue()));
+                }
 
             } catch (Exception e) {
                 e.printStackTrace();

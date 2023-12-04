@@ -5,6 +5,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.net.InetAddress;
 
 public class TransferPacket implements Serializable
 {
@@ -16,6 +17,7 @@ public class TransferPacket implements Serializable
         ACK     //Ack
     };
 
+    public InetAddress source;                  //Source's Adress
     public TypeMsg type;                        //Message's type
     public long from;                           //From id
     public long to;                             //Destination id

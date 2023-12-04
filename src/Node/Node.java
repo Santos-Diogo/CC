@@ -38,6 +38,7 @@ public class Node
     private static Map<String, Long> filesId;                           //Matches the files name with their id in the server context
     private static FileBlockInfo fbInfo;                                //Info on the node
     private static ThreadControl tc= new ThreadControl();               //Object used to terminate minor threads
+    public static DNScache dnscache = new DNScache();
 
     
     
