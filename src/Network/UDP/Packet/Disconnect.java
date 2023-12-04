@@ -2,8 +2,8 @@ package Network.UDP.Packet;
 
 public class Disconnect extends UDP_Packet
 {
-    Disconnect (long from, long target)
+    Disconnect (UDP_Packet p)
     {
-        super (Type.DC);
+        super (p);
     }
 }

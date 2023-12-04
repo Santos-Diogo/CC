@@ -11,8 +11,11 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import javax.swing.text.html.HTMLDocument.Iterator;
+
 import Network.UDP.Packet.Message;
 import Network.UDP.Packet.UDP_Packet;
+import Network.UDP.Packet.UDP_Packet.Type;
 import Network.UDP.Socket.SocketManager.ConnectionByIP;
 import Network.UDP.TransferProtocol.TransferPacket;
 import ThreadTools.ThreadControl;
@@ -31,94 +34,87 @@ public class Sender implements Runnable
         this.tc= tc;
     }
 
-    /**
-     * Proceedure to send out a packet
-     * @param packet
-     */
-    public void send (InetAddress targetAddr, ConnectionByIP.Connection.Packet fatPacket, Crypt crypt) throws Exception
+    public void udpSend (InetAddress targetAddr, UDP_Packet udp) throws Exception
     {
         //Add packet to retransmission List (With a timestamp)
-        
-
-        //Serialize packet
-        TransferPacket packet= fatPacket.packet;
-        long from= fatPacket.from;
-        byte[] serializeTP= packet.serialize();
-
-        //Make UDP packet
-        Message udp= new Message(from, this.connections.getTargetUserId(targetAddr, from), serializeTP);
+        this.connections.addRetransfer(targetAddr, udp);
 
         //Serialize packet
         byte[] serializeUDP= udp.serialize();
 
-        //Encrypt packet with Connection Key
-        byte[] encrypted= crypt.encrypt(serializeUDP);
-
         //Make Datagram
-        DatagramPacket datagramPacket= new DatagramPacket(encrypted, encrypted.length, targetAddr, Shared.Defines.transferPort);
-        
-
-        //@TODO
+        DatagramPacket datagramPacket= new DatagramPacket(serializeUDP, serializeUDP.length, targetAddr, Shared.Defines.transferPort);
 
         //Send Packet
         socket.send(datagramPacket);
     }
 
-    //@TODO!
-    Crypt connect (InetAddress addr)
+    /**
+     * Proceedure to send out a packet
+     * @param packet
+     */
+    public void send (InetAddress targetAddr, ConnectionByIP.Connection.Packet fatPacket) throws Exception
     {
-        return null;
+        
+        //Serialize packet
+        TransferPacket packet= fatPacket.packet;
+        long from= fatPacket.from;
+        byte[] serializeTP= packet.serialize();
+        
+        //Make UDP packet
+        Message udp= new Message(new UDP_Packet(Type.MSG, from, this.connections.getTargetUserId(targetAddr, from)), serializeTP);
+
+        udpSend(targetAddr, udp);
     }
 
     public void run ()
     {
-        while (tc.get_running())
+        try
         {
-            //Get all targets
-            Set<InetAddress> targetsIP= connections.getTargetsIp ();
-
-            //Iterate over the Connections
-            ConnectionByIP.Connection c;
-            for (InetAddress adr : targetsIP)
+            while (tc.get_running())
             {
-                int n= this.connections.getWindow(adr);
-                int i= 0;
-
-                BlockingQueue<ConnectionByIP.Connection.Packet> outputQ= this.connections.getOutput(adr);
-
-                //Need to check the retransmission Queue First
-
-                //Check if crypt is null and if so, connect
-                Crypt crypt;
-                if ((crypt= this.connections.getCrypt(adr))== null)
-                {
-                    //Create and set crypt
-                    crypt= connect (adr);
-
-                }
-
-                ConnectionByIP.Connection.Packet packet;
-                for (; i< n; i++)
-                {
-                    //No more blocks to take
-                    if ((packet= outputQ.peek())== null)
-                        break;
-                    
-                    try
-                    {
-                        packet= outputQ.take();
-                        send(adr, packet, crypt);
-                    }
-                    catch (Exception e)
-                    {
-                        e.printStackTrace();
-                    }
-                }
+                //Get all targets
+                Set<InetAddress> targetsIP= connections.getTargetsIp ();
                 
-                //Decrement used packets
-                this.connections.decWindow(adr, i);
+                //Iterate over the Connections
+                ConnectionByIP.Connection c;
+                for (InetAddress adr : targetsIP)
+                {
+                    int n= this.connections.getWindow(adr);
+                    int i= 0;
+                    
+                    BlockingQueue<ConnectionByIP.Connection.Packet> outputQ= this.connections.getOutput(adr);
+                    
+                    //Need to check the retransmission Queue First
+                    
+                    for (ConnectionByIP.Connection.RePacket rePacket : this.connections.getRetrans(adr))
+                    {
+                        if ((System.currentTimeMillis()- rePacket.createTime)> 300)
+                        {
+                            this.connections.getRetrans(adr).remove(i);
+                            udpSend (adr, rePacket.packet);
+                        }
+                        i++;
+                    }
+                    
+                    
+                    ConnectionByIP.Connection.Packet packet;
+                    for (; i< n; i++)
+                    {
+                        //No more blocks to take
+                        if ((packet= outputQ.peek())== null)
+                        break;
+                        packet= outputQ.take();
+                        send(adr, packet);
+                    }
+                    //Decrement used packets
+                    this.connections.decWindow(adr, i);
+                }
             }
-
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
         }
     }
 }

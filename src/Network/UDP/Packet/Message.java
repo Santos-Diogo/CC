@@ -5,13 +5,11 @@ import java.io.ObjectOutputStream;
 
 public class Message extends UDP_Packet
 {
-    public long from;
-    public long to;
     public byte[] message;
 
-    public Message (long from, long to, byte[] message)
+    public Message (UDP_Packet p, byte[] message)
     {
-        super(Type.MSG);
+        super(p);
         this.from= from;
         this.to= to;
         this.message= message;
