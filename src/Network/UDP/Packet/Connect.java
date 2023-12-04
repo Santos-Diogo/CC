@@ -6,9 +6,9 @@ public class Connect extends UDP_Packet
 {
     public PublicKey publicKey;                 //PublicKey
 
-    public Connect (PublicKey publicKey)
+    public Connect (UDP_Packet p, PublicKey publicKey)
     {
-        super (Type.CON);
+        super (p);
         this.publicKey= publicKey;
     }
 }

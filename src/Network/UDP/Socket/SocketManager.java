@@ -12,6 +12,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import ThreadTools.ThreadControl;
+import Network.UDP.Packet.UDP_Packet;
 import Network.UDP.TransferProtocol.*;
 import Shared.Crypt;
 
@@ -36,14 +37,11 @@ public class SocketManager
                 public TransferPacket packet;
                 public long from;
                 public long packetNum;
-                private static long inc= 0;
 
                 Packet (TransferPacket packet, long from)
                 {
                     this.packet= packet;
                     this.from= from;
-                    this.packetNum= inc;
-                    inc++;
                 }
                 Packet (Packet p)
                 {
@@ -52,14 +50,15 @@ public class SocketManager
                 }
             }
 
-            public class RePacket extends Packet
+            public class RePacket
             {
-                public long createTime;//Cena de tempo
+                public long createTime;         //Cena de tempo
+                public UDP_Packet packet;
 
-                RePacket (Packet p)
+                RePacket (UDP_Packet p)
                 {
-                    super (p);
                     this.createTime= System.currentTimeMillis();
+                    this.packet= p;
                 }
             }
 
@@ -67,7 +66,7 @@ public class SocketManager
             int window;
             Map<Long, Long> userConnectedTo;
             Crypt crypt;
-            Map<Long, RePacket> packetNumToRetransfer;      //make that associates packets to be retransmited with their IDs
+            List<RePacket> packetsToRetrans;
             BlockingQueue<Packet> packetsToTransfer;        //output for the nodes transmiting to a given IP 
             //Other Parameters
             
@@ -80,13 +79,13 @@ public class SocketManager
                 this.packetsToTransfer= new LinkedBlockingQueue<>();
             }
 
-            public void addRetransfer (Packet p)
+            public void addRetransfer (UDP_Packet p)
             {
                 try
                 {
                     this.rwl.writeLock().lock();
                     RePacket reP= new RePacket(p);
-                    this.packetNumToRetransfer.put(reP.packetNum, reP);
+                    this.packetsToRetrans.add(reP);
                 }
                 finally
                 {
@@ -177,6 +176,11 @@ public class SocketManager
                 {
                     this.rwl.readLock().unlock();
                 }
+            }
+
+            List<RePacket> getRetrans ()
+            {
+                return this.getRetrans();
             }
         }
 
@@ -330,9 +334,22 @@ public class SocketManager
             return this.map.get(addr).crypt;
         }
 
-        public void addRetransfer (InetAddress addr, ConnectionByIP.Connection.Packet p)
+        public void addRetransfer (InetAddress addr, UDP_Packet p)
         {
+            try
+            {
+                this.rwl.readLock().lock();
+                this.map.get(addr).addRetransfer(p);
+            }
+            finally
+            {
+                this.rwl.readLock().unlock();
+            }
+        }
 
+        public List<ConnectionByIP.Connection.RePacket> getRetrans (InetAddress addr)
+        {
+            return this.map.get(addr).getRetrans();
         }
     }
 
