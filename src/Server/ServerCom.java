@@ -111,15 +111,10 @@ public class ServerCom implements Runnable
                 break;
             }
             case AVF_REQ: {
-                handle_AVF_REQ(packet.getNet_Id());
+                handle_AVF_REQ(packet.netId);
                 break;
             }
-            case ADD_F: {
-
-                break;
-            }
-            case RM_F: {
-
+            case UPD: {
                 break;
             }
             case GET_REQ: {
