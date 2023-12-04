@@ -7,9 +7,11 @@ import java.net.InetAddress;
 
 import Network.UDP.Socket.SocketManager.IOQueue;
 import Network.UDP.TransferProtocol.TransferPacket;
+import Network.UDP.TransferProtocol.TransferPayload.GETPayload;
 import Shared.Crypt;
 
 import java.security.KeyPair;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public class TransferServerHandle implements Runnable
@@ -26,6 +28,7 @@ public class TransferServerHandle implements Runnable
     public void connect (TransferPacket p) throws Exception
     {
         //Create crypt from first packet
+        this.targetId= p.from;
         this.crypt= new Crypt(this.keyPair.getPrivate(), p.payload);
 
         TransferPacket packet= new TransferPacket(this.keyPair.getPublic().getEncoded());
@@ -54,9 +57,34 @@ public class TransferServerHandle implements Runnable
         }
     }
 
-    public void handle (TransferPacket packet)
+    public void handleGet (TransferPacket packet)
     {
+        try
+        {
+            GETPayload getPacket= new GETPayload(packet.payload);
+
+            //File and Blocks to send
+            long file= getPacket.file;
+            List<Long> blocks= getPacket.blocks;
+
+            //Send all the blocks
         
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
+    }
+
+    public void handle (TransferPacket packet) throws Exception
+    {
+        switch (packet.type)
+        {
+            case GET:
+                handleGet(packet);
+            default:
+                throw new Exception("Impossible Packet in Server Handler");
+        }
     }
 
     public void run ()

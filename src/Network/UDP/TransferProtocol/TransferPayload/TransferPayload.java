@@ -2,8 +2,9 @@ package Network.UDP.TransferProtocol.TransferPayload;
 
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectOutputStream;
+import java.io.Serializable;
 
-public interface TransferPayload 
+public interface TransferPayload extends Serializable
 {
     default public byte[] serialize () throws Exception
     {
@@ -12,6 +13,4 @@ public interface TransferPayload
         stream.writeObject(this);
         return bs.toByteArray();
     }
-
-    public TransferPayload deserialize (byte[] b) throws Exception;
 }

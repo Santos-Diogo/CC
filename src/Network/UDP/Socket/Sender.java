@@ -9,6 +9,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import Network.UDP.TransferProtocol.TransferPacket;
 import ThreadTools.ThreadControl;
 
 public class Sender implements Runnable
