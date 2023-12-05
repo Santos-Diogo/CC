@@ -114,6 +114,7 @@ class TransferRequests implements Runnable
                     if(Node.dnscache.contains_NodeAdress(nodes.getKey()))
                         node_Address = Node.dnscache.get_AddressFromCache(nodes.getKey());
                     else
+                    //meter na cache
                         node_Address = InetAddress.getByName(nodes.getKey().getName());
 
                     Thread t = new Thread(new Transfer(udpManager, node_Address, file, nodes.getValue()));
