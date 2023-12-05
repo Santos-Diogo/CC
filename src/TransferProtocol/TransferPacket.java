@@ -1,29 +1,24 @@
 package TransferProtocol;
 
-public class TransferPacket 
+import java.io.Serializable;
+
+import Shared.NetId;
+
+public class TransferPacket implements Serializable
 {
     public enum TypeMsg
     {
-        CON,    //Connect to node
-        GET
+        GETF_REQ,
+        GETF_REP,
+        ACK
     };
 
-    private TypeMsg type;   //Message's type    
-    private byte[] payload; //Packet's payload
+    public TypeMsg type;   //Message's type    
+    public NetId netid;
 
-    public TransferPacket (TypeMsg type, byte[] payload)
+    public TransferPacket (TypeMsg type, NetId netid)
     {
         this.type= type;
-        this.payload= payload;
-    }
-
-    public TypeMsg getType ()
-    {
-        return this.type;
-    }
-
-    public byte[] getPayload ()
-    {
-        return this.payload;
+        this.netid= netid;
     }
 }

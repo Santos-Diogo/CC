@@ -27,8 +27,8 @@ public class Node
     private static Scanner scanner = new Scanner(System.in);
     private static Map<String, Long> filesId;   //Matches the files name with their id in the server context
     private static FileBlockInfo fbInfo;
+    private static ConcurrentUDPServer udpServer;
     private static ThreadControl tc= new ThreadControl();
-
 
 
     public static void remove_ownedBlocks(List<Tuple<Long, Integer>> blocks, List<Long> ownedBlocks) {
@@ -50,30 +50,25 @@ public class Node
      * @param nBlocks
      * @return
      */
-    private static Map<Long, NetId> scalonate (NodeBlocks nodeBlocks, long nBlocks, Map<NetId, Integer> workload, List<Long> ownedBlocks)
+    private static Map<NetId, List<Long>> scalonate (NodeBlocks nodeBlocks, long nBlocks, Map<NetId, Integer> workload, List<Long> ownedBlocks)
     {
-        Map <Long, NetId> m= new HashMap<>();
+        Map <NetId, List<Long>> m= new HashMap<>();
         List<Tuple<Long, Integer>> rarestBlocks = nodeBlocks.rarestBlocks(nBlocks);
         remove_ownedBlocks(rarestBlocks, ownedBlocks);
-        //Debug start
-        for(Map.Entry<NetId, Integer> wkl: workload.entrySet())
-            System.out.println(wkl.getKey().toString() + ", " + wkl.getValue());
-	    for(Tuple<Long, Integer> tpl : rarestBlocks)
-            System.out.println(tpl.toString());
-        //Debug end
         for(Tuple<Long, Integer> block : rarestBlocks)
         {
             NetId node = schedule(block, nodeBlocks, workload);
-            m.put(block.fst(), node);
+            if (m.containsKey(node))
+                m.get(node).add(block.fst());
+            else
+            {
+                List<Long> blocks = new ArrayList<>();
+                blocks.add(block.fst());
+                m.put(node, blocks);
+            }
             int tmp = workload.get(node);
             workload.put(node, tmp + 1);
         }
-        //Debug start
-        for(Map.Entry<NetId, Integer> wkl: workload.entrySet())
-            System.out.println(wkl.getKey().toString() + ", " + wkl.getValue());
-        for(Map.Entry<Long, NetId> asd: m.entrySet())
-            System.out.println(asd.getKey() + ", " + asd.getValue().toString());
-        //Debug end
         return m;
     }
 
@@ -128,22 +123,10 @@ public class Node
             //Get Response
             GetRepPacket resp = (GetRepPacket) trackerInput.readObject();
 
-            //Debug
-            Set<NetId> nodes = resp.get_nodeBlocks().get_nodes();
+            Map<NetId, List<Long>> blockNode = scalonate (resp.get_nodeBlocks(), resp.get_nBlocks(), resp.getWorkLoad(), resp.getOwnedBlocks());
 
-            System.out.println("Nodes:");
-            for (NetId n : nodes) 
-            {
-                System.out.println(n.getName());
-            }
-            //Debug end
-
-            Map<Long, NetId> blockNode= scalonate (resp.get_nodeBlocks(), resp.get_nBlocks(), resp.getWorkLoad(), resp.getOwnedBlocks());
-            //Debug start
-            for (Map.Entry<NetId, Integer> wkl : resp.getWorkLoad().entrySet())
-                System.out.println(wkl.getKey().toString() + ", " + wkl.getValue());
-            //Debug end
-
+            
+            
             //Here we need to update tracker about the workload thats being issued on the nodes and to start the transfer process
         }
         catch (Exception e) 
@@ -225,6 +208,9 @@ public class Node
             //Registers Self
             fbInfo= new FileBlockInfo(args[0]);
             filesId= register (fbInfo);
+
+            udpServer = new ConcurrentUDPServer(fbInfo);
+            udpServer.startServer();
 
             // Handle commands
             String command;
