@@ -15,6 +15,6 @@ public class GetFilesReq extends TransferPacket {
         this.fileid = fileid;
         this.blocks = blocks;
     }
-
+    
     
 }

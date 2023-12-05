@@ -1,5 +1,10 @@
 package TransferProtocol;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 
 import Shared.NetId;
@@ -21,4 +26,23 @@ public class TransferPacket implements Serializable
         this.type= type;
         this.netid= netid;
     }
+
+    public byte[] serialize() throws IOException {
+        try (ByteArrayOutputStream bs = new ByteArrayOutputStream();
+             ObjectOutputStream stream = new ObjectOutputStream(bs)) {
+    
+            stream.writeObject(this);
+            return bs.toByteArray();
+        }
+    }
+    
+
+    public static TransferPacket deserialize(byte[] data) throws IOException, ClassNotFoundException {
+        try (ByteArrayInputStream bis = new ByteArrayInputStream(data);
+            ObjectInputStream ois = new ObjectInputStream(bis)) {
+
+            return (TransferPacket) ois.readObject();
+        }
+    }
+
 }

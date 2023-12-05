@@ -1,11 +1,14 @@
 package Node;
 
+import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import Blocker.FileBlockInfo;
+import TransferProtocol.GetFilesReq;
+import TransferProtocol.TransferPacket;
 
 public class ConcurrentUDPServer {
     
@@ -41,8 +44,21 @@ public class ConcurrentUDPServer {
     }
 
     private static void handlePacket(DatagramPacket packet) {
-        String receivedMessage = new String(packet.getData(), 0, packet.getLength());
-        System.out.println("Received message from " + packet.getAddress() + ": " + receivedMessage);
+        try {
+            TransferPacket receivedMessage = TransferPacket.deserialize(packet.getData());
+            switch (receivedMessage.type) {
+                case GETF_REQ:
+                    GetFilesReq parsedPacket = (GetFilesReq) receivedMessage;
+                    System.out.println("Received message from " + packet.getAddress() + ": " + parsedPacket.blocks.toString());
+                    break;
+            
+                default:
+                    break;
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
         // Process the received packet (replace this with your logic)
 

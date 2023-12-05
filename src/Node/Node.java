@@ -3,6 +3,8 @@ package Node;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
@@ -15,6 +17,8 @@ import Shared.Tuple;
 import ThreadTools.ThreadControl;
 import TrackProtocol.*;
 import TrackProtocol.TrackPacket.TypeMsg;
+import TransferProtocol.GetFilesReq;
+import TransferProtocol.TransferPacket;
 
 /***
  * Main Node thread
@@ -25,7 +29,6 @@ public class Node
     private static ObjectInputStream trackerInput;
     private static NetId net_Id;
     private static Scanner scanner = new Scanner(System.in);
-    private static Map<String, Long> filesId;   //Matches the files name with their id in the server context
     private static FileBlockInfo fbInfo;
     private static ConcurrentUDPServer udpServer;
     private static ThreadControl tc= new ThreadControl();
@@ -125,7 +128,26 @@ public class Node
 
             Map<NetId, List<Long>> blockNode = scalonate (resp.get_nodeBlocks(), resp.get_nBlocks(), resp.getWorkLoad(), resp.getOwnedBlocks());
 
-            
+            for (Map.Entry<NetId, List<Long>> requests : blockNode.entrySet())
+            {
+                TransferPacket request = new GetFilesReq(TransferProtocol.TransferPacket.TypeMsg.GETF_REQ, net_Id, fbInfo.get_fileID(file), requests.getValue());
+                InetAddress destinationAddress;
+                try (DatagramSocket socket = new DatagramSocket()) {
+                    byte[] sendData = request.serialize();
+                    
+                    destinationAddress = InetAddress.getByName(requests.getKey().getName() + Shared.Defines.DNS_Zone);
+
+                    DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, destinationAddress, Shared.Defines.transferPort);
+
+                    // Send the UDP packet
+                    socket.send(sendPacket);
+
+                    System.out.println("Packet sent successfully.");
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                break; //Debug
+            }
             
             //Here we need to update tracker about the workload thats being issued on the nodes and to start the transfer process
         }
@@ -182,13 +204,13 @@ public class Node
      * @return the input file's id in the server
      * @throws IOException
      */
-    private static Map<String, Long> register(FileBlockInfo b) throws IOException, ClassNotFoundException
+    private static void register(FileBlockInfo b) throws IOException, ClassNotFoundException
     {
         // Send Reg message with Node Status collected by "FileBlockInfo"
         trackerOutput.writeObject(new RegReqPacket(net_Id, b));
         trackerOutput.flush();
         RegRepPacket rep= (RegRepPacket) trackerInput.readObject();
-        return rep.get_fileId();
+        b.set_FilesID(rep.get_fileId());
     }
 
     public static void main(String[] args) throws InterruptedException {
@@ -207,7 +229,7 @@ public class Node
 
             //Registers Self
             fbInfo= new FileBlockInfo(args[0]);
-            filesId= register (fbInfo);
+            register (fbInfo);
 
             udpServer = new ConcurrentUDPServer(fbInfo);
             udpServer.startServer();

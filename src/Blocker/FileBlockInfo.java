@@ -18,6 +18,7 @@ public class FileBlockInfo implements Serializable
 {
     private Map<String, BlockInfo> fileBlockInfo;
     private Map<String, Long> files_filesize;
+    private Map<String, Long> filesID;
 
 
     /**
@@ -28,6 +29,7 @@ public class FileBlockInfo implements Serializable
     public FileBlockInfo (String dir)
     {
         this.fileBlockInfo= new HashMap<>();
+        this.files_filesize = new HashMap<>();
 
         try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(Paths.get(dir))) 
         {
@@ -89,5 +91,29 @@ public class FileBlockInfo implements Serializable
     public Map<String, BlockInfo> get_fileBlockInfo ()
     {
         return fileBlockInfo;
+    }
+
+    public boolean hasWholeFile (String file)
+    {
+        return fileBlockInfo.get(file).has_entireFile();
+    }
+
+    public void set_FilesID(Map<String, Long> filesID)
+    {
+        this.filesID = filesID;
+    }
+
+    public long get_fileID (String file)
+    {
+        return filesID.get(file);
+    }
+    public String getFile_byID (long fileID)
+    {
+        return filesID.entrySet()
+                        .stream()
+                        .filter(entry -> entry.getValue().equals(fileID))
+                        .findFirst()
+                        .map(Map.Entry::getKey)
+                        .orElse(null);
     }
 }
