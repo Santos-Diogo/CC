@@ -117,10 +117,8 @@ public class Node
     /**
      * Temporary solution
      */
-    private static void handle_get() 
+    private static void handle_get(String file) 
     {
-        System.out.println("Name of file to transfer:");
-        String file = scanner.nextLine();
         try 
         {
             // Send Repply
@@ -168,13 +166,17 @@ public class Node
      * Arguments not enough
      */
     private static void handle_command(String command) {
-        switch (command) {
+        switch (command.split("\\s+")[0]) {
             case "avf":
                 handle_avf();
                 break;
             case "get":
-                handle_get();
-                break;
+                try {
+                    handle_get(command.split("\\s+")[1]);
+                } catch (ArrayIndexOutOfBoundsException e) {
+                    System.out.println("Please specify the file to download");
+                    break;
+                }
             case "quit":
                 handle_quit();
                 break;
@@ -188,7 +190,7 @@ public class Node
      * @return String
      */
     private static String command_request() {
-        System.out.println("Type your desired command:\navf - available files\nquit- exit the network\n");
+        System.out.println("\nType your desired command:\navf - available files\nget <filename> - download file 'filename'\nquit- exit the network\n");
         return scanner.nextLine();
     }
 
