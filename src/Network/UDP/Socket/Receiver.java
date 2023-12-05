@@ -27,6 +27,26 @@ public class Receiver implements Runnable
         this.tc= tc;
     }
 
+    public void handleCon (UDP_Packet packet)
+    {
+        packet.
+    }
+
+    public void handle (UDP_Packet packet)
+    {
+        switch (packet.type)
+        {
+            case CON:
+                handleCon ()
+            case ACK:
+
+            case MSG:
+
+            case DC:
+
+        }
+    }
+
     public void run ()
     {
         try
@@ -41,17 +61,7 @@ public class Receiver implements Runnable
                 if ((crude= CRC.decouple(p.getData()))!= null)
                 {
                     UDP_Packet udp= new UDP_Packet(crude);
-
-                    //Wants a thread
-                    if (udp.to== 0)
-                    {
-
-                    }
-                    else
-                    {
-                        BlockingQueue<TransferPacket> queue= this.connection.getUserInput(udp.to);
-                        switch ()
-                    }
+                    handle (udp);
                 }
             }
         }
