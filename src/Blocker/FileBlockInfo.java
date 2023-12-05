@@ -28,7 +28,7 @@ public class FileBlockInfo implements Serializable
     public FileBlockInfo (String dir)
     {
         this.fileBlockInfo= new HashMap<>();
-	this.files_filesize = new HashMap<>();
+	    this.files_filesize = new HashMap<>();
         try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(Paths.get(dir))) 
         {
             for (Path filePath : directoryStream) 
