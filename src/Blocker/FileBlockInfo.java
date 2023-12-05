@@ -100,11 +100,14 @@ public class FileBlockInfo implements Serializable
 
     public void set_FilesID(Map<String, Long> filesID)
     {
+	System.out.println(filesID);
         this.filesID = filesID;
     }
 
     public long get_fileID (String file)
     {
+	    System.out.println(this.filesID);
+	    System.out.println(file);
         return filesID.get(file);
     }
     public String getFile_byID (long fileID)
