@@ -7,20 +7,23 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import Blocker.FileBlockInfo;
+import ThreadTools.ThreadControl;
 import TransferProtocol.GetFilesReq;
 import TransferProtocol.TransferPacket;
 
-public class ConcurrentUDPServer {
+public class ConcurrentUDPServer implements Runnable{
     
     private static final int THREAD_POOL_SIZE = 10;
+    private ThreadControl tc;
     private FileBlockInfo fbi;
 
-    public ConcurrentUDPServer (FileBlockInfo fbi)
+    public ConcurrentUDPServer (FileBlockInfo fbi, ThreadControl tc)
     {
         this.fbi = fbi;
+        this.tc = tc;
     }
 
-    public void startServer () {
+    public static void startServer () {
         ExecutorService executorService = Executors.newFixedThreadPool(THREAD_POOL_SIZE);
 
         try (DatagramSocket serverSocket = new DatagramSocket(Shared.Defines.transferPort)) {
@@ -69,5 +72,11 @@ public class ConcurrentUDPServer {
     // Method to send a UDP response
     private static void sendResponse(/*InetAddress address, int port, String message*/) {
         // Implement the logic to send a response back to the client
+    }
+
+    public void run ()
+    {
+        while(tc.get_running() == true)
+            startServer();
     }
 }

@@ -30,7 +30,6 @@ public class Node
     private static NetId net_Id;
     private static Scanner scanner = new Scanner(System.in);
     private static FileBlockInfo fbInfo;
-    private static ConcurrentUDPServer udpServer;
     private static ThreadControl tc= new ThreadControl();
 
 
@@ -231,8 +230,8 @@ public class Node
             fbInfo= new FileBlockInfo(args[0]);
             register (fbInfo);
 
-            udpServer = new ConcurrentUDPServer(fbInfo);
-            udpServer.startServer();
+            Thread t = new Thread(new ConcurrentUDPServer(fbInfo, tc));
+            t.start();
 
             // Handle commands
             String command;
