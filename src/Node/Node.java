@@ -129,7 +129,7 @@ public class Node
 
             for (Map.Entry<NetId, List<Long>> requests : blockNode.entrySet())
             {
-                TransferPacket request = new GetFilesReq(TransferProtocol.TransferPacket.TypeMsg.GETF_REQ, net_Id, fbInfo.get_fileID(file), requests.getValue());
+                TransferPacket request = new GetFilesReq(TransferProtocol.TransferPacket.TypeMsg.GETF_REQ, net_Id, file, requests.getValue());
                 InetAddress destinationAddress;
                 try (DatagramSocket socket = new DatagramSocket()) {
                     byte[] sendData = request.serialize();

@@ -52,7 +52,7 @@ public class ConcurrentUDPServer implements Runnable{
             switch (receivedMessage.type) {
                 case GETF_REQ:
                     GetFilesReq parsedPacket = (GetFilesReq) receivedMessage;
-                    System.out.println("Received message from " + packet.getAddress() + ": " + parsedPacket.blocks.toString());
+                    System.out.println("Received message from " + packet.getAddress() + ": " + parsedPacket.file + " " + parsedPacket.blocks.toString());
                     break;
             
                 default:

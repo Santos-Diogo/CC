@@ -6,13 +6,13 @@ import Shared.NetId;
 
 public class GetFilesReq extends TransferPacket {
 
-    public long fileid;
+    public String file;
     public List<Long> blocks; 
 
-    public GetFilesReq (TypeMsg type, NetId netid, long fileid, List<Long> blocks)
+    public GetFilesReq (TypeMsg type, NetId netid, String file, List<Long> blocks)
     {
         super(type, netid);
-        this.fileid = fileid;
+        this.file = file;
         this.blocks = blocks;
     }
     
