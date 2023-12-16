@@ -6,6 +6,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ByteArrayInputStream;
 
+/**
+ * Packets handled by the UDP Manager.
+ * Numbered for a connection and assigned specific "from" and "to" users.
+ */
 public class UDP_Packet implements Serializable
 {
     public enum Type 
