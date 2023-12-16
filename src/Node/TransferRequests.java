@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.BlockingQueue;
 
+import Shared.Defines;
 import Shared.NetId;
 import Shared.NodeBlocks;
 import Shared.Tuple;
@@ -111,11 +112,14 @@ class TransferRequests implements Runnable
                 for(Map.Entry<NetId, List<Long>> nodes : scalonated_blocks.entrySet())
                 {
                     InetAddress node_Address;
-                    if(Node.dnscache.contains_NodeAdress(nodes.getKey()))
-                        node_Address = Node.dnscache.get_AddressFromCache(nodes.getKey());
+                    NetId node = nodes.getKey();
+                    if(Node.dnscache.contains_NodeAdress(node))
+                        node_Address = Node.dnscache.get_AddressFromCache(node);
                     else
-                    //meter na cache
-                        node_Address = InetAddress.getByName(nodes.getKey().getName());
+                    {
+                        node_Address = InetAddress.getByName(node.getName() + Shared.Defines.DNS_Zone);
+                        Node.dnscache.add_AdressToCache(node, node_Address);
+                    }
 
                     Thread t = new Thread(new Transfer(udpManager, node_Address, file, nodes.getValue()));
                 }

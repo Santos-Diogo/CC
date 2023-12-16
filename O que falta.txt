@@ -6,4 +6,5 @@ Manager TCP - Diogo/Luis
 Atualizar o tracker dos blocos recebidos - Diogo/Luis
 Escalonamento com o ping - Luis
 Efetivamente acabar o transfer :) - Diogo/Luis
-Ter em atenção aquilo que ele disse de ler e escrever na diretoria. Ter segurança dos locks nos managers. 
+Ter em atenção aquilo que ele disse de ler e escrever na diretoria. Ter segurança dos locks nos managers.
+Escrever o bloco direito :)
