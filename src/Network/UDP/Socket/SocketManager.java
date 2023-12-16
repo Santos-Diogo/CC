@@ -3,6 +3,8 @@ package Network.UDP.Socket;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.security.KeyPair;
+import java.security.PublicKey;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -12,7 +14,10 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import ThreadTools.ThreadControl;
+import Network.UDP.Packet.Connect;
+import Network.UDP.Packet.Message;
 import Network.UDP.Packet.UDP_Packet;
+import Network.UDP.Packet.UDP_Packet.Type;
 import Network.UDP.TransferProtocol.*;
 import Shared.Crypt;
 
@@ -32,28 +37,21 @@ public class SocketManager
          */
         public class Connection
         {
-            public class Packet
+            /* public class Packet
             {
-                public TransferPacket packet;
                 public long from;
-                public long packetNum;
+                public TransferPacket packet;
 
-                Packet (TransferPacket packet, long from)
+                Packet (long from, TransferPacket packet)
                 {
-                    this.packet= packet;
                     this.from= from;
+                    this.packet= packet;
                 }
-                Packet (Packet p)
-                {
-                    this.packet= p.packet;
-                    this.from= p.from;
-                }
-            }
-
+            } */
             public class RePacket
             {
-                public long createTime;         //Cena de tempo
-                public UDP_Packet packet;
+                public long createTime;                     //milisecond the packet was created at
+                public UDP_Packet packet;                   //packet to retransmit
 
                 RePacket (UDP_Packet p)
                 {
@@ -62,21 +60,30 @@ public class SocketManager
                 }
             }
 
-            ReentrantReadWriteLock rwl;
-            int window;
-            Map<Long, Long> userConnectedTo;
-            Crypt crypt;
-            List<RePacket> packetsToRetrans;
-            BlockingQueue<Packet> packetsToTransfer;        //output for the nodes transmiting to a given IP 
+            ReentrantReadWriteLock rwl;     
+            long packetNum;                                 //number of the packet. used for ACK and retransmission handling
+            int window;                                     //determines the availability of packets to be sent
+            Map<Long, Long> userConnectedTo;                //matches a user with the other side's message receiver
+            KeyPair keypair;                                //own keypair
+            Crypt crypt;                                    //used for cryptography. set up in connection
+            Map<Long, RePacket> packetsToRetrans;           //list of packets to be retransmited if time elapses
+            BlockingQueue<UDP_Packet> packetsToTransfer;    //output for the nodes transmiting to a given IP/user combination (we allways use the defined port)
             //Other Parameters
             
-            public Connection ()
+            /**
+             * Creates a connection adding a connection packet to the send Queue
+             * @param keyPair keypair to be used when connecting to the other node
+             */
+            public Connection (KeyPair keyPair)
             {
                 this.rwl= new ReentrantReadWriteLock();
                 this.window= 1;
                 this.userConnectedTo= new HashMap<>();
                 this.crypt= null;
                 this.packetsToTransfer= new LinkedBlockingQueue<>();
+
+                //Creates a packet to connect to the target node
+                this.addPacket(new Connect(new UDP_Packet(Type.CON, 0, 0), keyPair.getPublic()));
             }
 
             public void addRetransfer (UDP_Packet p)
@@ -85,7 +92,7 @@ public class SocketManager
                 {
                     this.rwl.writeLock().lock();
                     RePacket reP= new RePacket(p);
-                    this.packetsToRetrans.add(reP);
+                    this.packetsToRetrans.put(p.pNnumber, reP);
                 }
                 finally
                 {
@@ -117,11 +124,6 @@ public class SocketManager
                 {
                     this.rwl.writeLock().unlock();
                 }
-            }
-            
-            public BlockingQueue<Connection.Packet> getOutput ()
-            {
-                return this.packetsToTransfer;
             }
             
             public long getUserConnectedTo (long user)
@@ -182,12 +184,70 @@ public class SocketManager
             {
                 return this.getRetrans();
             }
+
+
+            /**
+             * adds a packet to the send queue
+             * @param packet
+             */
+            public void addPacket (Packet packet, UDP_Packet.Type type)
+            {
+                try
+                {
+                    //get read lock
+                    this.rwl.readLock().lock();
+
+                    UDP_Packet udp;
+                    udp= new UDP_Packet(type, packet.from, this.userConnectedTo.get(packet.from));
+                    
+                    // Create packet according to type and stuff
+                    switch (type)
+                    {
+                        case CON:
+                        {
+                            udp= new Connect(udp, this.keypair.getPublic());
+                            break;
+                        }
+                        case DC:
+                        {
+                            // TODO
+                            break;
+                        }
+                        case MSG:
+                        {
+                            udp= new Message(udp, packet.packet.serialize());
+                            break;
+                        }
+                        case ACK:
+                        {
+                            // TODO
+                            break;
+                        }
+                    }
+                    
+                    //get write lock
+                    this.rwl.writeLock().lock();
+
+                    //Add packet to transmission queue
+                    this.packetsToTransfer.add(udp);
+                }
+                catch (Exception e)
+                {
+                    e.printStackTrace();
+                }
+                finally
+                {
+                    this.rwl.writeLock().unlock();
+                    this.rwl.readLock().unlock();
+                }
+            }
         }
 
         private ReentrantReadWriteLock rwl;
         private Map <InetAddress, Connection> map;                      //group connections by adress
         private Map<Long, InetAddress> idToConnection;                  //match a user with it's target adress
         private Map<Long, BlockingQueue<TransferPacket>> input;         //match user with it's input
+        private KeyPair keyPair;                                        //key pair used for encryption
 
         ConnectionByIP ()
         {
@@ -208,7 +268,7 @@ public class SocketManager
                 }
                 else
                 {
-                    c= new Connection();
+                    c= new Connection(this.keyPair);
                 }
                 
                 //Add user to connection
@@ -221,8 +281,8 @@ public class SocketManager
                 LinkedBlockingQueue<TransferPacket> userInput= new LinkedBlockingQueue<>();
                 this.input.put(user, userInput);
                 
-                //Return the user's connections
-                return new UserIO(userInput, c.getOutput());
+                //Return the user's Input and Connection to interact with
+                return new UserIO(userInput);
             }
             finally
             {
@@ -303,19 +363,6 @@ public class SocketManager
             }
         }
 
-        public BlockingQueue<Connection.Packet> getOutput(InetAddress adr)
-        {
-            try
-            {
-                this.rwl.readLock().lock();
-                return this.map.get(adr).packetsToTransfer;
-            }
-            finally
-            {
-                this.rwl.readLock().unlock();
-            }
-        }
-
         public long getTargetUserId (InetAddress addr, long from)
         {
             try
@@ -346,15 +393,20 @@ public class SocketManager
                 this.rwl.readLock().unlock();
             }
         }
-
+        
         public List<ConnectionByIP.Connection.RePacket> getRetrans (InetAddress addr)
         {
             return this.map.get(addr).getRetrans();
         }
-
+        
         public BlockingQueue<TransferPacket> getUserInput (long userId)
         {
             return this.input.get(userId);
+        }
+
+        public ConnectionByIP.Connection getConnection (InetAddress addr)
+        {
+            return this.map.get(addr);
         }
     }
 
@@ -362,7 +414,7 @@ public class SocketManager
     {
         public BlockingQueue<TransferPacket> in;
         public BlockingQueue<ConnectionByIP.Connection.Packet> out;
-
+        
         UserIO (BlockingQueue<TransferPacket> in, BlockingQueue<ConnectionByIP.Connection.Packet> out)
         {
             this.in= in;
@@ -379,7 +431,7 @@ public class SocketManager
     public class UserInfo extends UserIO
     {  
         public long id;
-
+        
         UserInfo (long id, BlockingQueue<TransferPacket> in, BlockingQueue<ConnectionByIP.Connection.Packet> out)
         {
             super (in, out);
@@ -405,6 +457,7 @@ public class SocketManager
         {
             this.rwl= new ReentrantReadWriteLock();
             this.nUser= 1;
+            this.connectivity= new ConnectionByIP();
             
             //Set up the socket
             DatagramSocket socket= new DatagramSocket(Shared.Defines.transferPort);
@@ -456,4 +509,5 @@ public class SocketManager
             this.rwl.writeLock().unlock();
         }
     }
+
 }

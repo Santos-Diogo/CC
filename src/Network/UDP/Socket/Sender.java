@@ -24,6 +24,7 @@ import Shared.Crypt;
 
 public class Sender implements Runnable
 {
+    private final int MAX_LATENCY= 300;
     private DatagramSocket socket;
     ConnectionByIP connections;
     ThreadControl tc;
@@ -93,7 +94,7 @@ public class Sender implements Runnable
                     
                     for (ConnectionByIP.Connection.RePacket rePacket : this.connections.getRetrans(adr))
                     {
-                        if ((System.currentTimeMillis()- rePacket.createTime)> 300)
+                        if ((System.currentTimeMillis()- rePacket.createTime)> this.MAX_LATENCY)
                         {
                             this.connections.getRetrans(adr).remove(i);
                             udpSend (adr, rePacket.packet);
