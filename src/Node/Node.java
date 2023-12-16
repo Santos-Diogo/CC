@@ -36,7 +36,6 @@ public class Node
     private static Scanner scanner = new Scanner(System.in);            //Console input
     private static FileBlockInfo fbInfo;                                //Info on the node
     private static ThreadControl tc= new ThreadControl();               //Object used to terminate minor threads
-    public static DNScache dnscache = new DNScache();
 
     
     

@@ -9,7 +9,7 @@ public class PingUtil {
 
     public PingUtil(String host) throws Exception
     {
-        Process process = new ProcessBuilder("ping", "-c", "10", "-i", "0,1", host).start();
+        Process process = new ProcessBuilder("ping", "-c", "10", "-i", "0,01", host).start();
         BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
         String line;
         while ((line = reader.readLine()) != null) {
