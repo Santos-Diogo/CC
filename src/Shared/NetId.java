@@ -3,6 +3,8 @@ package Shared;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.io.Serializable;
 
 /**
@@ -30,6 +32,11 @@ public class NetId implements Serializable
             System.err.println("Host não existe");
             return null;
         }
+    }
+
+    public void serialize (DataOutputStream out) throws IOException
+    {
+        out.writeUTF(name);
     }
 
     @Override

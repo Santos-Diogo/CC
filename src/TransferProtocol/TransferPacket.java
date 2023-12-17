@@ -2,6 +2,7 @@ package TransferProtocol;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -27,13 +28,9 @@ public class TransferPacket implements Serializable
         this.netid= netid;
     }
 
-    public byte[] serialize() throws IOException {
-        try (ByteArrayOutputStream bs = new ByteArrayOutputStream();
-             ObjectOutputStream stream = new ObjectOutputStream(bs)) {
-    
-            stream.writeObject(this);
-            return bs.toByteArray();
-        }
+    public void serialize(DataOutputStream out) throws IOException {
+        out.writeInt(this.type.ordinal());
+        this.netid.serialize(out);   
     }
     
 

@@ -1,5 +1,7 @@
 package Node;
 
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -131,8 +133,11 @@ public class Node
             {
                 TransferPacket request = new GetFilesReq(TransferProtocol.TransferPacket.TypeMsg.GETF_REQ, net_Id, file, requests.getValue());
                 InetAddress destinationAddress;
-                try (DatagramSocket socket = new DatagramSocket()) {
-                    byte[] sendData = request.serialize();
+                try (DatagramSocket socket = new DatagramSocket(); ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+                    DataOutputStream dos = new DataOutputStream(baos);
+                    request.serialize(dos);
+                    dos.close();
+                    byte[] sendData = baos.toByteArray();
                     
                     destinationAddress = InetAddress.getByName(requests.getKey().getName() + Shared.Defines.DNS_Zone);
 
