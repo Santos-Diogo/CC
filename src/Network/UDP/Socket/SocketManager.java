@@ -147,14 +147,109 @@ public class SocketManager
             }
         }
 
-        //method to be used when a packet is received
-        void received (UDP_Packet packet)
+        /**
+         * Add a packet to the user's queue after decrypting it
+         * @param packet received packet
+         */
+        private void receiveMessage (Message packet)
         {
+            try
+            {
+                // decrypt the packet
+                byte[] encrypted_transfer= packet.message;
+                byte[] decrypted_transfer= this.crypt.decrypt(encrypted_transfer);
+                TransferPacket transfer_packet= new TransferPacket(decrypted_transfer);
+
+                //add the packet to the user's input queue
+                this.received_packets.get(packet.to).add(transfer_packet);
+            }
+            catch (Exception e)
+            {
+                e.printStackTrace();
+            }
 
         }
 
+        //method to be used when a packet is received
+        void received (DatagramPacket datagram_packet)
+        {
+            // retrieve the udp packet's bytes
+            byte[] payload= datagram_packet.getData();
+            byte[] udp_serialized= CRC.decouple(payload);
+
+            // if the bytes are valid
+            if (udp_serialized!= null)
+            {
+                try
+                {
+                    // retrieve the udp packet itself
+                    UDP_Packet packet= new UDP_Packet(udp_serialized);
+                    
+                    switch (packet.type)
+                    {
+                        case ACK:
+                        {
+                            // remove packet corresponding to ack from retransmission queue
+                            this.retransmission_packets.remove(packet.pNnumber);
+                            break;
+                        }
+                        case CON:
+                        {
+                            // handle the connection
+                            break;
+                        }
+                        case DC:
+                        {
+                            //not in use
+                            break;
+                        }
+                        case MSG:
+                        {
+                            // if the packet is the expected packet
+                            if (packet.pNnumber== this.received_number)
+                            {
+                                // set received_number for next packet
+                                this.received_number++;
+                            }
+                            else
+                            {
+                                //if the received packet is over the expected received number
+                                if (packet.pNnumber> this.received_number)
+                                {
+                                    // add packets in between to not received and set received number and 
+                                    // set received number to be the next ack to receive under normal conditions
+                                    while (this.received_number!= packet.pNnumber)
+                                    {
+                                        this.non_received.add(this.received_number);
+                                        this.received_number++;
+                                    } 
+                                    this.received_number= packet.pNnumber+ 1;
+                                    
+                                }
+                                //if it's lower
+                                {
+                                    // if element was not in the list (duplicate)
+                                    if (!this.non_received.remove(packet.pNnumber))
+                                    {
+                                        // we dont receive the message
+                                        break;
+                                    }
+                                }
+                            }
+                            receiveMessage((Message) packet);
+                            break;
+                        }
+                    }
+                }
+                catch (Exception e)
+                {
+                    e.printStackTrace();
+                }
+            }
+        }
+            
         /**
-         * Method to send a single packet and add it to the retransmission queue with the sent instance defined as now
+         * Method to send a single packet and add it to the retransmission queue with the sent instance defined as now.
          * @param socket socket to use
          * @param packet packet to send
          * @param now timestamp for the moment we sent the packet
@@ -185,32 +280,34 @@ public class SocketManager
                 long now= System.currentTimeMillis();
 
                 //send retransmission packets
-                while (this.window!= 0)
+                for (RePacket repacket: this.retransmission_packets.values())
                 {
-                    for (RePacket repacket: this.retransmission_packets.values())
+                    // stop if the window is 0
+                    if (this.window== 0)
+                        break;
+
+                    //Consider the packet lost if a packet is in the retransmission queue for more than "MAX_LATENCY" else we dont send it and wait for the Ack
+                    if (now- repacket.added_time< MAX_LATENCY)
                     {
-                        //Consider the packet lost if a packet is in the retransmission queue for more than "MAX_LATENCY" else we dont send it and wait for the Ack
-                        if (now- repacket.added_time< MAX_LATENCY)
-                        {
-                            send (socket, repacket.packet, now);
-                            //decrement the window to reflect the sent packet
-                            this.window--;
-                        }
+                        send (socket, target_address, target_port, repacket.packet, now);
+                        //decrement the window to reflect the sent packet
+                        this.window--;
                     }
                 }
 
                 //send other packets
-                while (this.window!= 0)
-                {
-                    List<UDP_Packet> packets_list= new ArrayList<>();
-                    this.transmission_packets.drainTo(packets_list);
+                List<UDP_Packet> packets_list= new ArrayList<>();
+                this.transmission_packets.drainTo(packets_list);
 
-                    for (UDP_Packet packet: packets_list)
-                    {
-                        send (socket, packet, now);
-                        //decrement the window to reflect the sent packet
-                        this.window--;
-                    }
+                for (UDP_Packet packet: packets_list)
+                {
+                    // stop if the window is 0
+                    if (this.window== 0)
+                        break;
+
+                    send (socket, target_address, target_port, packet, now);
+                    //decrement the window to reflect the sent packet
+                    this.window--;
                 }
             }
             catch (Exception e)
