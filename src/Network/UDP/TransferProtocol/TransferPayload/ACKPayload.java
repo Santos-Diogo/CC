@@ -1,21 +1,30 @@
 package Network.UDP.TransferProtocol.TransferPayload;
 
-import java.io.ByteArrayInputStream;
-import java.io.ObjectInputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 
-public class ACKPayload implements TransferPayload
+import Network.UDP.TransferProtocol.TransferPacket;
+
+public class ACKPayload extends TransferPacket
 {
     Long ackNumber;
 
-    public ACKPayload (Long ackNumber)
+    public ACKPayload (Long ackNumber, TypeMsg type, byte[] payload)
     {
+        super(type, payload);
         this.ackNumber= ackNumber;
     }
 
-    public ACKPayload (byte[] b) throws Exception
+    public void serialize (DataOutputStream out) throws IOException
     {
-        ObjectInputStream stream= new ObjectInputStream(new ByteArrayInputStream(b));
-        ACKPayload p= (ACKPayload) stream.readObject();
-        this.ackNumber= p.ackNumber;
+        super.serialize(out);
+        out.writeLong(ackNumber);
+    }
+
+    public static ACKPayload deserialize (DataInputStream in, TransferPacket packet) throws IOException
+    {
+        long ackNumber = in.readLong();
+        return new ACKPayload(ackNumber, packet.type, packet.payload);
     }
 }

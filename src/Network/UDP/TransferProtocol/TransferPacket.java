@@ -1,11 +1,11 @@
 package Network.UDP.TransferProtocol;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.Serializable;
-import java.net.InetAddress;
 
 public class TransferPacket implements Serializable
 {
@@ -17,21 +17,9 @@ public class TransferPacket implements Serializable
         ACK     //Ack
     };
 
-    public InetAddress source;                  //Source's Adress
     public TypeMsg type;                        //Message's type
     public byte[] payload;                      //Packet's payload (Encrypted)
 
-    /**
-     * @return returns packet object written in bytes
-     * @throws Exception failure in internall streams
-     */
-    public byte[] serialize () throws Exception
-    {
-        ByteArrayOutputStream bs;
-        ObjectOutputStream stream= new ObjectOutputStream(bs= new ByteArrayOutputStream());
-        stream.writeObject(this);
-        return bs.toByteArray();
-    }
 
     public TransferPacket (byte[] b) throws Exception
     {
@@ -45,5 +33,27 @@ public class TransferPacket implements Serializable
     {
         this.type= type;
         this.payload= payload;
+    }
+
+    /**
+     * @return returns packet object written in bytes
+     * @throws IOException failure in internall streams
+     */
+    public void serialize (DataOutputStream out) throws IOException
+    {
+        out.writeInt(this.type.ordinal());
+        out.writeInt(payload.length);
+        out.write(payload);
+    
+    }
+
+    public static TransferPacket deserialize (DataInputStream in) throws IOException
+    {
+        TypeMsg type = TypeMsg.values()[in.readInt()];
+        int size = in.readInt();
+        byte[] payload = new byte[size];
+        in.read(payload, 0, size);
+        return new TransferPacket(type, payload);
+
     }
 }
