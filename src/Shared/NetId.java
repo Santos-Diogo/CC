@@ -3,6 +3,7 @@ package Shared;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.Serializable;
@@ -37,6 +38,12 @@ public class NetId implements Serializable
     public void serialize (DataOutputStream out) throws IOException
     {
         out.writeUTF(name);
+    }
+
+    public static NetId deserialize (DataInputStream in) throws IOException
+    {
+        String name = in.readUTF();
+        return new NetId(name);
     }
 
     @Override

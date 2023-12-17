@@ -1,5 +1,7 @@
 package Node;
 
+import java.io.ByteArrayInputStream;
+import java.io.DataInputStream;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -47,11 +49,12 @@ public class ConcurrentUDPServer implements Runnable{
     }
 
     private static void handlePacket(DatagramPacket packet) {
-        try {
-            TransferPacket receivedMessage = TransferPacket.deserialize(packet.getData());
+        try (ByteArrayInputStream bais = new ByteArrayInputStream(packet.getData())){
+            DataInputStream dis = new DataInputStream(bais);
+            TransferPacket receivedMessage = TransferPacket.deserialize(dis);
             switch (receivedMessage.type) {
                 case GETF_REQ:
-                    GetFilesReq parsedPacket = (GetFilesReq) receivedMessage;
+                    GetFilesReq parsedPacket = GetFilesReq.deserialize(dis, receivedMessage);
                     System.out.println("Received message from " + packet.getAddress() + ": " + parsedPacket.file + " " + parsedPacket.blocks.toString());
                     break;
             
