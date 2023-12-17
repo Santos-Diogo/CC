@@ -20,6 +20,7 @@ import Network.UDP.Packet.Message;
 import Network.UDP.Packet.UDP_Packet;
 import Network.UDP.Packet.UDP_Packet.Type;
 import Network.UDP.TransferProtocol.*;
+import Shared.CRC;
 import Shared.Crypt;
 
 /**
@@ -153,14 +154,19 @@ public class SocketManager
         }
 
         /**
-         * Method to send a single packet
+         * Method to send a single packet and add it to the retransmission queue with the sent instance defined as now
          * @param socket socket to use
          * @param packet packet to send
          * @param now timestamp for the moment we sent the packet
          */
-        private void send (DatagramSocket socket, UDP_Packet packet, long now)
+        private void send (DatagramSocket socket, InetAddress addr, int port, UDP_Packet packet, long now) throws Exception
         {
-
+            //add the packet to the resend queue
+            this.retransmission_packets.put(packet.pNnumber, new RePacket());
+            //set the serialized packet with crc-32 bitchecking 
+            byte[] checked= CRC.couple(packet.serialize());
+            //send the packet with crc-32 bitchecking
+            socket.send(new DatagramPacket(checked, checked.length, addr, port));
         }
 
         /**
@@ -169,7 +175,7 @@ public class SocketManager
          * @param target_address target's address
          * @param target_port target port
          */
-        void sendALL (DatagramSocket socket, InetAddress target_address, long target_port)
+        void sendALL (DatagramSocket socket, InetAddress target_address, int target_port)
         {
             try
             {
@@ -192,6 +198,7 @@ public class SocketManager
                         }
                     }
                 }
+
                 //send other packets
                 while (this.window!= 0)
                 {
