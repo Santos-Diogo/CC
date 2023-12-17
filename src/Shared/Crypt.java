@@ -1,15 +1,16 @@
 package Shared;
 
-import java.security.KeyFactory;
+import java.security.KeyPairGenerator;
+import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
-import java.security.spec.X509EncodedKeySpec;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyAgreement;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+import java.security.KeyPair;
 
 /**
  * Class responsible for encrypting and decrypting the messages using the given key
@@ -19,19 +20,28 @@ public class Crypt
     private SecretKey sKey;
 
     /**
+     * Creates a keypair
+     * @return
+     * @throws NoSuchAlgorithmException
+     */
+    public static KeyPair generateKeyPair () throws NoSuchAlgorithmException
+    {
+        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("DH");
+        KeyPair pair = keyPairGenerator.generateKeyPair();
+        return pair;
+    }
+
+    /**
      * Creates a secret key and constructs the Crypt
      * @param privateKey
      * @param publicKeyBytes
      * @throws Exception
      */
-    public Crypt (PrivateKey privateKey, byte[] publicKeyBytes) throws Exception
+    public Crypt (PrivateKey private_key, PublicKey public_key) throws Exception
     {
-        KeyFactory keyFactory = KeyFactory.getInstance("DH");
-        PublicKey publicKey = keyFactory.generatePublic(new X509EncodedKeySpec(publicKeyBytes));
-
         KeyAgreement keyAgreement = KeyAgreement.getInstance("DH");
-        keyAgreement.init(privateKey);
-        keyAgreement.doPhase(publicKey, true);
+        keyAgreement.init(private_key);
+        keyAgreement.doPhase(public_key, true);
 
         this.sKey= new SecretKeySpec(keyAgreement.generateSecret(), "AES");
     }

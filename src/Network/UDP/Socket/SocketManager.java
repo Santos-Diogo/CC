@@ -32,7 +32,6 @@ public class SocketManager
         public long added_time;                             //time at which the packet was added to the queue
         UDP_Packet packet;                                  //packet to transmit
     }
-
     public class Connection
     {
         public class ConnectionStatus
@@ -48,10 +47,11 @@ public class SocketManager
         KeyPair keys;
         Crypt crypt;
         Map<Long,Long> user_destination;                            // destination for a user's packets
-        Map<Long, BlockingQueue<RePacket>> retransmission_packets;  // packet's timestamp to packet to retransmit
+        Map<Long, RePacket> retransmission_packets;                 // packet's timestamp to packet to retransmit
         BlockingQueue<UDP_Packet> transmission_packets;             // packets to transmit
         Map<Long, BlockingQueue<TransferPacket>> received_packets;  // users to packets received
         ConnectionStatus status;                                    // statistics on the connection/ connection control
+        long inc;                                                   // number of the next packet to send
         long received_number;                                       // highest number of packet received
         List<Long> non_received;                                    // list of packets with number lower than "received number" that we haven't received
 
@@ -64,6 +64,7 @@ public class SocketManager
             this.transmission_packets= new LinkedBlockingQueue<>();
             this.retransmission_packets= new HashMap<>();
             this.status= new ConnectionStatus();
+            this.inc= 0;
             this.received_number= 0;
             this.non_received= new ArrayList<>();
 
@@ -112,15 +113,42 @@ public class SocketManager
          */
         BlockingQueue<TransferPacket> getInput (long user)
         {
-            return this.received_packets.get(user);
+            try
+            {
+                this.rwl.readLock().lock();
+                return this.received_packets.get(user);
+            }
+            finally
+            {
+                this.rwl.readLock().unlock();
+            }
         }
 
         /**
          * Adds a packet to the send queue
          */
-        void addPacket ()
+        void addPacketTransmission (long user_id, TransferPacket transfer_packet) throws Exception
         {
-            
+            try
+            {
+                //encrypt payload
+                byte [] encrypted_payload= this.crypt.encrypt(transfer_packet.serialize());
+                
+                //create packet
+                long from= user_id;
+                long to= this.user_destination.get(user_id);
+                UDP_Packet udp_packet= new Message(new UDP_Packet(Type.MSG, from, to, this.inc++), encrypted_payload);
+             
+                //lock
+                this.rwl.writeLock().lock();
+
+                //add packet to transmission queue
+                this.transmission_packets.add(udp_packet);
+            }
+            finally
+            {
+                this.rwl.writeLock().unlock();
+            }
         }
 
         /**
@@ -131,16 +159,67 @@ public class SocketManager
 
         }
     }
-
+    public class UserData
+    {
+        public long user_id;
+        public Connection user_connection;
+        
+        UserData (Connection c, long user_id)
+        {
+            this.user_connection= c;
+            this.user_id= user_id;
+        }
+    }
+    
+    
     ReentrantReadWriteLock rwl;
+    //Used to uniquely identify each user
+    private static long inc= 0;                                                 
     KeyPair keys;
     Map<InetAddress, Connection> address_to_connection;
     Map<Long,Connection> user_to_connection;
 
     SocketManager ()
     {
-        this.rwl= new ReentrantReadWriteLock();
-        // generate the keypair
-        // this.keys= ;
+        try
+        {
+            this.rwl= new ReentrantReadWriteLock();
+            this.keys= Crypt.generateKeyPair();
+            this.address_to_connection= new HashMap<>();
+            this.user_to_connection= new HashMap<>();
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
+    }
+
+    UserData registerUser (InetAddress adr)
+    {
+        try
+        {
+            this.rwl.writeLock().lock();
+            long user_id= inc++;
+
+            // get user's connection
+            Connection c;
+            if ((c= this.address_to_connection.get(adr))== null)
+            {
+                c= new Connection(keys);
+            }
+            this.address_to_connection.put(adr, c);
+
+            // register user in the connection
+            c.registerUser(user_id);
+            
+            // relate user to the connection
+            this.user_to_connection.put(user_id, c);
+
+            return new UserData(c, user_id);
+        }
+        finally
+        {
+            this.rwl.writeLock().unlock();
+        }
     }
 }

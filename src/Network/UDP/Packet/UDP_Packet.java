@@ -23,7 +23,6 @@ public class UDP_Packet implements Serializable
     public long from;
     public long to;
     public long pNnumber;
-    private static long inc;
 
     public UDP_Packet (byte[] b) throws Exception
     {
@@ -35,13 +34,12 @@ public class UDP_Packet implements Serializable
         this.pNnumber= p.pNnumber;
     }
 
-    public UDP_Packet (UDP_Packet.Type type, long from, long to)
+    public UDP_Packet (UDP_Packet.Type type, long from, long to, long pNumber)
     {
         this.type= type;
         this.from= from;
         this.to= to;
-        this.pNnumber= inc;
-        inc++;
+        this.pNnumber= pNumber;
     }
 
     public UDP_Packet (UDP_Packet p)
