@@ -34,41 +34,36 @@ public class SocketManager
     }
     public class Connection
     {
-        public class ConnectionStatus
-        {
-            //undefined requisites
-            ConnectionStatus ()
-            {
-
-            }
-        }
+        final int MAX_LATENCY= 300;
+        final int INITIAL_PACKETS= 10;
 
         ReentrantReadWriteLock rwl;
         KeyPair keys;
         Crypt crypt;
         Map<Long,Long> user_destination;                            // destination for a user's packets
-        Map<Long, RePacket> retransmission_packets;                 // packet's timestamp to packet to retransmit
+        long window;                                                // sets the availability to trasnmit "window" packets in a given moment
+        Map<Long, RePacket> retransmission_packets;                 // packet number to packet to retransmit
         BlockingQueue<UDP_Packet> transmission_packets;             // packets to transmit
         Map<Long, BlockingQueue<TransferPacket>> received_packets;  // users to packets received
-        ConnectionStatus status;                                    // statistics on the connection/ connection control
         long inc;                                                   // number of the next packet to send
         long received_number;                                       // highest number of packet received
         List<Long> non_received;                                    // list of packets with number lower than "received number" that we haven't received
-
+        
         Connection (KeyPair keys)
         {
             this.rwl= new ReentrantReadWriteLock();
             this.keys= keys;
             this.crypt= null;
             this.user_destination= new HashMap<>();
+            this.window= INITIAL_PACKETS;
             this.transmission_packets= new LinkedBlockingQueue<>();
             this.retransmission_packets= new HashMap<>();
-            this.status= new ConnectionStatus();
             this.inc= 0;
             this.received_number= 0;
             this.non_received= new ArrayList<>();
-
+            
             //add a connection message to the sender;
+            this.transmission_packets.add(new Connect(new UDP_Packet(Type.CON, 0, 0, inc++), keys.getPublic()));
         }
 
         Connection (KeyPair keys, Crypt crypt)
@@ -151,12 +146,74 @@ public class SocketManager
             }
         }
 
-        /**
-         * Method to be called by the sender to send every possible packet in accordance with the connection's own state
-         */
-        void send ()
+        //method to be used when a packet is received
+        void received (UDP_Packet packet)
         {
 
+        }
+
+        /**
+         * Method to send a single packet
+         * @param socket socket to use
+         * @param packet packet to send
+         * @param now timestamp for the moment we sent the packet
+         */
+        private void send (DatagramSocket socket, UDP_Packet packet, long now)
+        {
+
+        }
+
+        /**
+         * Method to be called by the sender to send every possible packet in accordance with the connection's own state
+         * @param socket datagram socket we are using in the socket manager
+         * @param target_address target's address
+         * @param target_port target port
+         */
+        void sendALL (DatagramSocket socket, InetAddress target_address, long target_port)
+        {
+            try
+            {
+                this.rwl.writeLock().lock();
+
+                //get current timestamp
+                long now= System.currentTimeMillis();
+
+                //send retransmission packets
+                while (this.window!= 0)
+                {
+                    for (RePacket repacket: this.retransmission_packets.values())
+                    {
+                        //Consider the packet lost if a packet is in the retransmission queue for more than "MAX_LATENCY" else we dont send it and wait for the Ack
+                        if (now- repacket.added_time< MAX_LATENCY)
+                        {
+                            send (socket, repacket.packet, now);
+                            //decrement the window to reflect the sent packet
+                            this.window--;
+                        }
+                    }
+                }
+                //send other packets
+                while (this.window!= 0)
+                {
+                    List<UDP_Packet> packets_list= new ArrayList<>();
+                    this.transmission_packets.drainTo(packets_list);
+
+                    for (UDP_Packet packet: packets_list)
+                    {
+                        send (socket, packet, now);
+                        //decrement the window to reflect the sent packet
+                        this.window--;
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                e.printStackTrace();
+            }
+            finally
+            {
+                this.rwl.writeLock().unlock();
+            }
         }
     }
     public class UserData

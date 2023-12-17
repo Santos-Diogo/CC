@@ -13,10 +13,11 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import javax.swing.text.html.HTMLDocument.Iterator;
 
+import Network.UDP.Packet.Connect;
 import Network.UDP.Packet.Message;
 import Network.UDP.Packet.UDP_Packet;
 import Network.UDP.Packet.UDP_Packet.Type;
-import Network.UDP.Socket.SocketManager.ConnectionByIP;
+import Network.UDP.Socket.SocketManager.Connection;
 import Network.UDP.TransferProtocol.TransferPacket;
 import ThreadTools.ThreadControl;
 import Shared.CRC;
@@ -26,13 +27,13 @@ public class Sender implements Runnable
 {
     private final int MAX_LATENCY= 300;
     private DatagramSocket socket;
-    ConnectionByIP connections;
+    Map<InetAddress, Connection> address_to_connection;
     ThreadControl tc;
 
-    Sender (DatagramSocket socket, ConnectionByIP connections, ThreadControl tc)
+    Sender (DatagramSocket socket, Map<InetAddress, Connection> address_to_connection, ThreadControl tc)
     {
         this.socket= socket;
-        this.connections= connections;
+        this.address_to_connection= address_to_connection;
         this.tc= tc;
     }
 
@@ -82,6 +83,7 @@ public class Sender implements Runnable
                 Set<InetAddress> targetsIP= connections.getTargetsIp ();
                 
                 //Iterate over the Connections
+     
                 ConnectionByIP.Connection c;
                 for (InetAddress adr : targetsIP)
                 {
