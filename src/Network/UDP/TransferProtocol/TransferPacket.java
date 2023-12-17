@@ -19,8 +19,6 @@ public class TransferPacket implements Serializable
 
     public InetAddress source;                  //Source's Adress
     public TypeMsg type;                        //Message's type
-    public long from;                           //From id
-    public long to;                             //Destination id
     public byte[] payload;                      //Packet's payload (Encrypted)
 
     /**
@@ -40,8 +38,6 @@ public class TransferPacket implements Serializable
         ObjectInputStream stream= new ObjectInputStream(new ByteArrayInputStream(b));
         TransferPacket p= (TransferPacket) stream.readObject();
         this.type= p.type;
-        this.from= p.from;
-        this.to= p.to;
         this.payload= p.payload;
     }
 
