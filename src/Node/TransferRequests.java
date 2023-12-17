@@ -165,7 +165,7 @@ class TransferRequests implements Runnable
         };
 
         ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-        // Schedule the task to run every 5 seconds, with an initial delay of 0 seconds
+        // Schedule the task to run every 30 seconds, with an initial delay of 0 seconds
         scheduler.scheduleAtFixedRate(pingCachedNodes, 0, 30, TimeUnit.SECONDS);
 
         

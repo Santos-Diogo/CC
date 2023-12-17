@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.concurrent.BlockingQueue;
 
 import Network.TCP.TrackProtocol.TrackPacket;
-import Network.UDP.Socket.SocketManager.IOQueue;
 import Network.UDP.TransferProtocol.TransferPacket;
 import Network.UDP.TransferProtocol.TransferPacket.TypeMsg;
 import Network.UDP.TransferProtocol.TransferPayload.GETPayload;
