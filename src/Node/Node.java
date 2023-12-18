@@ -28,8 +28,8 @@ public class Node
     private static long trackerId;                                      //Id assigned by the manager
     private static BlockingQueue<TrackPacket> trackerInput;             //TCP Input
     private static BlockingQueue<TrackPacket> trackerOutput;            //TCP Output
+    private static BlockingQueue<GetRepPacket> files;                   //Info for TransferRequests
     private static Network.TCP.Socket.SocketManager tcpSocketManager;   //TCP socket manager
-
     private static Network.UDP.Socket.SocketManager udpSocketManager;   //UDP socket manager
 
     private static NetId net_Id;                                        //Self NetId
@@ -44,7 +44,7 @@ public class Node
         try 
         {
             // Write Request
-            trackerOutput.add(new TrackPacket(net_Id, TypeMsg.AVF_REQ, trackerId, trackerId)); //From e to pelo q percebi são removidos
+            trackerOutput.add(new TrackPacket(net_Id, TypeMsg.AVF_REQ, trackerId, 0));
 
             // Get response
             AvfRepPacket packet = (AvfRepPacket) trackerInput.take();
@@ -73,11 +73,12 @@ public class Node
     {
         try 
         {
+            TrackPacket request = new GetReqPacket(net_Id, trackerId, 0, file);
             // Send Repply
-            trackerOutput.add();
+            trackerOutput.add(request);
 
             //Get Response
-            GetRepPacket resp = trackerInput.take();
+            GetRepPacket resp = (GetRepPacket) trackerInput.take();
 
             //Debug
             Set<NetId> nodes = resp.get_nodeBlocks().get_nodes();
@@ -89,13 +90,12 @@ public class Node
             }
             //Debug end
 
-            Map<Long, NetId> blockNode= scalonate (resp.get_nodeBlocks(), resp.get_nBlocks(), resp.getWorkLoad(), resp.getOwnedBlocks());
             //Debug start
             for (Map.Entry<NetId, Integer> wkl : resp.getWorkLoad().entrySet())
                 System.out.println(wkl.getKey().toString() + ", " + wkl.getValue());
             //Debug end
-
-            //Here we need to update tracker about the workload thats being issued on the nodes and to start the transfer process
+            files.add(resp);
+            //!!! Here we need to update tracker about the workload thats being issued on the nodes and to start the transfer process!!!
         }
         catch (Exception e) 
         {
@@ -182,7 +182,7 @@ public class Node
             register (fbInfo);
 
             //SetsUp UDP_Client and UDP_Server 
-            Thread udpC= new Thread(new TransferRequests());
+            Thread udpC= new Thread(new TransferRequests(tc, files, trackerOutput, udpSocketManager));
             Thread udpS= new Thread(new TransferServer(fbInfo, udpSocketManager, tc, args[0]));
             udpC.start();
             udpS.start();
