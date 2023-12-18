@@ -145,7 +145,7 @@ public class TransferRequests implements Runnable
                         dnscache.add_AdressToCache(node, node_Address);
                     }
 
-                    Thread t = new Thread(new Transfer(udpManager, node_Address, file, nodes.getValue()));
+                    Thread t = new Thread(new Transfer(udpManager, tcpoutput, node_Address, file.get_fileId(), nodes.getValue()));
                     t.start();
                 }
 
@@ -160,20 +160,24 @@ public class TransferRequests implements Runnable
     public void run()
     {
         Runnable pingCachedNodes = () -> {
-            if (!dnscache.isEmpty())
-            {
-                Set<NetId> cachedNodes = dnscache.getCachedNetIds();
-                for(NetId node : cachedNodes)
+            try{
+                if (!dnscache.isEmpty())
                 {
-                    PingUtil results = new PingUtil(node.getName() + Shared.Defines.DNS_Zone);
-                    this.pingInfo.put(node, results);
+                    Set<NetId> cachedNodes = dnscache.getCachedNetIds();
+                    for(NetId node : cachedNodes)
+                    {
+                        PingUtil results = new PingUtil(node.getName() + Shared.Defines.DNS_Zone);
+                        this.pingInfo.put(node, results);
+                    }
                 }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         };
 
         ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
         // Schedule the task to run every 30 seconds, with an initial delay of 0 seconds
-        scheduler.scheduleAtFixedRate(pingCachedNodes, 0, 30, TimeUnit.SECONDS);
+        scheduler.scheduleAtFixedRate(pingCachedNodes, 0, 60, TimeUnit.SECONDS);
 
         
         while (tc.get_running())

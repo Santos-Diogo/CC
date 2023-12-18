@@ -122,7 +122,7 @@ public class SocketManager
          * @param transfer_packet packet to send
          * @throws Exception
          */
-        void addPacketTransmission (long user_id, TransferPacket transfer_packet) throws Exception
+        public void addPacketTransmission (long user_id, TransferPacket transfer_packet) throws Exception
         {
             try
             {
@@ -297,7 +297,7 @@ public class SocketManager
         }
     }
 
-    UserData registerUser (InetAddress adr)
+    public UserData registerUser (InetAddress adr)
     {
         try
         {
