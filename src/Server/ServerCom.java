@@ -82,12 +82,12 @@ public class ServerCom implements Runnable
         }
     }
 
-    private void handle_UPD (TrackPacket packet)
+    private void handle_ADD (TrackPacket packet)
     {
         System.out.println("UPD message");
         try 
         {
-            UpdateFilePacket p = (UpdateFilePacket) packet;
+            AddBlockPacket p = (AddBlockPacket) packet;
         } catch (Exception e)
         {
             e.printStackTrace();
@@ -129,8 +129,8 @@ public class ServerCom implements Runnable
                 handle_AVF_REQ(packet);
                 break;
             }
-            case UPD: {
-                handle_UPD(packet);
+            case ADD: {
+                handle_ADD(packet);
                 break;
             }
             case GET_REQ: {

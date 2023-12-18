@@ -11,7 +11,9 @@ public class TrackPacket implements Serializable
         REG_REP,    // Register Response
         AVF_REQ,    // Available Files Request
         AVF_RESP,   // Available Files Response
-        UPD,        // Update about a File/ Blocks
+        ADD,        // Add a block to a node
+        RM,         // Remove a block from a node
+        WKL,        // Update the nodes workload
         DC,         // Node disconnected from network
         GET_REQ,    // Get files request
         GET_RESP,   // Get files response

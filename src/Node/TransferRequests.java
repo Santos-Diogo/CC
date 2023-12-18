@@ -27,7 +27,7 @@ import java.util.concurrent.TimeUnit;
 
 import Network.TCP.TrackProtocol.GetRepPacket;
 import Network.TCP.TrackProtocol.TrackPacket;
-import Network.TCP.TrackProtocol.UpdateFilePacket;
+import Network.TCP.TrackProtocol.AddBlockPacket;
 import Network.TCP.TrackProtocol.TrackPacket.TypeMsg;
 import Network.UDP.Socket.SocketManager;
 import Network.UDP.TransferProtocol.TransferPayload.TSFPayload;
@@ -201,7 +201,7 @@ public class TransferRequests implements Runnable
                     try (FileOutputStream fos = new FileOutputStream(newDir)) {
                         fos.write(block.block);
                     }
-                    UpdateFilePacket upd = new UpdateFilePacket(new TrackPacket(self, TypeMsg.UPD, selfId, 0), true, fileId, block.blockNumber);
+                    AddBlockPacket upd = new AddBlockPacket(new TrackPacket(self, TypeMsg.ADD, selfId, 0), fileId, block.blockNumber);
                     tcpoutput.add(upd);
                 }
                 filePaths.sort(Comparator.comparingInt(s -> Character.digit(s.charAt(s.length() - 1), 10)));
