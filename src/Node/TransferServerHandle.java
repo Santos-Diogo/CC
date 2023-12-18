@@ -1,8 +1,6 @@
 package Node;
 
 import ThreadTools.ThreadControl;
-
-import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -14,7 +12,6 @@ import Network.UDP.TransferProtocol.TransferPacket.TypeMsg;
 import Network.UDP.TransferProtocol.TransferPayload.GETPayload;
 import Network.UDP.TransferProtocol.TransferPayload.TSFPayload;
 
-import java.security.KeyPair;
 import java.util.List;
 
 import Blocker.FileBlockInfo;
@@ -28,10 +25,10 @@ public class TransferServerHandle implements Runnable
     private FileBlockInfo fbi;
     private String dir;
 
-    TransferServerHandle (ThreadControl tc, Network.UDP.Socket.SocketManager manager, FileBlockInfo fbi, String dir, InetAddress target)
+    public TransferServerHandle (ThreadControl tc, UserData data, FileBlockInfo fbi, String dir)
     {
         this.tc= tc;
-        this.user_data= manager.registerUser(target);
+        this.user_data= data;
         this.fbi = fbi;
         this.dir = dir;
     }
