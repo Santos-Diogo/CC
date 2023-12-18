@@ -1,20 +1,19 @@
 package Network.TCP.TrackProtocol;
 
-import java.util.List;
 
 
 public class UpdateFilePacket extends TrackPacket{
     
     private boolean add_rm; //true: add. false: rm.
     private long fileid;
-    private List<Long> blocks;
+    private long block;
 
-    public UpdateFilePacket (TrackPacket track_packet, boolean add_rm, long fileid, List<Long> blocks)
+    public UpdateFilePacket (TrackPacket track_packet, boolean add_rm, long fileid, Long block)
     {
         super(track_packet);
         this.add_rm = add_rm;
         this.fileid = fileid;
-        this.blocks = blocks;
+        this.block = block;
     }
 
     public boolean isAdd_rm() {
@@ -25,8 +24,8 @@ public class UpdateFilePacket extends TrackPacket{
         return fileid;
     }
 
-    public List<Long> getBlocks() {
-        return blocks;
+    public Long getBlocks() {
+        return block;
     }
 
     

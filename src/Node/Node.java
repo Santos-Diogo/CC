@@ -176,7 +176,7 @@ public class Node
             register (fbInfo);
 
             //SetsUp UDP_Client and UDP_Server 
-            Thread udpC= new Thread(new TransferRequests(tc, files, trackerOutput, udpSocketManager));
+            Thread udpC= new Thread(new TransferRequests(net_Id, trackerId, tc, files, trackerOutput, udpSocketManager, args[0]));
             Thread udpS= new Thread(new TransferServer(fbInfo, udpSocketManager, tc, args[0]));
             udpC.start();
             udpS.start();

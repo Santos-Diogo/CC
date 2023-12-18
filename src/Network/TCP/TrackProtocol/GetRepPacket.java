@@ -10,15 +10,17 @@ import Shared.NodeBlocks;
 public class GetRepPacket extends TrackPacket
 {
     private long fileId;
+    private String fileName;
     private Long nBlocks;
     private NodeBlocks nodeBlocks;
     private List<Long> ownedBlocks;
     private Map<NetId, Integer> workLoad;
 
-    public GetRepPacket (TrackPacket track_packet, long fileId, Long nBlocks, NodeBlocks nodeBlocks, List<Long> ownedBlocks, Map<NetId, Integer> workload)
+    public GetRepPacket (TrackPacket track_packet, long fileId, String fileName, Long nBlocks, NodeBlocks nodeBlocks, List<Long> ownedBlocks, Map<NetId, Integer> workload)
     {
         super (track_packet);
         this.fileId= fileId;
+        this.fileName = fileName;
         this.nBlocks= nBlocks;
         this.nodeBlocks= nodeBlocks;
         this.ownedBlocks = ownedBlocks;
@@ -28,6 +30,11 @@ public class GetRepPacket extends TrackPacket
     public long get_fileId ()
     {
         return this.fileId;
+    }
+
+    public String getName()
+    {
+        return this.fileName;
     }
 
     public Long get_nBlocks ()

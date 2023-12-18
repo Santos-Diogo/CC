@@ -1,34 +1,28 @@
 package Node;
 
-import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
-import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 
-import Network.TCP.TrackProtocol.TrackPacket;
 import Network.UDP.Socket.SocketManager.UserData;
 import Network.UDP.TransferProtocol.TransferPacket;
 import Network.UDP.TransferProtocol.TransferPacket.TypeMsg;
 import Network.UDP.TransferProtocol.TransferPayload.GETPayload;
 import Network.UDP.TransferProtocol.TransferPayload.TSFPayload;
-import Shared.Crypt;
 
 public class Transfer implements Runnable{
 
     private InetAddress node_toRequest; 
     private UserData userData;
-    private BlockingQueue<TrackPacket> tcpQueue;
-    private BlockingQueue<TSFPayload>
+    private BlockingQueue<TSFPayload> queue;
     private long fileid;
     private List<Long> blocks;
 
-    public Transfer (Network.UDP.Socket.SocketManager udpManager, BlockingQueue<TrackPacket> tcpQueue, InetAddress node, long fileid, List<Long> blocks)
+    public Transfer (Network.UDP.Socket.SocketManager udpManager, InetAddress node, long fileid, List<Long> blocks, BlockingQueue<TSFPayload> queue)
     {
         this.node_toRequest = node;
         this.userData = udpManager.registerUser(node);
-        this.tcpQueue = tcpQueue;
+        this.queue = queue;
         this.fileid = fileid;
         this.blocks = blocks;
     }
@@ -44,7 +38,7 @@ public class Transfer implements Runnable{
             for(int i = 0; i < blocks_size; i++)
             {
                 TSFPayload repPacket = (TSFPayload) transfers.take();
-
+                queue.add(repPacket);
             }
         } catch (Exception e) {
             e.printStackTrace();
