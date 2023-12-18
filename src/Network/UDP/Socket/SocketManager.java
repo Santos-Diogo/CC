@@ -129,7 +129,8 @@ public class SocketManager
                 //encrypt payload
                 ByteArrayOutputStream stream;
                 transfer_packet.serialize(new DataOutputStream(stream= new ByteArrayOutputStream()));
-                byte[] encrypted_payload= stream.toByteArray();
+                byte[] serialized= stream.toByteArray();
+                byte[] encrypted_payload= this.crypt.encrypt(serialized);
                 
                 //create packet
                 long from= user_id;
