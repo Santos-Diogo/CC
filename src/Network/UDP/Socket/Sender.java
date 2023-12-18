@@ -1,76 +1,20 @@
 package Network.UDP.Socket;
 
-import java.util.List;
-import java.util.Set;
-import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-
-import javax.swing.text.html.HTMLDocument.Iterator;
-
-import Network.UDP.Packet.Connect;
-import Network.UDP.Packet.Message;
-import Network.UDP.Packet.UDP_Packet;
-import Network.UDP.Packet.UDP_Packet.Type;
-import Network.UDP.Socket.SocketManager.Connection;
-import Network.UDP.TransferProtocol.TransferPacket;
 import ThreadTools.ThreadControl;
-import Shared.CRC;
-import Shared.Crypt;
+import Shared.Defines;
 
 public class Sender implements Runnable
 {
-    private final int MAX_LATENCY= 300;
+    private SocketManager socket_manager;
     private DatagramSocket socket;
-    Map<InetAddress, Connection> address_to_connection;
     ThreadControl tc;
 
-    Sender (DatagramSocket socket, Map<InetAddress, Connection> address_to_connection, ThreadControl tc)
+    Sender (DatagramSocket socket, SocketManager socket_manager, ThreadControl tc)
     {
         this.socket= socket;
-        this.address_to_connection= address_to_connection;
+        this.socket_manager= socket_manager;
         this.tc= tc;
-    }
-
-    public void udpSend (InetAddress targetAddr, UDP_Packet udp) throws Exception
-    {
-        //Add packet to retransmission List (With a timestamp)
-        this.connections.addRetransfer(targetAddr, udp);
-
-        //Serialize packet
-        byte[] serializeUDP= udp.serialize();
-
-        //Add checksum
-        byte[] checksummed= CRC.couple(serializeUDP);
-
-        //Make Datagram
-        DatagramPacket datagramPacket= new DatagramPacket(checksummed, checksummed.length, targetAddr, Shared.Defines.transferPort);
-
-        //Send Packet
-        socket.send(datagramPacket);
-    }
-
-    /**
-     * Proceedure to send out a packet
-     * @param packet
-     */
-    public void send (InetAddress targetAddr, ConnectionByIP.Connection.Packet fatPacket) throws Exception
-    {
-        
-        //Serialize packet
-        TransferPacket packet= fatPacket.packet;
-        long from= fatPacket.from;
-        byte[] serializeTP= packet.serialize();
-        
-        //Make UDP packet
-        Message udp= new Message(new UDP_Packet(Type.MSG, from, this.connections.getTargetUserId(targetAddr, from)), serializeTP);
-
-        udpSend(targetAddr, udp);
     }
 
     public void run ()
@@ -79,44 +23,7 @@ public class Sender implements Runnable
         {
             while (tc.get_running())
             {
-                //Get all targets
-                Set<InetAddress> targetsIP= connections.getTargetsIp ();
-                
-                //Iterate over the Connections
-     
-                ConnectionByIP.Connection c;
-                for (InetAddress adr : targetsIP)
-                {
-                    int n= this.connections.getWindow(adr);
-                    int i= 0;
-                    
-                    BlockingQueue<ConnectionByIP.Connection.Packet> outputQ= this.connections.getOutput(adr);
-                    
-                    //Need to check the retransmission Queue First
-                    
-                    for (ConnectionByIP.Connection.RePacket rePacket : this.connections.getRetrans(adr))
-                    {
-                        if ((System.currentTimeMillis()- rePacket.createTime)> this.MAX_LATENCY)
-                        {
-                            this.connections.getRetrans(adr).remove(i);
-                            udpSend (adr, rePacket.packet);
-                        }
-                        i++;
-                    }
-                    
-                    
-                    ConnectionByIP.Connection.Packet packet;
-                    for (; i< n; i++)
-                    {
-                        //No more blocks to take
-                        if ((packet= outputQ.peek())== null)
-                        break;
-                        packet= outputQ.take();
-                        send(adr, packet);
-                    }
-                    //Decrement used packets
-                    this.connections.decWindow(adr, i);
-                }
+                socket_manager.send(socket, Defines.transferPort);
             }
         }
         catch (Exception e)

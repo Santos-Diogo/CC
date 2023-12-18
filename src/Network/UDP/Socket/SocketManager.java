@@ -180,8 +180,10 @@ public class SocketManager
          */
         private void send (DatagramSocket socket, InetAddress addr, int port, UDP_Packet packet, long now) throws Exception
         {
-            //add the packet to the resend queue
-            this.retransmission_packets.put(packet.pNnumber, new RePacket());
+            //add the packet to the resend queue if it isn't an ack packet
+            if (packet.type!= Type.ACK)
+                this.retransmission_packets.put(packet.pNnumber, new RePacket());
+
             //set the serialized packet with crc-32 bitchecking 
             byte[] checked= CRC.couple(packet.serialize());
             //send the packet with crc-32 bitchecking
@@ -347,10 +349,38 @@ public class SocketManager
                 // retrieve the udp packet itself
                 UDP_Packet packet= new UDP_Packet(udp_serialized);
 
-                //if there is no encryption key set and the received packet is not of type connect
-                if (!(connection.crypt== null && packet.type!= Type.CON))
+                
+                // if there is no encryption key set and the received packet is not of type connect or
+                // the packet as already been received
+                if ((connection.crypt== null && packet.type!= Type.CON) || (packet.pNnumber< connection.received_number&& !connection.non_received.contains(packet)))
                 {
+                    if (packet.pNnumber== connection.received_number)
+                    {
+                        // set received_number for next packet
+                        connection.received_number++;
+                    }
+                    else
+                    {
+                        //if the received packet is over the expected received number
+                        if (packet.pNnumber> connection.received_number)
+                        {
+                            // add packets in between to not received and set received number and 
+                            // set received number to be the next packet to receive under normal conditions
+                            while (connection.received_number!= packet.pNnumber)
+                            {
+                                connection.non_received.add(connection.received_number);
+                                connection.received_number++;
+                            } 
+                            connection.received_number= packet.pNnumber+ 1;     
+                        }
+                        //if it's lower
+                        {
+                            // remove the packet from the non received list as it is now received
+                            connection.non_received.remove(packet.pNnumber);
+                        }
+                    }
 
+                    //Handle the packet
                     switch (packet.type)
                     {
                         case ACK:
@@ -365,6 +395,7 @@ public class SocketManager
                         {
                             // handle the connection
                             Connect connect_packet= (Connect) packet;
+                            // set up the crypt with the received key
                             connection.crypt= new Crypt(keys.getPrivate(), connect_packet.publicKey);
                             
                             //mark the connection as received
