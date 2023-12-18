@@ -36,7 +36,6 @@ public class Node
     private static Scanner scanner = new Scanner(System.in);            //Console input
     private static FileBlockInfo fbInfo;                                //Info on the node
     private static ThreadControl tc= new ThreadControl();               //Object used to terminate minor threads
-    public static DNScache dnscache = new DNScache();
 
     
     
@@ -149,9 +148,13 @@ public class Node
     private static void register(FileBlockInfo b) throws IOException, ClassNotFoundException
     {
         // Send Reg message with Node Status collected by "FileBlockInfo"
-        trackerOutput.add();
-        RegRepPacket rep= trackerInput.take();
-        b.set_FilesID(rep.get_fileId());
+        trackerOutput.add(new RegReqPacket(net_Id, trackerId, trackerId, b));  //From e to pelo q percebi são removidos
+        try{
+            RegRepPacket rep= (RegRepPacket) trackerInput.take();
+            b.set_FilesID(rep.get_fileId());
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     public static void main(String[] args) throws InterruptedException 

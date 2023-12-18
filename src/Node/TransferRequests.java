@@ -11,8 +11,13 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
+import Shared.Defines;
 import Shared.NetId;
 import Shared.NodeBlocks;
 import Shared.Tuple;
@@ -85,6 +90,7 @@ class TransferRequests implements Runnable
             if(block.snd() == 1)
                 return nodeBlocks.get_loneBlock(block.fst());
             List<NetId> nodes = nodeBlocks.get_nodesBlock(block.fst());
+            // Só falta adicionar o que se vai usar para comparar, o resto já esta feito (relativo ao ping)
             nodes.sort(Comparator.comparingInt(workload :: get).thenComparing(node -> new Random().nextInt()));
             return nodes.get(0);
         }
@@ -111,10 +117,14 @@ class TransferRequests implements Runnable
                 for(Map.Entry<NetId, List<Long>> nodes : scalonated_blocks.entrySet())
                 {
                     InetAddress node_Address;
-                    if(Node.dnscache.contains_NodeAdress(nodes.getKey()))
-                        node_Address = Node.dnscache.get_AddressFromCache(nodes.getKey());
+                    NetId node = nodes.getKey();
+                    if(dnscache.contains_NodeAdress(node))
+                        node_Address = dnscache.get_AddressFromCache(node);
                     else
-                        node_Address = InetAddress.getByName(nodes.getKey().getName());
+                    {
+                        node_Address = InetAddress.getByName(node.getName() + Shared.Defines.DNS_Zone);
+                        dnscache.add_AdressToCache(node, node_Address);
+                    }
 
                     Thread t = new Thread(new Transfer(udpManager, node_Address, file, nodes.getValue()));
                 }
@@ -129,9 +139,36 @@ class TransferRequests implements Runnable
 
     ThreadControl tc;
     BlockingQueue<Long> files;
+    Map<NetId, PingUtil> pingInfo;
+    DNScache dnscache;
+
+    public TransferRequests (ThreadControl tc, BlockingQueue<Long> files)
+    {
+        this.tc = tc;
+        this.files = files;
+        this.pingInfo = new HashMap<>();
+        this.dnscache = new DNScache();
+    }
 
     public void run()
     {
+        Runnable pingCachedNodes = () -> {
+            if (!dnscache.isEmpty())
+            {
+                Set<NetId> cachedNodes = dnscache.getCachedNetIds();
+                for(NetId node : cachedNodes)
+                {
+                    PingUtil results = new PingUtil(node.getName() + Shared.Defines.DNS_Zone);
+                    this.pingInfo.put(node, results);
+                }
+            }
+        };
+
+        ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+        // Schedule the task to run every 30 seconds, with an initial delay of 0 seconds
+        scheduler.scheduleAtFixedRate(pingCachedNodes, 0, 30, TimeUnit.SECONDS);
+
+        
         while (tc.get_running())
         {
             try

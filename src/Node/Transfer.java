@@ -1,12 +1,13 @@
 package Node;
 
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 
 import Network.TCP.TrackProtocol.TrackPacket;
-import Network.UDP.Socket.SocketManager.IOQueue;
 import Network.UDP.TransferProtocol.TransferPacket;
 import Network.UDP.TransferProtocol.TransferPacket.TypeMsg;
 import Network.UDP.TransferProtocol.TransferPayload.GETPayload;
@@ -38,9 +39,14 @@ public class Transfer implements Runnable{
     public void run ()
     {
         GETPayload payload = new GETPayload(fileid, blocks);
-        try {
-            TransferPacket packet = new TransferPacket(TypeMsg.GET, udpId, target_id, crypt.encrypt(payload.serialize()));
-            byte[] serialized_packet = packet.serialize(); 
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+            DataOutputStream dos = new DataOutputStream(baos);
+            payload.serialize(dos);
+            dos.flush();
+            TransferPacket packet = new TransferPacket(TypeMsg.GET, udpId, target_id, crypt.encrypt(baos.toByteArray()));
+            baos.reset();
+            packet.serialize(dos); 
+            byte[] serialized_packet = baos.toByteArray();
             DatagramPacket packet2 = new DatagramPacket(serialized_packet, serialized_packet.length, node_toRequest, Shared.Defines.transferPort);
             udpQueue.out.add(packet2);
             int blocks_size = blocks.size();
