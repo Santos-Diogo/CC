@@ -12,7 +12,6 @@ import Network.UDP.TransferProtocol.TransferPayload.TSFPayload;
 
 public class Transfer implements Runnable{
 
-    private InetAddress node_toRequest; 
     private UserData userData;
     private BlockingQueue<TSFPayload> queue;
     private long fileid;
@@ -20,7 +19,6 @@ public class Transfer implements Runnable{
 
     public Transfer (Network.UDP.Socket.SocketManager udpManager, InetAddress node, long fileid, List<Long> blocks, BlockingQueue<TSFPayload> queue)
     {
-        this.node_toRequest = node;
         this.userData = udpManager.registerUser(node);
         this.queue = queue;
         this.fileid = fileid;

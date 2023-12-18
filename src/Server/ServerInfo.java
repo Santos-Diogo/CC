@@ -19,10 +19,6 @@ public class ServerInfo
             this.netId = netId;
         }
 
-        public NetId get_netId() {
-            return this.netId;
-        }
-
         public boolean contains_NetID(NetId node) {
             return this.netId.equals(node);
         }
@@ -72,11 +68,6 @@ public class ServerInfo
             if (available_blocks.size() == nBlocks)
                 return true;
             return false;
-        }
-
-        long get_fileId ()
-        {
-            return this.fileId;
         }
 
         boolean nodeHasFile(NetId node) {

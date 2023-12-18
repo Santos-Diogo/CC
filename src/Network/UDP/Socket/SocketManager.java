@@ -409,7 +409,7 @@ public class SocketManager
 
                 // if there is no encryption key set and the received packet is not of type connect or
                 // the packet as already been received
-                if ((connection.crypt== null && packet.type!= Type.CON) || (packet.pNnumber< connection.received_number&& !connection.non_received.contains(packet)))
+                if ((connection.crypt== null && packet.type!= Type.CON) || (packet.pNnumber< connection.received_number&& !connection.non_received.contains(packet.pNnumber)))
                 {
                     if (packet.pNnumber== connection.received_number)
                     {

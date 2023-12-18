@@ -4,7 +4,6 @@ import ThreadTools.ThreadControl;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileReader;
@@ -31,7 +30,6 @@ import Network.TCP.TrackProtocol.AddBlockPacket;
 import Network.TCP.TrackProtocol.TrackPacket.TypeMsg;
 import Network.UDP.Socket.SocketManager;
 import Network.UDP.TransferProtocol.TransferPayload.TSFPayload;
-import Shared.Defines;
 import Shared.NetId;
 import Shared.NodeBlocks;
 import Shared.Tuple;
@@ -69,14 +67,12 @@ public class TransferRequests implements Runnable
     private class FileGetter implements Runnable
     {
         GetRepPacket file;
-        ThreadControl tc;
         Network.UDP.Socket.SocketManager udpManager;
         //TCP socket Manager
 
-        public FileGetter (GetRepPacket file, ThreadControl tc, Network.UDP.Socket.SocketManager udpManager)
+        public FileGetter (GetRepPacket file, Network.UDP.Socket.SocketManager udpManager)
         {
             this.file= file;
-            this.tc= tc;
             this.udpManager = udpManager;
         }
 
@@ -190,7 +186,6 @@ public class TransferRequests implements Runnable
                 e.printStackTrace();
             }
             String newDir = dir + "/" + file.getName() + ".fsblk.";
-            long fileId = file.get_fileId();
             List<String> filePaths = new ArrayList<>();
             try{
                 for(int i = 0; i< nBlocks; i++)
@@ -201,7 +196,7 @@ public class TransferRequests implements Runnable
                     try (FileOutputStream fos = new FileOutputStream(newDir)) {
                         fos.write(block.block);
                     }
-                    AddBlockPacket upd = new AddBlockPacket(new TrackPacket(self, TypeMsg.ADD, selfId, 0), fileId, block.blockNumber);
+                    AddBlockPacket upd = new AddBlockPacket(new TrackPacket(self, TypeMsg.ADD, selfId, 0), file.getName(), block.blockNumber);
                     tcpoutput.add(upd);
                 }
                 filePaths.sort(Comparator.comparingInt(s -> Character.digit(s.charAt(s.length() - 1), 10)));
@@ -249,7 +244,7 @@ public class TransferRequests implements Runnable
             {
                 //Take file to transfer
                 GetRepPacket file= files.take();
-                Thread t= new Thread(new FileGetter(file, tc, udpManager));
+                Thread t= new Thread(new FileGetter(file, udpManager));
                 t.start();
             }
             catch (Exception e)
