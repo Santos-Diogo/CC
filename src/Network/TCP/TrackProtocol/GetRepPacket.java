@@ -15,9 +15,9 @@ public class GetRepPacket extends TrackPacket
     private List<Long> ownedBlocks;
     private Map<NetId, Integer> workLoad;
 
-    public GetRepPacket (NetId self, long fileId, Long nBlocks, NodeBlocks nodeBlocks, long from, long to, List<Long> ownedBlocks, Map<NetId, Integer> workload)
+    public GetRepPacket (TrackPacket track_packet, long fileId, Long nBlocks, NodeBlocks nodeBlocks, List<Long> ownedBlocks, Map<NetId, Integer> workload)
     {
-        super (self, TypeMsg.GET_RESP, from, to);
+        super (track_packet);
         this.fileId= fileId;
         this.nBlocks= nBlocks;
         this.nodeBlocks= nodeBlocks;

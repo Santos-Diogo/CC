@@ -22,9 +22,25 @@ public class TrackPacket implements Serializable
     public long from;
     public long to;
 
-    public TrackPacket(NetId n, TypeMsg type, long from, long to) 
+    /**
+     * @param n target net id
+     * @param type type of message
+     * @param from from (tcp manager id)
+     * @param to to (tcp manager id)
+     */
+    public TrackPacket (NetId n, TypeMsg type, long from, long to) 
     {
         this.netId= n;
         this.type= type;
+        this.from= from;
+        this.to= to;
+    }
+
+    public TrackPacket (TrackPacket p)
+    {
+        this.from= p.from;
+        this.type= p.type;
+        this.from= p.from;
+        this.to= p.to;
     }
 }

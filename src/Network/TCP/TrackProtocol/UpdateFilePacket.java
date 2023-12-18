@@ -10,9 +10,9 @@ public class UpdateFilePacket extends TrackPacket{
     private long fileid;
     private List<Long> blocks;
 
-    public UpdateFilePacket (NetId self, long from, long to, boolean add_rm, long fileid, List<Long> blocks)
+    public UpdateFilePacket (TrackPacket track_packet, boolean add_rm, long fileid, List<Long> blocks)
     {
-        super(self, TypeMsg.UPD, from, to);
+        super(track_packet);
         this.add_rm = add_rm;
         this.fileid = fileid;
         this.blocks = blocks;

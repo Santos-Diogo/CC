@@ -6,9 +6,9 @@ public class GetReqPacket extends TrackPacket
 {
     private String file;
 
-    public GetReqPacket (NetId n, long from, long to, String file)
+    public GetReqPacket (TrackPacket track_packet, String file)
     {
-        super(n, TypeMsg.GET_REQ, from, to);
+        super(track_packet);
         this.file= file;
     }
     

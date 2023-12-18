@@ -7,9 +7,9 @@ public class AvfRepPacket extends TrackPacket
 {
     Map<String, Long> fileSizes;
 
-    public AvfRepPacket(NetId n, Map<String, Long> files, long from, long to) 
+    public AvfRepPacket(TrackPacket track_packet, Map<String, Long> files) 
     {
-        super(n, TypeMsg.AVF_RESP, from, to);
+        super(track_packet);
         this.fileSizes = files;
     }
 
