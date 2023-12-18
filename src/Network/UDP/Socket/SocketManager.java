@@ -1,5 +1,7 @@
 package Network.UDP.Socket;
 
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -121,7 +123,9 @@ public class SocketManager
             try
             {
                 //encrypt payload
-                byte [] encrypted_payload= this.crypt.encrypt(transfer_packet.serialize());
+                ByteArrayOutputStream stream;
+                transfer_packet.serialize(new DataOutputStream(stream= new ByteArrayOutputStream()));
+                byte[] encrypted_payload= stream.toByteArray();
                 
                 //create packet
                 long from= user_id;
