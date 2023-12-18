@@ -3,6 +3,7 @@ package Network.TCP.Socket;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.net.Socket;
+import java.util.concurrent.BlockingQueue;
 
 import Network.TCP.TrackProtocol.TrackPacket;
 import ThreadTools.ThreadControl;
@@ -29,7 +30,8 @@ public class Receiver implements Runnable
 
     private void handle (TrackPacket p)
     {
-        
+        BlockingQueue<TrackPacket> queue= manager.getInputQueue(p.to);
+        queue.add(p);
     }
 
     public void run ()
