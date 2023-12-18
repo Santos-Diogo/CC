@@ -1,10 +1,7 @@
 package Node;
 
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
@@ -13,10 +10,7 @@ import java.util.*;
 import Blocker.*;
 import Network.TCP.TrackProtocol.*;
 import Network.TCP.TrackProtocol.TrackPacket.TypeMsg;
-import Network.UDP.TransferProtocol.TransferPacket;
 import Shared.NetId;
-import Shared.NodeBlocks;
-import Shared.Tuple;
 import ThreadTools.*;
 import Network.TCP.Socket.SocketManager;
 
@@ -73,7 +67,7 @@ public class Node
     {
         try 
         {
-            TrackPacket request = new GetReqPacket(net_Id, trackerId, 0, file);
+            GetReqPacket request = new GetReqPacket(new TrackPacket(net_Id, TypeMsg.GET_REQ, trackerId, 0) ,file);
             // Send Repply
             trackerOutput.add(request);
 
@@ -148,7 +142,7 @@ public class Node
     private static void register(FileBlockInfo b) throws IOException, ClassNotFoundException
     {
         // Send Reg message with Node Status collected by "FileBlockInfo"
-        trackerOutput.add(new RegReqPacket(net_Id, trackerId, trackerId, b));  //From e to pelo q percebi são removidos
+        trackerOutput.add(new RegReqPacket(new TrackPacket(net_Id, TypeMsg.REG_REQ, trackerId, 0), b));  //From e to pelo q percebi são removidos
         try{
             RegRepPacket rep= (RegRepPacket) trackerInput.take();
             b.set_FilesID(rep.get_fileId());

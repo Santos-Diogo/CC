@@ -1,7 +1,6 @@
 package Network.TCP.TrackProtocol;
 
 import Blocker.*;
-import Shared.NetId;
 
 public class RegReqPacket extends TrackPacket
 {
