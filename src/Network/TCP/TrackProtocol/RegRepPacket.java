@@ -1,4 +1,4 @@
-package TrackProtocol;
+package Network.TCP.TrackProtocol;
 
 import java.util.Map;
 
@@ -8,9 +8,9 @@ public class RegRepPacket extends TrackPacket
 {
     Map<String, Long> fileId;
 
-    public RegRepPacket (NetId n, Map<String, Long> fileId)
+    public RegRepPacket (TrackPacket track_packet, Map<String, Long> fileId)
     {
-        super(n, TypeMsg.REG_REP);
+        super(track_packet);
         this.fileId= fileId;
     }
 

@@ -6,20 +6,21 @@ import java.util.*;
 
 import Blocker.BlockInfo;
 import Blocker.FileBlockInfo;
+import Network.TCP.TrackProtocol.*;
+import Network.TCP.TrackProtocol.TrackPacket.TypeMsg;
 
 import java.lang.String;
 
 import Shared.NetId;
 import Shared.NodeBlocks;
 import ThreadTools.ThreadControl;
-import TrackProtocol.*;
 
 /**
  * Class responsible for handling communication for each independent node on the
  * server side.
  */
-public class ServerCom implements Runnable {
-
+public class ServerCom implements Runnable 
+{
     private ThreadControl tc;
     private ObjectInputStream in;
     private ObjectOutputStream out;
@@ -38,7 +39,7 @@ public class ServerCom implements Runnable {
     {
         System.out.println("REG message");
         RegReqPacket p = (RegReqPacket) packet;
-        NetId node = packet.getNet_Id();
+        NetId node = packet.netId;
         FileBlockInfo fbi = p.get_fileBlockInfo();
         Map<String, Long> fileId= new HashMap<>();
         BlockInfo blockInfo;
@@ -58,7 +59,7 @@ public class ServerCom implements Runnable {
         try
         {
             //Write back to node the sent file's ids
-            out.writeObject(new RegRepPacket(selfId, fileId));    
+            out.writeObject(new RegRepPacket(new TrackPacket(selfId, TypeMsg.REG_REP, 0, packet.from), fileId));    
             out.flush();
         }
         catch (IOException e)
@@ -67,11 +68,12 @@ public class ServerCom implements Runnable {
         }
     }
 
-    private void handle_AVF_REQ(NetId requesting_node) {
+    private void handle_AVF_REQ(TrackPacket packet) 
+    {
         System.out.println("AVF REQ");
         try 
         {
-            out.writeObject(new AvfRepPacket(selfId, serverInfo.get_filesWithSizes(requesting_node)));
+            out.writeObject(new AvfRepPacket(new TrackPacket(selfId, TypeMsg.AVF_RESP, 0, packet.from), this.serverInfo.get_filesWithSizes(packet.netId)));
             out.flush();
         }
         catch (IOException e) 
@@ -83,43 +85,40 @@ public class ServerCom implements Runnable {
     private void handle_GET_REQ(TrackPacket packet) {
         // @TODO
         System.out.println("GET message");
-        try {
+        try 
+        {
             GetReqPacket p = (GetReqPacket) packet;
             String file = p.getFile();
             long fileId = serverInfo.get_fileId(file);
             long nBlocks = serverInfo.get_nBlocks(file);
             List<Long> ownedBlocks = new ArrayList<>();
-            NodeBlocks nodeInfoFile = serverInfo.get_nodeInfoFile(file, p.getNet_Id(), ownedBlocks);
+            NodeBlocks nodeInfoFile = serverInfo.get_nodeInfoFile(file, p.netId, ownedBlocks);
             Map<NetId, Integer> workLoad = serverInfo.get_workLoad(nodeInfoFile.get_nodes());
-            GetRepPacket replyP = new GetRepPacket(selfId, fileId, nBlocks, nodeInfoFile, ownedBlocks, workLoad);
+            GetRepPacket replyP = new GetRepPacket(new TrackPacket(selfId, TypeMsg.GET_RESP, 0, packet.from), fileId, nBlocks, nodeInfoFile, ownedBlocks, workLoad);
             out.writeObject(replyP);
             out.flush();
-        } catch (IOException e) {
+        }
+        catch (IOException e) {
             e.printStackTrace();
         }
     }
 
     private void handle_DC(TrackPacket packet) {
         System.out.println("DC message");
-        serverInfo.remove_infoFromNode(packet.getNet_Id());
+        serverInfo.remove_infoFromNode(packet.netId);
     }
 
     private void handle(TrackPacket packet) {
-        switch (packet.getType()) {
+        switch (packet.type) {
             case REG_REQ: {
                 handle_REG(packet);
                 break;
             }
             case AVF_REQ: {
-                handle_AVF_REQ(packet.getNet_Id());
+                handle_AVF_REQ(packet);
                 break;
             }
-            case ADD_F: {
-
-                break;
-            }
-            case RM_F: {
-
+            case UPD: {
                 break;
             }
             case GET_REQ: {

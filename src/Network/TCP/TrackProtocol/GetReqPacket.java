@@ -1,4 +1,4 @@
-package TrackProtocol;
+package Network.TCP.TrackProtocol;
 
 import Shared.NetId;
 
@@ -6,9 +6,9 @@ public class GetReqPacket extends TrackPacket
 {
     private String file;
 
-    public GetReqPacket (NetId n, String file)
+    public GetReqPacket (TrackPacket track_packet, String file)
     {
-        super(n, TypeMsg.GET_REQ);
+        super(track_packet);
         this.file= file;
     }
     

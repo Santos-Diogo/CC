@@ -1,4 +1,4 @@
-package TrackProtocol;
+package Network.TCP.TrackProtocol;
 
 import java.util.*;
 import Shared.NetId;
@@ -15,14 +15,14 @@ public class GetRepPacket extends TrackPacket
     private List<Long> ownedBlocks;
     private Map<NetId, Integer> workLoad;
 
-    public GetRepPacket (NetId self, long fileId, Long nBlocks, NodeBlocks nodeBlocks, List<Long> ownedBlocks, Map<NetId, Integer> workLoad)
+    public GetRepPacket (TrackPacket track_packet, long fileId, Long nBlocks, NodeBlocks nodeBlocks, List<Long> ownedBlocks, Map<NetId, Integer> workload)
     {
-        super (self, TypeMsg.GET_RESP);
+        super (track_packet);
         this.fileId= fileId;
         this.nBlocks= nBlocks;
         this.nodeBlocks= nodeBlocks;
         this.ownedBlocks = ownedBlocks;
-        this.workLoad = workLoad;
+        this.workLoad = workload;
     }
 
     public long get_fileId ()
@@ -47,5 +47,4 @@ public class GetRepPacket extends TrackPacket
     public Map<NetId, Integer> getWorkLoad() {
         return workLoad;
     }
-    
 }
