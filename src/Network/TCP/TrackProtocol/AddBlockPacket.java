@@ -4,18 +4,18 @@ package Network.TCP.TrackProtocol;
 
 public class AddBlockPacket extends TrackPacket{
 
-    private long fileid;
+    private String file;
     private long block;
 
-    public AddBlockPacket (TrackPacket track_packet, long fileid, Long block)
+    public AddBlockPacket (TrackPacket track_packet, String file, Long block)
     {
         super(track_packet);
-        this.fileid = fileid;
+        this.file = file;
         this.block = block;
     }    
 
-    public long getFileid() {
-        return fileid;
+    public String getFile() {
+        return file;
     }
 
     public Long getBlocks() {

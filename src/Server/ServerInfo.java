@@ -175,6 +175,7 @@ public class ServerInfo
         }
     }
 
+
     public void addTo_fileHistory (String file, Long filesize)
     {
         rwl.writeLock().lock();
@@ -185,6 +186,10 @@ public class ServerInfo
         }
     }
 
+    public boolean nodeHasFile(NetId node, String file)
+    {
+        return file_nodeData.get(file).nodeHasFile(node);
+    }
 
     public void add_load (Map<NetId, Integer> load)
     {

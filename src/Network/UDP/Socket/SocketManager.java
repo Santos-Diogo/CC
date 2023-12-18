@@ -23,7 +23,6 @@ import Network.UDP.Packet.Message;
 import Network.UDP.Packet.UDP_Packet;
 import Network.UDP.Packet.UDP_Packet.Type;
 import Network.UDP.TransferProtocol.*;
-import Node.TransferServer;
 import Node.TransferServerHandle;
 import Shared.CRC;
 import Shared.Crypt;

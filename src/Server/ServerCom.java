@@ -84,10 +84,15 @@ public class ServerCom implements Runnable
 
     private void handle_ADD (TrackPacket packet)
     {
-        System.out.println("UPD message");
+        System.out.println("ADD message");
         try 
         {
             AddBlockPacket p = (AddBlockPacket) packet;
+            if(serverInfo.nodeHasFile(selfId, p.getFile()))
+            {
+              //  serverInfo.add
+            }
+
         } catch (Exception e)
         {
             e.printStackTrace();
