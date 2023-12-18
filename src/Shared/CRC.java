@@ -21,7 +21,7 @@ public class CRC
         //Ready up result
         int length= message.length- 8;
         byte[] result= new byte[length];
-        System.arraycopy(byteBuffer, 8, result, 0, length);
+        byteBuffer.get(result, 0, length);
 
         //Check CRC32
         CRC32 crc32= new CRC32();
@@ -46,7 +46,7 @@ public class CRC
         byte[] ret= new byte [message.length+ 8];
         ByteBuffer byteBuffer= ByteBuffer.wrap(ret);
         byteBuffer.putLong(computed);
-
+        
         //Write the rest of the message
         System.arraycopy(message, 0, ret, 8, message.length);
 

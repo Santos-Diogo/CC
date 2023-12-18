@@ -32,7 +32,7 @@ public class Transfer implements Runnable{
         try {
             userData.user_connection.addPacketTransmission(userData.user_id, payload);
             int blocks_size = blocks.size();
-            BlockingQueue<TransferPacket> transfers = userData.user_connection.getInput(userData.user_id);
+            BlockingQueue<TransferPacket> transfers = userData.user_connection.getInput(userData.user_id);            
             for(int i = 0; i < blocks_size; i++)
             {
                 TSFPayload repPacket = (TSFPayload) transfers.take();
