@@ -23,7 +23,6 @@ import Network.UDP.Packet.Message;
 import Network.UDP.Packet.UDP_Packet;
 import Network.UDP.Packet.UDP_Packet.Type;
 import Network.UDP.TransferProtocol.*;
-import Node.TransferServer;
 import Node.TransferServerHandle;
 import Shared.CRC;
 import Shared.Crypt;
@@ -282,11 +281,14 @@ public class SocketManager
     Map<InetAddress, Connection> address_to_connection;
     Map<Long,Connection> user_to_connection;
 
-    public SocketManager (ThreadControl tc)
+    public SocketManager (ThreadControl tc, FileBlockInfo fbi, String dir)
     {
         try
         {
             this.rwl= new ReentrantReadWriteLock();
+            this.tc= tc;
+            this.fbi= fbi;
+            this.dir= dir;
             this.keys= Crypt.generateKeyPair();
             this.address_to_connection= new HashMap<>();
             this.user_to_connection= new HashMap<>();

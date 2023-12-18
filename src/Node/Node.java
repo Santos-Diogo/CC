@@ -169,7 +169,7 @@ public class Node
             trackerOutput= tcpSocketManager.getOutpuQueue();
 
             // Creates UDP Manager
-            udpSocketManager= new Network.UDP.Socket.SocketManager(tc);
+            udpSocketManager= new Network.UDP.Socket.SocketManager(tc, fbInfo, args[0]);
 
             //Registers Self
             fbInfo= new FileBlockInfo(args[0]);
