@@ -15,9 +15,7 @@ public class SocketManager
     private ReentrantReadWriteLock rwl;
     private long nUser;
     private Map<Long, BlockingQueue<TrackPacket>> userToInput;      // Match user with corresponding input Queue
-    private BlockingQueue<TrackPacket> outputQueue;                 //We only need one out
-    private Receiver receiver;
-    private Sender sender;
+    private BlockingQueue<TrackPacket> outputQueue;                 // We only need one out
 
     public SocketManager (Socket socket, ThreadControl tc)
     {
@@ -28,8 +26,8 @@ public class SocketManager
             this.userToInput= new HashMap<>();
             
             //Initiate Sender and Receiver
-            Thread t1= new Thread(receiver= new Receiver(this, socket, tc));
-            Thread t2= new Thread(sender= new Sender(this, socket, outputQueue, tc));
+            Thread t1= new Thread(new Receiver(this, socket, tc));
+            Thread t2= new Thread(new Sender(this, socket, outputQueue, tc));
             t1.start();
             t2.start();
         }
@@ -53,12 +51,13 @@ public class SocketManager
             BlockingQueue<TrackPacket> q= new LinkedBlockingQueue<>();
             this.userToInput.put(this.nUser, q);
 
+            //Increment nUser
+            this.nUser+= 1;
+            
             return nUser;
         }
         finally
         {
-            //Increment nUser
-            this.nUser+= 1;
             this.rwl.writeLock().unlock();
         }
     }

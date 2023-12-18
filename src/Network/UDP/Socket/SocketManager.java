@@ -6,17 +6,14 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.security.KeyPair;
-import java.security.PublicKey;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import ThreadTools.ThreadControl;
 import Network.UDP.Packet.Ack;
 import Network.UDP.Packet.Connect;
 import Network.UDP.Packet.Message;
@@ -25,6 +22,8 @@ import Network.UDP.Packet.UDP_Packet.Type;
 import Network.UDP.TransferProtocol.*;
 import Shared.CRC;
 import Shared.Crypt;
+import Shared.Defines;
+import ThreadTools.ThreadControl;
 
 /**
  * Class responsible for handling UDP Socket's IO and answering to some methods (?)
@@ -116,7 +115,10 @@ public class SocketManager
         }
 
         /**
-         * Adds a packet to the send queue
+         * Adds a packet to the send queue. To be used by the users
+         * @param user_id sending user id
+         * @param transfer_packet packet to send
+         * @throws Exception
          */
         void addPacketTransmission (long user_id, TransferPacket transfer_packet) throws Exception
         {
@@ -270,7 +272,7 @@ public class SocketManager
     Map<InetAddress, Connection> address_to_connection;
     Map<Long,Connection> user_to_connection;
 
-    SocketManager ()
+    public SocketManager (ThreadControl tc)
     {
         try
         {
@@ -278,6 +280,13 @@ public class SocketManager
             this.keys= Crypt.generateKeyPair();
             this.address_to_connection= new HashMap<>();
             this.user_to_connection= new HashMap<>();
+
+            //Creates the socket and starts both the sender and the receiver
+            DatagramSocket socket= new DatagramSocket(Defines.transferPort);
+            Thread sender= new Thread(new Sender(socket, this, tc)); 
+            Thread receiver= new Thread(new Receiver(socket, this, tc));
+            sender.start();
+            receiver.start();
         }
         catch (Exception e)
         {
