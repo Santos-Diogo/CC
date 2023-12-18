@@ -15,6 +15,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import ThreadTools.ThreadControl;
+import Network.UDP.Packet.Ack;
 import Network.UDP.Packet.Connect;
 import Network.UDP.Packet.Message;
 import Network.UDP.Packet.UDP_Packet;
@@ -39,7 +40,6 @@ public class SocketManager
         final int INITIAL_PACKETS= 10;
 
         ReentrantReadWriteLock rwl;
-        KeyPair keys;
         Crypt crypt;
         Map<Long,Long> user_destination;                            // destination for a user's packets
         long window;                                                // sets the availability to trasnmit "window" packets in a given moment
@@ -50,10 +50,9 @@ public class SocketManager
         long received_number;                                       // highest number of packet received
         List<Long> non_received;                                    // list of packets with number lower than "received number" that we haven't received
         
-        Connection (KeyPair keys)
+        Connection ()
         {
             this.rwl= new ReentrantReadWriteLock();
-            this.keys= keys;
             this.crypt= null;
             this.user_destination= new HashMap<>();
             this.window= INITIAL_PACKETS;
@@ -65,12 +64,6 @@ public class SocketManager
             
             //add a connection message to the sender;
             this.transmission_packets.add(new Connect(new UDP_Packet(Type.CON, 0, 0, inc++), keys.getPublic()));
-        }
-
-        Connection (KeyPair keys, Crypt crypt)
-        {
-            this(keys);
-            this.crypt= crypt;
         }
 
         /**
@@ -167,85 +160,16 @@ public class SocketManager
             {
                 e.printStackTrace();
             }
-
         }
 
-        //method to be used when a packet is received
-        void received (DatagramPacket datagram_packet)
+        /**
+         * Sends an ack packet with the given packet number
+         * @param n
+         */
+        void ack (long n)
         {
-            // retrieve the udp packet's bytes
-            byte[] payload= datagram_packet.getData();
-            byte[] udp_serialized= CRC.decouple(payload);
-
-            // if the bytes are valid
-            if (udp_serialized!= null)
-            {
-                try
-                {
-                    // retrieve the udp packet itself
-                    UDP_Packet packet= new UDP_Packet(udp_serialized);
-                    
-                    switch (packet.type)
-                    {
-                        case ACK:
-                        {
-                            // remove packet corresponding to ack from retransmission queue
-                            this.retransmission_packets.remove(packet.pNnumber);
-                            break;
-                        }
-                        case CON:
-                        {
-                            // handle the connection
-                            break;
-                        }
-                        case DC:
-                        {
-                            //not in use
-                            break;
-                        }
-                        case MSG:
-                        {
-                            // if the packet is the expected packet
-                            if (packet.pNnumber== this.received_number)
-                            {
-                                // set received_number for next packet
-                                this.received_number++;
-                            }
-                            else
-                            {
-                                //if the received packet is over the expected received number
-                                if (packet.pNnumber> this.received_number)
-                                {
-                                    // add packets in between to not received and set received number and 
-                                    // set received number to be the next ack to receive under normal conditions
-                                    while (this.received_number!= packet.pNnumber)
-                                    {
-                                        this.non_received.add(this.received_number);
-                                        this.received_number++;
-                                    } 
-                                    this.received_number= packet.pNnumber+ 1;
-                                    
-                                }
-                                //if it's lower
-                                {
-                                    // if element was not in the list (duplicate)
-                                    if (!this.non_received.remove(packet.pNnumber))
-                                    {
-                                        // we dont receive the message
-                                        break;
-                                    }
-                                }
-                            }
-                            receiveMessage((Message) packet);
-                            break;
-                        }
-                    }
-                }
-                catch (Exception e)
-                {
-                    e.printStackTrace();
-                }
-            }
+            UDP_Packet ack_packet= new Ack(new UDP_Packet(Type.ACK, 0, 0, 0), n);
+            this.transmission_packets.add(ack_packet);
         }
             
         /**
@@ -265,7 +189,7 @@ public class SocketManager
         }
 
         /**
-         * Method to be called by the sender to send every possible packet in accordance with the connection's own state
+         * Method to send a connection's packets
          * @param socket datagram socket we are using in the socket manager
          * @param target_address target's address
          * @param target_port target port
@@ -363,10 +287,10 @@ public class SocketManager
             long user_id= inc++;
 
             // get user's connection
-            Connection c;
-            if ((c= this.address_to_connection.get(adr))== null)
+            Connection c= this.address_to_connection.get(adr);
+            if (c== null)
             {
-                c= new Connection(keys);
+                c= new Connection();
             }
             this.address_to_connection.put(adr, c);
 
@@ -381,6 +305,123 @@ public class SocketManager
         finally
         {
             this.rwl.writeLock().unlock();
+        }
+    }
+
+    /**
+     * method to send every possible packet from every possible connection
+     * should be used by the Sender
+     * @param socket socket to send packets from
+     * @param port port to send packets to
+     */
+    void send (DatagramSocket socket, int port)
+    {
+        for (Map.Entry<InetAddress, Connection> entry: this.address_to_connection.entrySet())
+        {
+            entry.getValue().sendALL(socket, entry.getKey(), port);
+        }
+    }
+
+    //method to be used when a packet is received
+    void received (DatagramPacket datagram_packet)
+    {
+        InetAddress from= datagram_packet.getAddress();
+
+        // retrieve the udp packet's bytes
+        byte[] payload= datagram_packet.getData();
+        byte[] udp_serialized= CRC.decouple(payload);
+
+        //Create the connection if it doesn't exist
+        Connection connection= this.address_to_connection.get(from);
+        if (connection== null)
+        {
+            connection= new Connection();
+        }
+        
+
+        // if the bytes are valid
+        if (udp_serialized!= null)
+        {
+            try
+            {
+                // retrieve the udp packet itself
+                UDP_Packet packet= new UDP_Packet(udp_serialized);
+
+                //if there is no encryption key set and the received packet is not of type connect
+                if (!(connection.crypt== null && packet.type!= Type.CON))
+                {
+
+                    switch (packet.type)
+                    {
+                        case ACK:
+                        {
+                            // remove packet corresponding to ack from retransmission queue
+                            connection.retransmission_packets.remove(packet.pNnumber);
+                            //allow the window to grow
+                            connection.window+= 2;
+                            break;
+                        }
+                        case CON:
+                        {
+                            // handle the connection
+                            Connect connect_packet= (Connect) packet;
+                            connection.crypt= new Crypt(keys.getPrivate(), connect_packet.publicKey);
+                            
+                            //mark the connection as received
+                            connection.ack(packet.pNnumber);
+                            break;
+                        }
+                        case DC:
+                        {
+                            //not in use
+                            break;
+                        }
+                        case MSG:
+                        {
+                            // if the packet is the expected packet
+                            if (packet.pNnumber== connection.received_number)
+                            {
+                                // set received_number for next packet
+                                connection.received_number++;
+                            }
+                            else
+                            {
+                                //if the received packet is over the expected received number
+                                if (packet.pNnumber> connection.received_number)
+                                {
+                                    // add packets in between to not received and set received number and 
+                                    // set received number to be the next ack to receive under normal conditions
+                                    while (connection.received_number!= packet.pNnumber)
+                                    {
+                                        connection.non_received.add(connection.received_number);
+                                        connection.received_number++;
+                                    } 
+                                    connection.received_number= packet.pNnumber+ 1;
+                                    
+                                }
+                                //if it's lower
+                                {
+                                    // if element was not in the list (duplicate)
+                                    if (!connection.non_received.remove(packet.pNnumber))
+                                    {
+                                        // we dont receive the message
+                                        break;
+                                    }
+                                }
+                            }
+                            // receive the message and ack for every case except if the number of the
+                            // packet is lower and not in the queue
+                            connection.receiveMessage((Message) packet);
+                            connection.ack(packet.pNnumber);
+                            break;
+                        }
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                e.printStackTrace();
+            }
         }
     }
 }
