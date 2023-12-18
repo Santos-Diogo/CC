@@ -7,6 +7,7 @@ import java.util.*;
 import Blocker.BlockInfo;
 import Blocker.FileBlockInfo;
 import Network.TCP.TrackProtocol.*;
+import Network.TCP.TrackProtocol.TrackPacket.TypeMsg;
 
 import java.lang.String;
 
@@ -58,7 +59,7 @@ public class ServerCom implements Runnable
         try
         {
             //Write back to node the sent file's ids
-            out.writeObject(new RegRepPacket(selfId, fileId));    
+            out.writeObject(new RegRepPacket(new TrackPacket(selfId, TypeMsg.REG_REP, 0, packet.from), fileId));    
             out.flush();
         }
         catch (IOException e)
@@ -67,11 +68,12 @@ public class ServerCom implements Runnable
         }
     }
 
-    private void handle_AVF_REQ(NetId requesting_node) {
+    private void handle_AVF_REQ(TrackPacket packet) 
+    {
         System.out.println("AVF REQ");
         try 
         {
-            out.writeObject(new AvfRepPacket(selfId, serverInfo.get_filesWithSizes(requesting_node)));
+            out.writeObject(new AvfRepPacket(new TrackPacket(selfId, TypeMsg.AVF_RESP, 0, packet.from), this.serverInfo.get_filesWithSizes(packet.netId)));
             out.flush();
         }
         catch (IOException e) 
@@ -83,18 +85,20 @@ public class ServerCom implements Runnable
     private void handle_GET_REQ(TrackPacket packet) {
         // @TODO
         System.out.println("GET message");
-        try {
+        try 
+        {
             GetReqPacket p = (GetReqPacket) packet;
             String file = p.getFile();
             long fileId = serverInfo.get_fileId(file);
             long nBlocks = serverInfo.get_nBlocks(file);
             List<Long> ownedBlocks = new ArrayList<>();
-            NodeBlocks nodeInfoFile = serverInfo.get_nodeInfoFile(file, p.getNet_Id(), ownedBlocks);
+            NodeBlocks nodeInfoFile = serverInfo.get_nodeInfoFile(file, p.netId, ownedBlocks);
             Map<NetId, Integer> workLoad = serverInfo.get_workLoad(nodeInfoFile.get_nodes());
-            GetRepPacket replyP = new GetRepPacket(selfId, fileId, nBlocks, nodeInfoFile, ownedBlocks, workLoad);
+            GetRepPacket replyP = new GetRepPacket(new TrackPacket(selfId, TypeMsg.GET_RESP, 0, packet.from), fileId, nBlocks, nodeInfoFile, ownedBlocks, workLoad);
             out.writeObject(replyP);
             out.flush();
-        } catch (IOException e) {
+        }
+        catch (IOException e) {
             e.printStackTrace();
         }
     }
@@ -111,7 +115,7 @@ public class ServerCom implements Runnable
                 break;
             }
             case AVF_REQ: {
-                handle_AVF_REQ(packet.netId);
+                handle_AVF_REQ(packet);
                 break;
             }
             case UPD: {
