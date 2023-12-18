@@ -2,7 +2,14 @@ package Node;
 
 import ThreadTools.ThreadControl;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -14,12 +21,16 @@ import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import Network.TCP.TrackProtocol.GetRepPacket;
 import Network.TCP.TrackProtocol.TrackPacket;
+import Network.TCP.TrackProtocol.UpdateFilePacket;
+import Network.TCP.TrackProtocol.TrackPacket.TypeMsg;
 import Network.UDP.Socket.SocketManager;
+import Network.UDP.TransferProtocol.TransferPayload.TSFPayload;
 import Shared.Defines;
 import Shared.NetId;
 import Shared.NodeBlocks;
@@ -30,20 +41,24 @@ import Shared.Tuple;
  */
 public class TransferRequests implements Runnable
 {
-
+    NetId self;
+    long selfId;
     ThreadControl tc;
     BlockingQueue<GetRepPacket> files;
     BlockingQueue<TrackPacket> tcpoutput;
     SocketManager udpManager;
+    String dir;
     Map<NetId, PingUtil> pingInfo;
     DNScache dnscache;
 
-    public TransferRequests (ThreadControl tc, BlockingQueue<GetRepPacket> files, BlockingQueue<TrackPacket> tcpoutput, SocketManager udpManager)
+    public TransferRequests (NetId self, long selfID, ThreadControl tc, BlockingQueue<GetRepPacket> files, BlockingQueue<TrackPacket> tcpoutput, SocketManager udpManager, String dir)
     {
+        this.self = self;
         this.tc = tc;
         this.files = files;
         this.tcpoutput = tcpoutput;
         this.udpManager = udpManager;
+        this.dir = dir;
         this.pingInfo = new HashMap<>();
         this.dnscache = new DNScache();
     }
@@ -116,12 +131,33 @@ public class TransferRequests implements Runnable
             return nodes.get(0);
         }
 
-        public byte[] assembleFile (byte[][] blocks, long nBlocks)
-        {
-            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-            for(int i = 0; i < nBlocks; i++)
-                outputStream.write(blocks[i], 0, blocks[i].length);
-            return outputStream.toByteArray();
+         private static void appendFileContent(String filePath, BufferedWriter bw) throws IOException {
+            try (FileReader fr = new FileReader(filePath);
+                    BufferedReader br = new BufferedReader(fr)) {
+
+                String line;
+                // Read each line from the file and append it to the combined file
+                while ((line = br.readLine()) != null) {
+                    bw.write(line);
+                    bw.newLine();
+                }
+            }
+        }
+
+        private static void deleteOriginalFiles(List<String> fileList) {
+            // Iterate over the list of files and delete each file
+            for (String filePath : fileList) {
+                File file = new File(filePath);
+                if (file.exists()) {
+                    if (file.delete()) {
+                        System.out.println("File " + filePath + " deleted successfully.");
+                    } else {
+                        System.out.println("Failed to delete file: " + filePath);
+                    }
+                } else {
+                    System.out.println("File does not exist: " + filePath);
+                }
+            }
         }
 
         public void run ()
@@ -132,6 +168,7 @@ public class TransferRequests implements Runnable
             Map<NetId, Integer> workload = file.getWorkLoad();
             List<Long> ownedBlocks = file.getOwnedBlocks();
             Map<NetId, List<Long>> scalonated_blocks = scalonate(nodeblocks, nBlocks, workload, ownedBlocks);
+            BlockingQueue<TSFPayload> queue = new LinkedBlockingQueue<>();
             try {
                 for(Map.Entry<NetId, List<Long>> nodes : scalonated_blocks.entrySet())
                 {
@@ -145,15 +182,41 @@ public class TransferRequests implements Runnable
                         dnscache.add_AdressToCache(node, node_Address);
                     }
 
-                    Thread t = new Thread(new Transfer(udpManager, tcpoutput, node_Address, file.get_fileId(), nodes.getValue()));
+                    Thread t = new Thread(new Transfer(udpManager, node_Address, file.get_fileId(), nodes.getValue(), queue));
                     t.start();
                 }
 
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            byte[][] blocks;
-            escrever_ficheiro(filename, assembleFile(blocks, nBlocks));
+            String newDir = dir + "/" + file.getName() + ".fsblk.";
+            long fileId = file.get_fileId();
+            List<String> filePaths = new ArrayList<>();
+            try{
+                for(int i = 0; i< nBlocks; i++)
+                {
+                    TSFPayload block = queue.take();
+                    String newDirBlock = newDir + block.blockNumber;
+                    filePaths.add(newDirBlock);
+                    try (FileOutputStream fos = new FileOutputStream(newDir)) {
+                        fos.write(block.block);
+                    }
+                    UpdateFilePacket upd = new UpdateFilePacket(new TrackPacket(self, TypeMsg.UPD, selfId, 0), true, fileId, block.blockNumber);
+                    tcpoutput.add(upd);
+                }
+                filePaths.sort(Comparator.comparingInt(s -> Character.digit(s.charAt(s.length() - 1), 10)));
+                try (FileWriter fw = new FileWriter(dir + "/" + file.getName()))
+                {
+                    BufferedWriter bw = new BufferedWriter(fw);
+                    for(String path : filePaths) {
+                        appendFileContent(path, bw);
+                    }
+                    deleteOriginalFiles(filePaths);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            
         }
     }
 
