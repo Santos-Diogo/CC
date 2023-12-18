@@ -27,7 +27,7 @@ public class SocketManager
             
             //Initiate Sender and Receiver
             Thread t1= new Thread(new Receiver(this, socket, tc));
-            Thread t2= new Thread(new Sender(this, socket, outputQueue, tc));
+            Thread t2= new Thread(new Sender(socket, outputQueue, tc));
             t1.start();
             t2.start();
         }
