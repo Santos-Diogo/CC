@@ -2,7 +2,6 @@ package Network.TCP.TrackProtocol;
 
 import java.util.Map;
 
-import Shared.NetId;
 
 public class RegRepPacket extends TrackPacket
 {

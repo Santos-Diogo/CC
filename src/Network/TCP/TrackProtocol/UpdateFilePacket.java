@@ -2,7 +2,6 @@ package Network.TCP.TrackProtocol;
 
 import java.util.List;
 
-import Shared.NetId;
 
 public class UpdateFilePacket extends TrackPacket{
     

@@ -1,6 +1,5 @@
 package Network.TCP.TrackProtocol;
 
-import Shared.NetId;
 import java.util.Map;
 
 public class AvfRepPacket extends TrackPacket

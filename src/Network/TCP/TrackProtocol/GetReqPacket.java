@@ -1,6 +1,5 @@
 package Network.TCP.TrackProtocol;
 
-import Shared.NetId;
 
 public class GetReqPacket extends TrackPacket
 {

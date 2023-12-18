@@ -17,6 +17,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import Network.TCP.TrackProtocol.GetRepPacket;
+import Network.TCP.TrackProtocol.TrackPacket;
+import Network.UDP.Socket.SocketManager;
 import Shared.Defines;
 import Shared.NetId;
 import Shared.NodeBlocks;
@@ -25,19 +28,37 @@ import Shared.Tuple;
 /**
  * Thread that handles transfer requests from the node
  */
-class TransferRequests implements Runnable
+public class TransferRequests implements Runnable
 {
+
+    ThreadControl tc;
+    BlockingQueue<GetRepPacket> files;
+    BlockingQueue<TrackPacket> tcpoutput;
+    SocketManager udpManager;
+    Map<NetId, PingUtil> pingInfo;
+    DNScache dnscache;
+
+    public TransferRequests (ThreadControl tc, BlockingQueue<GetRepPacket> files, BlockingQueue<TrackPacket> tcpoutput, SocketManager udpManager)
+    {
+        this.tc = tc;
+        this.files = files;
+        this.tcpoutput = tcpoutput;
+        this.udpManager = udpManager;
+        this.pingInfo = new HashMap<>();
+        this.dnscache = new DNScache();
+    }
+
     /**
      * Responsible for getting and assembling a file
      */
     private class FileGetter implements Runnable
     {
-        long file;
+        GetRepPacket file;
         ThreadControl tc;
         Network.UDP.Socket.SocketManager udpManager;
         //TCP socket Manager
 
-        FileGetter (long file, ThreadControl tc, Network.UDP.Socket.SocketManager udpManager)
+        public FileGetter (GetRepPacket file, ThreadControl tc, Network.UDP.Socket.SocketManager udpManager)
         {
             this.file= file;
             this.tc= tc;
@@ -105,14 +126,12 @@ class TransferRequests implements Runnable
 
         public void run ()
         {
-            //Send escalonate Request to TrackerServer -> Requires TCP Socket
-            NodeBlocks nodeblocks;
-            long nBlocks;
-            Map<NetId, Integer> workload;
-            List<Long> ownedBlocks;
-            Map<NetId, List<Long>> scalonated_blocks = scalonate(nodeblocks, nBlocks, workload, ownedBlocks);
-            //Create threads for each node to get the packet -> Requeires UDP Socket
             
+            NodeBlocks nodeblocks = file.get_nodeBlocks();
+            long nBlocks = file.get_nBlocks();
+            Map<NetId, Integer> workload = file.getWorkLoad();
+            List<Long> ownedBlocks = file.getOwnedBlocks();
+            Map<NetId, List<Long>> scalonated_blocks = scalonate(nodeblocks, nBlocks, workload, ownedBlocks);
             try {
                 for(Map.Entry<NetId, List<Long>> nodes : scalonated_blocks.entrySet())
                 {
@@ -127,6 +146,7 @@ class TransferRequests implements Runnable
                     }
 
                     Thread t = new Thread(new Transfer(udpManager, node_Address, file, nodes.getValue()));
+                    t.start();
                 }
 
             } catch (Exception e) {
@@ -135,19 +155,6 @@ class TransferRequests implements Runnable
             byte[][] blocks;
             escrever_ficheiro(filename, assembleFile(blocks, nBlocks));
         }
-    }
-
-    ThreadControl tc;
-    BlockingQueue<Long> files;
-    Map<NetId, PingUtil> pingInfo;
-    DNScache dnscache;
-
-    public TransferRequests (ThreadControl tc, BlockingQueue<Long> files)
-    {
-        this.tc = tc;
-        this.files = files;
-        this.pingInfo = new HashMap<>();
-        this.dnscache = new DNScache();
     }
 
     public void run()
@@ -174,8 +181,8 @@ class TransferRequests implements Runnable
             try
             {
                 //Take file to transfer
-                long file= files.take();
-                Thread t= new Thread(new FileGetter (file, tc));
+                GetRepPacket file= files.take();
+                Thread t= new Thread(new FileGetter(file, tc, udpManager));
                 t.start();
             }
             catch (Exception e)

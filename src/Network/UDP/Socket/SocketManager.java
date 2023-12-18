@@ -1,6 +1,8 @@
 package Network.UDP.Socket;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -157,8 +159,9 @@ public class SocketManager
                 // decrypt the packet
                 byte[] encrypted_transfer= packet.message;
                 byte[] decrypted_transfer= this.crypt.decrypt(encrypted_transfer);
-                TransferPacket transfer_packet= new TransferPacket(decrypted_transfer);
-
+                ByteArrayInputStream bais = new ByteArrayInputStream(decrypted_transfer);
+                DataInputStream dis = new DataInputStream(bais);
+                TransferPacket transfer_packet = TransferPacket.deserialize(dis);
                 //add the packet to the user's input queue
                 this.received_packets.get(packet.to).add(transfer_packet);
             }
