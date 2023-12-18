@@ -1,102 +1,47 @@
 package Node;
 
+import java.util.concurrent.BlockingQueue;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.*;
 
 import Blocker.*;
+import Network.TCP.TrackProtocol.*;
+import Network.TCP.TrackProtocol.TrackPacket.TypeMsg;
 import Shared.NetId;
-import Shared.NodeBlocks;
-import Shared.Tuple;
-import ThreadTools.ThreadControl;
-import TrackProtocol.*;
-import TrackProtocol.TrackPacket.TypeMsg;
+import ThreadTools.*;
+import Network.TCP.Socket.SocketManager;
 
 /***
  * Main Node thread
  */
-public class Node 
+public class Node
 {
-    private static ObjectOutputStream trackerOutput;
-    private static ObjectInputStream trackerInput;
-    private static NetId net_Id;
-    private static Scanner scanner = new Scanner(System.in);
-    private static Map<String, Long> filesId;   //Matches the files name with their id in the server context
-    private static FileBlockInfo fbInfo;
-    private static ThreadControl tc= new ThreadControl();
+    private static long trackerId;                                      //Id assigned by the manager
+    private static BlockingQueue<TrackPacket> trackerInput;             //TCP Input
+    private static BlockingQueue<TrackPacket> trackerOutput;            //TCP Output
+    private static BlockingQueue<GetRepPacket> files;                   //Info for TransferRequests
+    private static Network.TCP.Socket.SocketManager tcpSocketManager;   //TCP socket manager
+    private static Network.UDP.Socket.SocketManager udpSocketManager;   //UDP socket manager
 
+    private static NetId net_Id;                                        //Self NetId
+    private static Scanner scanner = new Scanner(System.in);            //Console input
+    private static FileBlockInfo fbInfo;                                //Info on the node
+    private static ThreadControl tc= new ThreadControl();               //Object used to terminate minor threads
 
-
-    public static void remove_ownedBlocks(List<Tuple<Long, Integer>> blocks, List<Long> ownedBlocks) {
-        
-        Iterator<Tuple<Long, Integer>> iterator = blocks.iterator();
-
-        while (iterator.hasNext()) {
-            Tuple<Long, Integer> block = iterator.next();
-
-            if (ownedBlocks.contains(block.fst())) {
-                iterator.remove(); // Remove the element from the list
-            }
-        }
-    }
-
-    /**
-     * This only solves the transfer without scalonation
-     * @param nodeBlocks
-     * @param nBlocks
-     * @return
-     */
-    private static Map<Long, NetId> scalonate (NodeBlocks nodeBlocks, long nBlocks, Map<NetId, Integer> workload, List<Long> ownedBlocks)
-    {
-        Map <Long, NetId> m= new HashMap<>();
-        List<Tuple<Long, Integer>> rarestBlocks = nodeBlocks.rarestBlocks(nBlocks);
-        remove_ownedBlocks(rarestBlocks, ownedBlocks);
-        //Debug start
-        for(Map.Entry<NetId, Integer> wkl: workload.entrySet())
-            System.out.println(wkl.getKey().toString() + ", " + wkl.getValue());
-	    for(Tuple<Long, Integer> tpl : rarestBlocks)
-            System.out.println(tpl.toString());
-        //Debug end
-        for(Tuple<Long, Integer> block : rarestBlocks)
-        {
-            NetId node = schedule(block, nodeBlocks, workload);
-            m.put(block.fst(), node);
-            int tmp = workload.get(node);
-            workload.put(node, tmp + 1);
-        }
-        //Debug start
-        for(Map.Entry<NetId, Integer> wkl: workload.entrySet())
-            System.out.println(wkl.getKey().toString() + ", " + wkl.getValue());
-        for(Map.Entry<Long, NetId> asd: m.entrySet())
-            System.out.println(asd.getKey() + ", " + asd.getValue().toString());
-        //Debug end
-        return m;
-    }
-
-    private static NetId schedule (Tuple<Long, Integer> block, NodeBlocks nodeBlocks, Map<NetId, Integer> workload)
-    {
-        if(block.snd() == 1)
-            return nodeBlocks.get_loneBlock(block.fst());
-        List<NetId> nodes = nodeBlocks.get_nodesBlock(block.fst());
-        nodes.sort(Comparator.comparingInt(workload :: get).thenComparing(node -> new Random().nextInt()));
-        return nodes.get(0);
-    }
-
+    
     
     private static void handle_avf() 
     {
         try 
         {
             // Write Request
-            trackerOutput.writeObject(new TrackPacket(net_Id, TypeMsg.AVF_REQ));
-            trackerOutput.flush();
+            trackerOutput.add(new TrackPacket(net_Id, TypeMsg.AVF_REQ, trackerId, 0));
 
             // Get response
-            AvfRepPacket packet = (AvfRepPacket) trackerInput.readObject();
+            AvfRepPacket packet = (AvfRepPacket) trackerInput.take();
 
             // Write File Names
             Map<String, Long> files = packet.get_files();
@@ -116,17 +61,18 @@ public class Node
 
     /**
      * Temporary solution
+     * Mudado para o TransferServerHandle (?)
      */
     private static void handle_get(String file) 
     {
         try 
         {
+            GetReqPacket request = new GetReqPacket(new TrackPacket(net_Id, TypeMsg.GET_REQ, trackerId, 0) ,file);
             // Send Repply
-            trackerOutput.writeObject(new GetReqPacket(net_Id, file));
-            trackerOutput.flush();
+            trackerOutput.add(request);
 
             //Get Response
-            GetRepPacket resp = (GetRepPacket) trackerInput.readObject();
+            GetRepPacket resp = (GetRepPacket) trackerInput.take();
 
             //Debug
             Set<NetId> nodes = resp.get_nodeBlocks().get_nodes();
@@ -138,13 +84,12 @@ public class Node
             }
             //Debug end
 
-            Map<Long, NetId> blockNode= scalonate (resp.get_nodeBlocks(), resp.get_nBlocks(), resp.getWorkLoad(), resp.getOwnedBlocks());
             //Debug start
             for (Map.Entry<NetId, Integer> wkl : resp.getWorkLoad().entrySet())
                 System.out.println(wkl.getKey().toString() + ", " + wkl.getValue());
             //Debug end
-
-            //Here we need to update tracker about the workload thats being issued on the nodes and to start the transfer process
+            files.add(resp);
+            //!!! Here we need to update tracker about the workload thats being issued on the nodes and to start the transfer process!!!
         }
         catch (Exception e) 
         {
@@ -152,14 +97,9 @@ public class Node
         }
     }
 
-    private static void handle_quit() {
-        try {
-            trackerOutput.writeObject(new TrackPacket(net_Id, TypeMsg.DC));
-            trackerOutput.flush();
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    private static void handle_quit() 
+    {
+        trackerOutput.add(new TrackPacket(net_Id, TypeMsg.DC, trackerId, trackerId)); //From e to pelo q percebi são removidos
     }
 
     /**
@@ -199,16 +139,20 @@ public class Node
      * @return the input file's id in the server
      * @throws IOException
      */
-    private static Map<String, Long> register(FileBlockInfo b) throws IOException, ClassNotFoundException
+    private static void register(FileBlockInfo b) throws IOException, ClassNotFoundException
     {
         // Send Reg message with Node Status collected by "FileBlockInfo"
-        trackerOutput.writeObject(new RegReqPacket(net_Id, b));
-        trackerOutput.flush();
-        RegRepPacket rep= (RegRepPacket) trackerInput.readObject();
-        return rep.get_fileId();
+        trackerOutput.add(new RegReqPacket(new TrackPacket(net_Id, TypeMsg.REG_REQ, trackerId, 0), b));  //From e to pelo q percebi são removidos
+        try{
+            RegRepPacket rep= (RegRepPacket) trackerInput.take();
+            b.set_FilesID(rep.get_fileId());
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
-    public static void main(String[] args) throws InterruptedException {
+    public static void main(String[] args) throws InterruptedException 
+    {
         String serverAddress = args[1];
         int serverPort = (args.length > 2) ? Integer.parseInt(args[2]) : Shared.Defines.trackerPort;
         Socket socket;
@@ -217,14 +161,26 @@ public class Node
             // Define this machine IP adress
             net_Id = new NetId(InetAddress.getLocalHost().getHostName());
 
-            // Connects to server
-            socket = new Socket(serverAddress, serverPort);
-            trackerOutput = new ObjectOutputStream(socket.getOutputStream());
-            trackerInput = new ObjectInputStream(socket.getInputStream());
+            // Creates TCP Manager
+            socket= new Socket(serverAddress, serverPort);
+            tcpSocketManager= new SocketManager(socket, tc);
+            trackerId= tcpSocketManager.register();
+            trackerInput= tcpSocketManager.getInputQueue(trackerId);
+            trackerOutput= tcpSocketManager.getOutpuQueue();
+
+            // Creates UDP Manager
+            udpSocketManager= new Network.UDP.Socket.SocketManager(tc);
 
             //Registers Self
             fbInfo= new FileBlockInfo(args[0]);
-            filesId= register (fbInfo);
+            register (fbInfo);
+
+            //SetsUp UDP_Client and UDP_Server 
+            Thread udpC= new Thread(new TransferRequests(tc, files, trackerOutput, udpSocketManager));
+            Thread udpS= new Thread(new TransferServer(fbInfo, udpSocketManager, tc, args[0]));
+            udpC.start();
+            udpS.start();
+
 
             // Handle commands
             String command;
@@ -232,9 +188,9 @@ public class Node
             {
                 handle_command(command);
             }
+
             // Close the socket when done
             socket.close();
-            
         }
         catch (UnknownHostException e) 
         {
