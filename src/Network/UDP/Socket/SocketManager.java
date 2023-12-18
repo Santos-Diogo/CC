@@ -103,7 +103,7 @@ public class SocketManager
          * @param user user's id
          * @return user's input packet queue
          */
-        BlockingQueue<TransferPacket> getInput (long user)
+        public BlockingQueue<TransferPacket> getInput (long user)
         {
             try
             {

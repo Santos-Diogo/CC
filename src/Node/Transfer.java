@@ -20,10 +20,9 @@ public class Transfer implements Runnable{
     private InetAddress node_toRequest; 
     private UserData userData;
     private BlockingQueue<TrackPacket> tcpQueue;
+    private BlockingQueue<TSFPayload>
     private long fileid;
     private List<Long> blocks;
-    private Crypt crypt;
-    private long target_id;
 
     public Transfer (Network.UDP.Socket.SocketManager udpManager, BlockingQueue<TrackPacket> tcpQueue, InetAddress node, long fileid, List<Long> blocks)
     {
@@ -41,12 +40,12 @@ public class Transfer implements Runnable{
         try {
             userData.user_connection.addPacketTransmission(userData.user_id, payload);
             int blocks_size = blocks.size();
+            BlockingQueue<TransferPacket> transfers = userData.user_connection.getInput(userData.user_id);
             for(int i = 0; i < blocks_size; i++)
             {
-                TransferPacket repPacket = userData.user_connection
-                TSFPayload file_block = new TSFPayload(crypt.decrypt(repPacket.payload));
+                TSFPayload repPacket = (TSFPayload) transfers.take();
+
             }
-            
         } catch (Exception e) {
             e.printStackTrace();
         }
