@@ -82,8 +82,24 @@ public class ServerCom implements Runnable
         }
     }
 
+    private void handle_ADD (TrackPacket packet)
+    {
+        System.out.println("ADD message");
+        try 
+        {
+            AddBlockPacket p = (AddBlockPacket) packet;
+            if(serverInfo.nodeHasFile(selfId, p.getFile()))
+            {
+              //  serverInfo.add
+            }
+
+        } catch (Exception e)
+        {
+            e.printStackTrace();
+        }
+    }
+
     private void handle_GET_REQ(TrackPacket packet) {
-        // @TODO
         System.out.println("GET message");
         try 
         {
@@ -94,7 +110,7 @@ public class ServerCom implements Runnable
             List<Long> ownedBlocks = new ArrayList<>();
             NodeBlocks nodeInfoFile = serverInfo.get_nodeInfoFile(file, p.netId, ownedBlocks);
             Map<NetId, Integer> workLoad = serverInfo.get_workLoad(nodeInfoFile.get_nodes());
-            GetRepPacket replyP = new GetRepPacket(new TrackPacket(selfId, TypeMsg.GET_RESP, 0, packet.from), fileId, nBlocks, nodeInfoFile, ownedBlocks, workLoad);
+            GetRepPacket replyP = new GetRepPacket(new TrackPacket(selfId, TypeMsg.GET_RESP, 0, packet.from), fileId, file ,nBlocks, nodeInfoFile, ownedBlocks, workLoad);
             out.writeObject(replyP);
             out.flush();
         }
@@ -118,7 +134,8 @@ public class ServerCom implements Runnable
                 handle_AVF_REQ(packet);
                 break;
             }
-            case UPD: {
+            case ADD: {
+                handle_ADD(packet);
                 break;
             }
             case GET_REQ: {

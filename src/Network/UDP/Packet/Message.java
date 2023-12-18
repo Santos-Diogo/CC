@@ -10,8 +10,6 @@ public class Message extends UDP_Packet
     public Message (UDP_Packet p, byte[] message)
     {
         super(p);
-        this.from= from;
-        this.to= to;
         this.message= message;
     }
 

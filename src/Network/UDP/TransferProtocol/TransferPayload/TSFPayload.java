@@ -13,9 +13,9 @@ public class TSFPayload extends TransferPacket
     public long blockNumber;
     public byte[] block;
 
-    public TSFPayload (long blockNumber, byte[] b, TypeMsg type, byte[] payload)
+    public TSFPayload (long blockNumber, byte[] b, TypeMsg type)
     {
-        super(type, payload);
+        super(type);
         this.blockNumber = blockNumber;
         this.block = b;
     }
@@ -34,6 +34,6 @@ public class TSFPayload extends TransferPacket
         int size = in.readInt();
         byte[] block = new byte[size];
         in.read(block, 0, size);
-        return new TSFPayload(blockNumber, block, packet.type, packet.payload);
+        return new TSFPayload(blockNumber, block, packet.type);
     }
 }
