@@ -26,13 +26,6 @@ public class BlockInfo implements Serializable
         this.filesBlocks= filesBlocks;
     }
 
-    public BlockInfo (Long block)
-    {
-        this.lock_rw= new ReentrantReadWriteLock();
-        this.filesBlocks= new ArrayList<>();
-        filesBlocks.add(block);
-    }
-
     public List<Long> get_filesBlocks () throws NullPointerException
     {
         try
@@ -52,7 +45,6 @@ public class BlockInfo implements Serializable
         {
             lock_rw.writeLock().lock();
             filesBlocks.add(block);
-            filesBlocks.sort(null);
         }
         finally
         {
