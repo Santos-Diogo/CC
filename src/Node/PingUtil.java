@@ -21,9 +21,6 @@ public class PingUtil {
                 this.rtt = Double.parseDouble(rttString);
             }
         }
-
-        // Wait for the process to finish
-        int exitCode = process.waitFor();
     }
 
     public double getRtt() {
