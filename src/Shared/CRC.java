@@ -12,23 +12,28 @@ public class CRC
      * @param message Message and CRC32 calc at the head
      * @return return null for failure and content if CRC32 matches up
      */
-    static public byte[] decouple (byte[] message)
-    {
-        //Get stored CRC32 result
+    static public byte[] decouple(byte[] message) {
+        // Check the message's length
+        if (message.length < 8)
+            return null;
+
+        // Get stored CRC32 result
         ByteBuffer byteBuffer = ByteBuffer.wrap(message);
-        long stored= byteBuffer.getLong();
+        long stored = byteBuffer.getLong();
 
-        //Ready up result
-        int length= message.length- 8;
-        byte[] result= new byte[length];
-        byteBuffer.get(result, 0, length);
-
-        //Check CRC32
-        CRC32 crc32= new CRC32();
-        crc32.update(result);
-        long computed= crc32.getValue();
+        // Ready up result
+        int length = message.length - 8;
+        byte[] result = new byte[length];
         
-        return (stored== computed) ? result : null;
+        // get the message
+        byteBuffer.get(result);
+
+        // Check CRC32
+        CRC32 crc32 = new CRC32();
+        crc32.update(result);
+        long computed = crc32.getValue();
+
+        return (stored == computed) ? result : null;
     }
 
     /**
@@ -37,20 +42,14 @@ public class CRC
      */
     static public byte[] couple (byte[] message)
     {
-        //Calculate CRC32
-        CRC32 crc32= new CRC32();
+        CRC32 crc32 = new CRC32();
         crc32.update(message);
-        long computed= crc32.getValue();
 
-        //Write CRC32 @ head
-        byte[] ret= new byte [message.length+ 8];
-        ByteBuffer byteBuffer= ByteBuffer.wrap(ret);
-        byteBuffer.putLong(computed);
-        
-        //Write the rest of the message
-        System.arraycopy(message, 0, ret, 8, message.length);
+        ByteBuffer byteBuffer = ByteBuffer.allocate(message.length + 8);
+        byteBuffer.putLong(crc32.getValue());
+        byteBuffer.put(message);
 
-        return ret;
+        return byteBuffer.array();
     }
 }
 
