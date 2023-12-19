@@ -55,20 +55,26 @@ public class SocketManager
         long received_number;                                       // highest number of packet received
         List<Long> non_received;                                    // list of packets with number lower than "received number" that we haven't received
         
-        Connection ()
+        Connection (DatagramSocket socket, InetAddress addr)
         {
             this.rwl= new ReentrantReadWriteLock();
             this.crypt= null;
             this.user_destination= new HashMap<>();
             this.window= INITIAL_PACKETS;
             this.transmission_packets= new LinkedBlockingQueue<>();
+            this.received_packets = new HashMap<>();
             this.retransmission_packets= new HashMap<>();
             this.inc= 0;
             this.received_number= 0;
             this.non_received= new ArrayList<>();
             
             //add a connection message to the sender;
-            this.transmission_packets.add(new Connect(new UDP_Packet(Type.CON, 0, 0, inc++), keys.getPublic()));
+            try {
+                this.send(socket, addr, Defines.transferPort, new Connect(new UDP_Packet(Type.CON, 0, 0, inc++), keys.getPublic()), System.currentTimeMillis());
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
 
         /**
@@ -126,9 +132,11 @@ public class SocketManager
          */
         public void addPacketTransmission (long user_id, TransferPacket transfer_packet) throws Exception
         {
+            while(crypt==null);
             try
             {
                 //encrypt payload
+                
                 ByteArrayOutputStream stream;
                 transfer_packet.serialize(new DataOutputStream(stream= new ByteArrayOutputStream()));
                 byte[] serialized= stream.toByteArray();
@@ -144,6 +152,8 @@ public class SocketManager
 
                 //add packet to transmission queue
                 this.transmission_packets.add(udp_packet);
+            } catch (Exception e) {
+                e.printStackTrace();
             }
             finally
             {
@@ -197,7 +207,8 @@ public class SocketManager
                 this.retransmission_packets.put(packet.pNnumber, new RePacket());
 
             //set the serialized packet with crc-32 bitchecking 
-            byte[] checked= CRC.couple(packet.serialize());
+            //byte[] checked= CRC.couple(packet.serialize());
+            byte[] checked= packet.serialize();
             //send the packet with crc-32 bitchecking
             socket.send(new DatagramPacket(checked, checked.length, addr, port));
         }
@@ -275,7 +286,7 @@ public class SocketManager
     ThreadControl tc;
     FileBlockInfo fbi;
     String dir;
-
+    DatagramSocket socket;
     private static long inc= 0;                                                 
     KeyPair keys;
     Map<InetAddress, Connection> address_to_connection;
@@ -294,7 +305,7 @@ public class SocketManager
             this.user_to_connection= new HashMap<>();
 
             //Creates the socket and starts both the sender and the receiver
-            DatagramSocket socket= new DatagramSocket(Defines.transferPort);
+            socket= new DatagramSocket(Defines.transferPort);
             Thread sender= new Thread(new Sender(socket, this, tc)); 
             Thread receiver= new Thread(new Receiver(socket, this, tc));
             sender.start();
@@ -317,7 +328,7 @@ public class SocketManager
             Connection c= this.address_to_connection.get(adr);
             if (c== null)
             {
-                c= new Connection();
+                c= new Connection(socket, adr);
             }
             this.address_to_connection.put(adr, c);
 
@@ -346,7 +357,7 @@ public class SocketManager
             Connection c= this.address_to_connection.get(adr);
             if (c== null)
             {
-                c= new Connection();
+                c= new Connection(socket, adr);
             }
             this.address_to_connection.put(adr, c);
 
@@ -385,13 +396,15 @@ public class SocketManager
 
         // retrieve the udp packet's bytes
         byte[] payload= datagram_packet.getData();
-        byte[] udp_serialized= CRC.decouple(payload);
+        //byte[] udp_serialized= CRC.decouple(payload);
+        byte[] udp_serialized= payload;
 
         //Create the connection if it doesn't exist
         Connection connection= this.address_to_connection.get(from);
         if (connection== null)
         {
-            connection= new Connection();
+            connection= new Connection(socket, from);
+            this.address_to_connection.put(from, connection);
         }
         
 
@@ -402,7 +415,6 @@ public class SocketManager
             {
                 // retrieve the udp packet itself
                 UDP_Packet packet= new UDP_Packet(udp_serialized);
-
                 //set matching for the user in our side
                 connection.user_destination.put(packet.to, packet.from);
 
@@ -451,10 +463,10 @@ public class SocketManager
                         case CON:
                         {
                             // handle the connection
-                            Connect connect_packet= (Connect) packet;
+                            Connect connect_packet = new Connect(udp_serialized);
                             // set up the crypt with the received key
                             connection.crypt= new Crypt(keys.getPrivate(), connect_packet.publicKey);
-                            
+
                             //mark the connection as received
                             connection.ack(packet.pNnumber);
                             break;

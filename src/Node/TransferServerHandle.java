@@ -1,7 +1,6 @@
 package Node;
 
 import ThreadTools.ThreadControl;
-import java.net.InetAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.BlockingQueue;
@@ -48,7 +47,6 @@ public class TransferServerHandle implements Runnable
             //Send all the blocks
 
             String fileDir= dir + file;
-            
             if (fbi.hasWholeFile(file))
             {
                 try (FileInputStream fileInputStream = new FileInputStream(fileDir))

@@ -1,6 +1,7 @@
 package Node;
 
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
@@ -142,7 +143,10 @@ public class Node
     private static void register(FileBlockInfo b) throws IOException, ClassNotFoundException
     {
         // Send Reg message with Node Status collected by "FileBlockInfo"
-        trackerOutput.add(new RegReqPacket(new TrackPacket(net_Id, TypeMsg.REG_REQ, trackerId, 0), b));  //From e to pelo q percebi são removidos
+        RegReqPacket p = new RegReqPacket(new TrackPacket(net_Id, TypeMsg.REG_REQ, trackerId, 0), b);
+        System.out.println(p.netId);
+        trackerOutput.add(p);
+
         try{
             RegRepPacket rep= (RegRepPacket) trackerInput.take();
             b.set_FilesID(rep.get_fileId());
@@ -155,12 +159,13 @@ public class Node
     {
         String serverAddress = args[1];
         int serverPort = (args.length > 2) ? Integer.parseInt(args[2]) : Shared.Defines.trackerPort;
+        files = new LinkedBlockingQueue<>();
         Socket socket;
         try 
         {
             // Define this machine IP adress
             net_Id = new NetId(InetAddress.getLocalHost().getHostName());
-
+            System.out.println(net_Id);
             // Creates TCP Manager
             socket= new Socket(serverAddress, serverPort);
             tcpSocketManager= new SocketManager(socket, tc);
@@ -168,6 +173,7 @@ public class Node
             trackerInput= tcpSocketManager.getInputQueue(trackerId);
             trackerOutput= tcpSocketManager.getOutpuQueue();
 
+            
             // Creates UDP Manager
             udpSocketManager= new Network.UDP.Socket.SocketManager(tc, fbInfo, args[0]);
 
