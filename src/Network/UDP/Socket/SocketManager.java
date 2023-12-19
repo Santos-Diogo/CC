@@ -395,7 +395,9 @@ public class SocketManager
 
         // retrieve the udp packet's bytes
         byte[] payload= datagram_packet.getData();
+        System.out.println(payload);
         byte[] udp_serialized= CRC.decouple(payload);
+        System.out.println(udp_serialized);
 
         //Create the connection if it doesn't exist
         Connection connection= this.address_to_connection.get(from);
