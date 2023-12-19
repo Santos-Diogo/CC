@@ -47,6 +47,7 @@ public class Crypt
     public static KeyPair generateKeyPair () throws NoSuchAlgorithmException
     {
         KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("DH");
+        keyPairGenerator.initialize(1024);
         KeyPair pair = keyPairGenerator.generateKeyPair();
         return pair;
     }

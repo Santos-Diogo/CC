@@ -132,11 +132,12 @@ public class SocketManager
          */
         public void addPacketTransmission (long user_id, TransferPacket transfer_packet) throws Exception
         {
+            System.out.println("Entrou antes Crypt !");
             while(crypt==null);
             try
             {
                 //encrypt payload
-                
+                System.out.println("Entrou Crypt !");
                 ByteArrayOutputStream stream;
                 transfer_packet.serialize(new DataOutputStream(stream= new ByteArrayOutputStream()));
                 byte[] serialized= stream.toByteArray();
@@ -214,9 +215,9 @@ public class SocketManager
                 dos.close();
                 byte[] serialized = baos.toByteArray();
                 //set the serialized packet with crc-32 bitchecking 
-                System.out.println("Packet serializado: " + Test.test.bytesToHex(serialized));
+                //System.out.println("Packet serializado: " + Test.test.bytesToHex(serialized));
                 byte[] checked= CRC.couple(serialized);
-                System.out.println("Packet com CRC: " + Test.test.bytesToHex(checked));
+                //System.out.println("Packet com CRC: " + Test.test.bytesToHex(checked));
                 //send the packet with crc-32 bitchecking
                 socket.send(new DatagramPacket(checked, checked.length, addr, port));
             }      
@@ -405,7 +406,7 @@ public class SocketManager
 
         // retrieve the udp packet's bytes
         int length = datagram_packet.getLength();
-        System.out.println("Packet.getData() recebido: " + Test.test.bytesToHex(datagram_packet.getData()));
+        //System.out.println("Packet.getData() recebido: " + Test.test.bytesToHex(datagram_packet.getData()));
         byte[] payload= new byte[length];
         System.arraycopy(datagram_packet.getData(), 0, payload, 0, length);
         byte[] udp_serialized= CRC.decouple(payload);
@@ -422,6 +423,7 @@ public class SocketManager
         // if the bytes are valid
         if (udp_serialized!= null)
         {
+            System.out.println("Entrou !");
             try (ByteArrayInputStream bais = new ByteArrayInputStream(udp_serialized))
             {
                 // retrieve the udp packet itself
@@ -432,7 +434,7 @@ public class SocketManager
                 //set matching for the user in our side
                 connection.user_destination.put(packet.to, packet.from);
 
-
+                System.out.println(packet.type);
                 // if there is no encryption key set and the received packet is not of type connect or
                 // the packet as already been received
                 if ((connection.crypt== null && packet.type!= Type.CON) || (packet.pNnumber< connection.received_number&& !connection.non_received.contains(packet.pNnumber)))
