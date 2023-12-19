@@ -12,7 +12,7 @@ import java.net.InetAddress;
 public class test 
 {
 
-    private static String bytesToHex(byte[] bytes) {
+    public static String bytesToHex(byte[] bytes) {
         StringBuilder hexStringBuilder = new StringBuilder();
         for (byte b : bytes) {
             hexStringBuilder.append(String.format("%02X", b));
@@ -27,10 +27,10 @@ public class test
             System.out.println("Before serialize: " + string);
             byte[] serialized= string.getBytes();
             System.out.println("Before couple " + serialized);
-            System.out.println("Before couple bytesToHex" + bytesToHex(serialized));
+            System.out.println("Before couple bytesToHex " + bytesToHex(serialized));
             byte[] checked= CRC.couple(serialized);
             System.out.println("After couple " + checked);
-            System.out.println("After couple bytesToHex" + bytesToHex(checked));
+            System.out.println("After couple bytesToHex " + bytesToHex(checked));
             DatagramPacket packet = new DatagramPacket(checked, checked.length,
             InetAddress.getByName("Portatil2.p2pcc") , 9090);
     

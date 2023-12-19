@@ -22,12 +22,15 @@ public class test2 {
         {
             DatagramPacket p = new DatagramPacket(new byte[4000], 4000); 
             socket.receive(p);
-            byte[] before = p.getData();
+            System.out.println("length " + p.getLength());
+            int length = p.getLength();
+            byte[] before = new byte[length];
+            System.arraycopy(p.getData(), 0, before, 0, length);
             System.out.println("Before decouple " + before);
-            System.out.println("Before decouple bytesToHex" + bytesToHex(before));
+            System.out.println("Before decouple bytesToHex " + bytesToHex(before));
             byte[] after = CRC.decouple(before);
             System.out.println("After decouple: " + after);
-            System.out.println("After decouple bytesToHex" + bytesToHex(after));
+            System.out.println("After decouple bytesToHex " + bytesToHex(after));
             String string = new String(after);
             System.out.println("After deserialize: " + string);
         } catch (Exception e) {

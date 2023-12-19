@@ -207,7 +207,9 @@ public class SocketManager
                 this.retransmission_packets.put(packet.pNnumber, new RePacket());
 
             //set the serialized packet with crc-32 bitchecking 
+            System.out.println("Packet serializado: " + Test.test.bytesToHex(packet.serialize()));
             byte[] checked= CRC.couple(packet.serialize());
+            System.out.println("Packet com CRC: " + Test.test.bytesToHex(checked));
             //send the packet with crc-32 bitchecking
             socket.send(new DatagramPacket(checked, checked.length, addr, port));
         }
@@ -394,10 +396,11 @@ public class SocketManager
         InetAddress from= datagram_packet.getAddress();
 
         // retrieve the udp packet's bytes
-        byte[] payload= datagram_packet.getData();
-        System.out.println(payload);
+        int length = datagram_packet.getLength();
+        System.out.println("Packet.getData() recebido: " + Test.test.bytesToHex(datagram_packet.getData()));
+        byte[] payload= new byte[length];
+        System.arraycopy(datagram_packet.getData(), 0, payload, 0, length);
         byte[] udp_serialized= CRC.decouple(payload);
-        System.out.println(udp_serialized);
 
         //Create the connection if it doesn't exist
         Connection connection= this.address_to_connection.get(from);
