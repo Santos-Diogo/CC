@@ -5,6 +5,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.security.spec.X509EncodedKeySpec;
 import java.util.Arrays;
 
 import javax.crypto.Cipher;
@@ -14,6 +15,8 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 import java.nio.ByteBuffer;
+import java.security.GeneralSecurityException;
+import java.security.KeyFactory;
 import java.security.KeyPair;
 
 /**
@@ -84,6 +87,19 @@ public class Crypt
         return cipher.doFinal(ciphertext);
     }
     
+
+    /**
+     * Deserialize a PublicKey from a byte array
+     * @param publicKeyBytes Byte array representing the serialized PublicKey
+     * @return Deserialized PublicKey
+     * @throws GeneralSecurityException
+     */
+    public static PublicKey deserializePublicKey(byte[] publicKeyBytes) throws GeneralSecurityException 
+    {
+        KeyFactory keyFactory = KeyFactory.getInstance("DH");
+        return keyFactory.generatePublic(new X509EncodedKeySpec(publicKeyBytes));
+    }
+
     // Utility method to convert byte array to hex string for logging
     private String bytesToHex(byte[] bytes) {
         StringBuilder hexStringBuilder = new StringBuilder();

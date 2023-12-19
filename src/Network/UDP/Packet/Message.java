@@ -1,9 +1,7 @@
 package Network.UDP.Packet;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 
 public class Message extends UDP_Packet
 {
@@ -15,20 +13,20 @@ public class Message extends UDP_Packet
         this.message= message;
     }
 
-    public Message (byte[] b) throws Exception
+    
+    public static Message deserialize (DataInputStream dis, UDP_Packet packet) throws Exception
     {
-        super(b);
-
-        // Deserialize the additional field(s) for Connect
-        ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(b));
-        message = (byte[]) ois.readObject();
+        int length = dis.readInt();
+        byte[] message = new byte[length];
+        dis.read(message, length, length);
+        return new Message(packet, message);
     }
 
-    public byte[] serialize () throws Exception
+    @Override
+    public void serialize (DataOutputStream dos) throws Exception
     {
-        ByteArrayOutputStream bs;
-        ObjectOutputStream stream= new ObjectOutputStream(bs= new ByteArrayOutputStream());
-        stream.writeObject(this);
-        return bs.toByteArray();
+        super.serialize(dos);
+        dos.writeInt(message.length);
+        dos.write(message);
     }
 }

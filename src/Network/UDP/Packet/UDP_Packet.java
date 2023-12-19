@@ -1,10 +1,9 @@
 package Network.UDP.Packet;
 
 import java.io.Serializable;
-import java.io.ObjectOutputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.ObjectInputStream;
-import java.io.ByteArrayInputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+
 
 /**
  * Packets handled by the UDP Manager.
@@ -24,16 +23,6 @@ public class UDP_Packet implements Serializable
     public long to;
     public long pNnumber;
 
-    public UDP_Packet (byte[] b) throws Exception
-    {
-        ObjectInputStream stream= new ObjectInputStream(new ByteArrayInputStream(b));
-        UDP_Packet p= (UDP_Packet) stream.readObject();
-        this.type= p.type;
-        this.from= p.from;
-        this.to= p.to;
-        this.pNnumber= p.pNnumber;
-    }
-
     public UDP_Packet (UDP_Packet.Type type, long from, long to, long pNumber)
     {
         this.type= type;
@@ -50,11 +39,16 @@ public class UDP_Packet implements Serializable
         this.pNnumber= p.pNnumber;
     }
 
-    public byte[] serialize () throws Exception
+    public void serialize (DataOutputStream dos) throws Exception
     {
-        ByteArrayOutputStream bs;
-        ObjectOutputStream stream= new ObjectOutputStream(bs= new ByteArrayOutputStream());
-        stream.writeObject(this);
-        return bs.toByteArray();
+        dos.writeInt(type.ordinal());
+        dos.writeLong(from);
+        dos.writeLong(to);
+        dos.writeLong(pNnumber);
+    }
+
+    public static UDP_Packet deserialize (DataInputStream dis) throws Exception
+    {
+        return new UDP_Packet(Type.values()[dis.readInt()], dis.readLong(), dis.readLong(), dis.readLong());
     }
 }

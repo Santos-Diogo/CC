@@ -1,10 +1,10 @@
 package Network.UDP.Packet;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.security.PublicKey;
+
+import Shared.Crypt;
 
 public class Connect extends UDP_Packet
 {
@@ -16,25 +16,20 @@ public class Connect extends UDP_Packet
         this.publicKey= publicKey;
     }
 
-    public byte[] serialize() throws Exception {
-        ByteArrayOutputStream bs;
-        ObjectOutputStream stream = new ObjectOutputStream(bs = new ByteArrayOutputStream());
-
-        // Serialize the fields from the UDP_Packet class
-        stream.writeObject(this);
-
-        // Serialize the publicKey field
-        stream.writeObject(publicKey);
-
-        return bs.toByteArray();
+    @Override
+    public void serialize(DataOutputStream dos) throws Exception {
+        super.serialize(dos);
+        byte[] key = publicKey.getEncoded();
+        dos.writeInt(key.length);
+        dos.write(key);
     }
 
-    public Connect (byte[] b) throws Exception 
+    public static Connect deserialize (DataInputStream dis, UDP_Packet packet) throws Exception 
     {
-         super(b);
-
-        // Deserialize the additional field(s) for Connect
-        ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(b));
-        publicKey = (PublicKey) ois.readObject();
+        int length = dis.readInt();
+        byte[] enconded = new byte[length];
+        dis.read(enconded, 0, length);
+        PublicKey key = Crypt.deserializePublicKey(enconded);
+        return new Connect(packet, key);
     }
 }

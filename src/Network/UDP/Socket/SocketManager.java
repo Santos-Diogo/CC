@@ -206,12 +206,20 @@ public class SocketManager
             if (packet.type!= Type.ACK)
                 this.retransmission_packets.put(packet.pNnumber, new RePacket());
 
-            //set the serialized packet with crc-32 bitchecking 
-            System.out.println("Packet serializado: " + Test.test.bytesToHex(packet.serialize()));
-            byte[] checked= CRC.couple(packet.serialize());
-            System.out.println("Packet com CRC: " + Test.test.bytesToHex(checked));
-            //send the packet with crc-32 bitchecking
-            socket.send(new DatagramPacket(checked, checked.length, addr, port));
+
+            try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) 
+            {
+                DataOutputStream dos = new DataOutputStream(baos);
+                packet.serialize(dos);
+                dos.close();
+                byte[] serialized = baos.toByteArray();
+                //set the serialized packet with crc-32 bitchecking 
+                System.out.println("Packet serializado: " + Test.test.bytesToHex(serialized));
+                byte[] checked= CRC.couple(serialized);
+                System.out.println("Packet com CRC: " + Test.test.bytesToHex(checked));
+                //send the packet with crc-32 bitchecking
+                socket.send(new DatagramPacket(checked, checked.length, addr, port));
+            }      
         }
 
         /**
@@ -414,10 +422,13 @@ public class SocketManager
         // if the bytes are valid
         if (udp_serialized!= null)
         {
-            try
+            try (ByteArrayInputStream bais = new ByteArrayInputStream(udp_serialized))
             {
                 // retrieve the udp packet itself
-                UDP_Packet packet= new UDP_Packet(udp_serialized);
+                DataInputStream dis = new DataInputStream(bais);
+                UDP_Packet packet = UDP_Packet.deserialize(dis);
+                dis.close();
+                bais.reset();
                 //set matching for the user in our side
                 connection.user_destination.put(packet.to, packet.from);
 
@@ -466,7 +477,9 @@ public class SocketManager
                         case CON:
                         {
                             // handle the connection
-                            Connect connect_packet = new Connect(udp_serialized);
+                            dis = new DataInputStream(bais);
+                            Connect connect_packet = Connect.deserialize(dis, packet);
+                            dis.close();
                             // set up the crypt with the received key
                             connection.crypt= new Crypt(keys.getPrivate(), connect_packet.publicKey);
 
@@ -492,7 +505,10 @@ public class SocketManager
                                 Thread responder= new Thread(new TransferServerHandle(tc, user_data, fbi, dir));
                                 responder.start();
                             }
-                            connection.receiveMessage((Message) packet);
+                            dis = new DataInputStream(bais);
+                            Message msg = Message.deserialize(dis, packet);
+                            dis.close();
+                            connection.receiveMessage(msg);
                             connection.ack(packet.pNnumber);
                             break;
                         }
