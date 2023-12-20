@@ -40,7 +40,7 @@ public class TrackPacket implements Serializable
 
     public TrackPacket (TrackPacket p)
     {
-        this.from= p.from;
+        this.netId = p.netId;
         this.type= p.type;
         this.from= p.from;
         this.to= p.to;

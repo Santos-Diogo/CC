@@ -146,12 +146,9 @@ public class TransferRequests implements Runnable
                 File file = new File(filePath);
                 if (file.exists()) {
                     if (file.delete()) {
-                        System.out.println("File " + filePath + " deleted successfully.");
                     } else {
-                        System.out.println("Failed to delete file: " + filePath);
                     }
                 } else {
-                    System.out.println("File does not exist: " + filePath);
                 }
             }
         }
@@ -177,7 +174,6 @@ public class TransferRequests implements Runnable
                         node_Address = InetAddress.getByName(node.getName() + Shared.Defines.DNS_Zone);
                         dnscache.add_AdressToCache(node, node_Address);
                     }
-
                     Thread t = new Thread(new Transfer(udpManager, node_Address, file.get_fileId(), nodes.getValue(), queue));
                     t.start();
                 }

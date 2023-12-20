@@ -18,6 +18,7 @@ public class Receiver implements Runnable
     {
         try
         {
+            
             this.in= new ObjectInputStream (s.getInputStream());
             this.manager= manager;
             this.tc= tc;

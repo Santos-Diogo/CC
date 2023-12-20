@@ -147,7 +147,7 @@ public class ServerCom implements Runnable
                 break;
             }
             default: {
-                System.out.println("Fodeu-se");
+                System.out.println("");
             }
         }
     }

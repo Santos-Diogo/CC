@@ -1,7 +1,7 @@
 package Network.UDP.Packet;
 
-import java.io.ByteArrayOutputStream;
-import java.io.ObjectOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 
 public class Message extends UDP_Packet
 {
@@ -13,11 +13,20 @@ public class Message extends UDP_Packet
         this.message= message;
     }
 
-    public byte[] serialize () throws Exception
+    
+    public static Message deserialize (DataInputStream dis, UDP_Packet packet) throws Exception
     {
-        ByteArrayOutputStream bs;
-        ObjectOutputStream stream= new ObjectOutputStream(bs= new ByteArrayOutputStream());
-        stream.writeObject(this);
-        return bs.toByteArray();
+        int length = dis.readInt();
+        byte[] message = new byte[length];
+        dis.read(message, length, length);
+        return new Message(packet, message);
+    }
+
+    @Override
+    public void serialize (DataOutputStream dos) throws Exception
+    {
+        super.serialize(dos);
+        dos.writeInt(message.length);
+        dos.write(message);
     }
 }

@@ -19,13 +19,8 @@ public class PingUtil {
                 int endIndex = line.indexOf(" ms", startIndex);
                 String rttString = line.substring(startIndex, endIndex);
                 this.rtt = Double.parseDouble(rttString);
-                System.out.println("Round-trip time: " + rtt + " ms");
             }
         }
-
-        // Wait for the process to finish
-        int exitCode = process.waitFor();
-        System.out.println("Exited with error code " + exitCode);
     }
 
     public double getRtt() {
