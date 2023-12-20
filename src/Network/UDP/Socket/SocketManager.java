@@ -14,7 +14,12 @@ import java.util.Map;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.security.PublicKey;
+import java.util.Set;
+import java.util.Map.Entry;
 
 import Blocker.FileBlockInfo;
 import Network.UDP.Packet.Ack;
@@ -38,14 +43,23 @@ public class SocketManager
     {
         public long added_time;                             //time at which the packet was added to the queue
         UDP_Packet packet;                                  //packet to transmit
+
+        RePacket (long now, UDP_Packet packet)
+        {
+            this.added_time= now;
+            this.packet= packet;
+        }
     }
     public class Connection
     {
         final int MAX_LATENCY= 300;
         final int INITIAL_PACKETS= 10;
 
-        ReentrantReadWriteLock rwl;
-        Crypt crypt;
+        ReentrantReadWriteLock rwl;                                 // state lock
+        KeyPair keys;                                               // keypair to be used in encryption/ decription
+        Crypt crypt;                                                // used to encrypt and decryppt messages.
+        ReentrantLock connection_lock;                              // lock used for connection status
+        Condition connection_condition;                             // condition used for the connection's status
         Map<Long,Long> user_destination;                            // destination for a user's packets
         long window;                                                // sets the availability to trasnmit "window" packets in a given moment
         Map<Long, RePacket> retransmission_packets;                 // packet number to packet to retransmit
@@ -55,10 +69,13 @@ public class SocketManager
         long received_number;                                       // highest number of packet received
         List<Long> non_received;                                    // list of packets with number lower than "received number" that we haven't received
         
-        Connection (DatagramSocket socket, InetAddress addr)
+        Connection (DatagramSocket socket, InetAddress addr, KeyPair keys)
         {
             this.rwl= new ReentrantReadWriteLock();
+            this.keys= keys;
             this.crypt= null;
+            this.connection_lock= new ReentrantLock();
+            this.connection_condition= this.connection_lock.newCondition();
             this.user_destination= new HashMap<>();
             this.window= INITIAL_PACKETS;
             this.transmission_packets= new LinkedBlockingQueue<>();
@@ -69,11 +86,35 @@ public class SocketManager
             this.non_received= new ArrayList<>();
             
             //add a connection message to the sender;
-            try {
+            try 
+            {
                 this.send(socket, addr, Defines.transferPort, new Connect(new UDP_Packet(Type.CON, 0, 0, inc++), keys.getPublic()), System.currentTimeMillis());
-
-            } catch (Exception e) {
+            }
+            catch (Exception e) 
+            {
                 e.printStackTrace();
+            }
+        }
+
+        /**
+         * Sets up the crypt in a given connection
+         * @param foreign_key
+         */
+        void setCrypt (PublicKey foreign_key)
+        {
+            try
+            {
+                this.rwl.writeLock().lock();
+                this.crypt= new Crypt(this.keys.getPrivate(), foreign_key);
+                this.connection_condition.signalAll();
+            }
+            catch (Exception e)
+            {
+                e.printStackTrace();
+            }
+            finally
+            {
+                this.rwl.writeLock().unlock();
             }
         }
 
@@ -132,8 +173,6 @@ public class SocketManager
          */
         public void addPacketTransmission (long user_id, TransferPacket transfer_packet) throws Exception
         {
-            System.out.println("Entrou antes Crypt !");
-            while(crypt==null);
             try
             {
                 //encrypt payload
@@ -147,13 +186,21 @@ public class SocketManager
                 long from= user_id;
                 long to= this.user_destination.get(user_id);
                 UDP_Packet udp_packet= new Message(new UDP_Packet(Type.MSG, from, to, this.inc++), encrypted_payload);
-             
+                
                 //lock
                 this.rwl.writeLock().lock();
+                
+                //wait for the connection to be established
+                if (this.crypt== null)
+                {
+                    this.connection_condition.await();
+                }
 
                 //add packet to transmission queue
                 this.transmission_packets.add(udp_packet);
-            } catch (Exception e) {
+            } 
+            catch (Exception e) 
+            {
                 e.printStackTrace();
             }
             finally
@@ -173,15 +220,26 @@ public class SocketManager
                 // decrypt the packet
                 byte[] encrypted_transfer= packet.message;
                 byte[] decrypted_transfer= this.crypt.decrypt(encrypted_transfer);
+
+                // deserialize the packet
                 ByteArrayInputStream bais = new ByteArrayInputStream(decrypted_transfer);
                 DataInputStream dis = new DataInputStream(bais);
                 TransferPacket transfer_packet = TransferPacket.deserialize(dis);
-                //add the packet to the user's input queue
-                this.received_packets.get(packet.to).add(transfer_packet);
+
+                // lock
+                this.rwl.readLock().lock();
+
+                // add the packet to the user's input queue
+                BlockingQueue<TransferPacket> queue= this.received_packets.get(packet.to);
+                queue.add(transfer_packet);
             }
             catch (Exception e)
             {
                 e.printStackTrace();
+            }
+            finally
+            {
+                this.rwl.readLock().unlock();
             }
         }
 
@@ -205,20 +263,20 @@ public class SocketManager
         {
             //add the packet to the resend queue if it isn't an ack packet
             if (packet.type!= Type.ACK)
-                this.retransmission_packets.put(packet.pNnumber, new RePacket());
-
+                this.retransmission_packets.put(packet.pNnumber, new RePacket(now, packet));
 
             try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) 
             {
+                //serialize the packet
                 DataOutputStream dos = new DataOutputStream(baos);
                 packet.serialize(dos);
                 dos.close();
                 byte[] serialized = baos.toByteArray();
-                //set the serialized packet with crc-32 bitchecking 
-                //System.out.println("Packet serializado: " + Test.test.bytesToHex(serialized));
+                
+                // set the serialized packet with crc-32 bitchecking 
                 byte[] checked= CRC.couple(serialized);
-                //System.out.println("Packet com CRC: " + Test.test.bytesToHex(checked));
-                //send the packet with crc-32 bitchecking
+                
+                // send the packet with crc-32 bitchecking
                 socket.send(new DatagramPacket(checked, checked.length, addr, port));
             }      
         }
@@ -234,9 +292,12 @@ public class SocketManager
             try
             {
                 this.rwl.writeLock().lock();
-
+                
                 //get current timestamp
                 long now= System.currentTimeMillis();
+
+                if (this.window< this.INITIAL_PACKETS)
+                    this.window= this.INITIAL_PACKETS;
 
                 //send retransmission packets
                 for (RePacket repacket: this.retransmission_packets.values())
@@ -246,7 +307,7 @@ public class SocketManager
                         break;
 
                     //Consider the packet lost if a packet is in the retransmission queue for more than "MAX_LATENCY" else we dont send it and wait for the Ack
-                    if (now- repacket.added_time< MAX_LATENCY)
+                    if (now- repacket.added_time> MAX_LATENCY)
                     {
                         send (socket, target_address, target_port, repacket.packet, now);
                         //decrement the window to reflect the sent packet
@@ -265,7 +326,7 @@ public class SocketManager
                         break;
 
                     send (socket, target_address, target_port, packet, now);
-                    //decrement the window to reflect the sent packet
+                    // decrement the window
                     this.window--;
                 }
             }
@@ -279,6 +340,7 @@ public class SocketManager
             }
         }
     }
+
     public class UserData
     {
         public long user_id;
@@ -338,7 +400,7 @@ public class SocketManager
             Connection c= this.address_to_connection.get(adr);
             if (c== null)
             {
-                c= new Connection(socket, adr);
+                c= new Connection(socket, adr, this.keys);
             }
             this.address_to_connection.put(adr, c);
 
@@ -367,7 +429,7 @@ public class SocketManager
             Connection c= this.address_to_connection.get(adr);
             if (c== null)
             {
-                c= new Connection(socket, adr);
+                c= new Connection(socket, adr, this.keys);
             }
             this.address_to_connection.put(adr, c);
 
@@ -386,141 +448,174 @@ public class SocketManager
     }
 
     /**
-     * method to send every possible packet from every possible connection
+     * method to send every possible packet from every possible connection.
      * should be used by the Sender
      * @param socket socket to send packets from
      * @param port port to send packets to
      */
     void send (DatagramSocket socket, int port)
     {
-        for (Map.Entry<InetAddress, Connection> entry: this.address_to_connection.entrySet())
+        try
         {
-            entry.getValue().sendALL(socket, entry.getKey(), port);
+            //get the connections set and release the lock
+            this.rwl.readLock().lock();
+            Set<Entry<InetAddress, Connection>> entry_set= this.address_to_connection.entrySet();
+            this.rwl.readLock().unlock();
+
+            for (Map.Entry<InetAddress, Connection> entry: entry_set)
+            {
+                entry.getValue().sendALL(socket, entry.getKey(), port);
+            }
+        }
+        finally
+        {
+            this.rwl.readLock().unlock();
         }
     }
 
     //method to be used when a packet is received
     void received (DatagramPacket datagram_packet)
     {
-        InetAddress from= datagram_packet.getAddress();
-
-        // retrieve the udp packet's bytes
-        int length = datagram_packet.getLength();
-        //System.out.println("Packet.getData() recebido: " + Test.test.bytesToHex(datagram_packet.getData()));
-        byte[] payload= new byte[length];
-        System.arraycopy(datagram_packet.getData(), 0, payload, 0, length);
-        byte[] udp_serialized= CRC.decouple(payload);
-
-        //Create the connection if it doesn't exist
-        Connection connection= this.address_to_connection.get(from);
-        if (connection== null)
+        try
         {
-            connection= new Connection(socket, from);
-            this.address_to_connection.put(from, connection);
-        }
-        
-
-        // if the bytes are valid
-        if (udp_serialized!= null)
-        {
-            System.out.println("Entrou !");
-            try (ByteArrayInputStream bais = new ByteArrayInputStream(udp_serialized))
+            InetAddress from= datagram_packet.getAddress();
+            
+            // retrieve the udp packet's bytes
+            int length = datagram_packet.getLength();
+            byte[] payload= new byte[length];
+            System.arraycopy(datagram_packet.getData(), 0, payload, 0, length);
+            byte[] udp_serialized= CRC.decouple(payload);
+            
+            //get or create the connection if it doesn't exist
+            this.rwl.readLock().lock();
+            Connection connection= this.address_to_connection.get(from);
+            if (connection== null)
             {
-                // retrieve the udp packet itself
-                DataInputStream dis = new DataInputStream(bais);
-                UDP_Packet packet = UDP_Packet.deserialize(dis);
-                dis.close();
-                bais.reset();
-                //set matching for the user in our side
-                connection.user_destination.put(packet.to, packet.from);
-
-                System.out.println(packet.type);
-                // if there is no encryption key set and the received packet is not of type connect or
-                // the packet as already been received
-                if ((connection.crypt== null && packet.type!= Type.CON) || (packet.pNnumber< connection.received_number&& !connection.non_received.contains(packet.pNnumber)))
+                connection= new Connection(socket, from, this.keys);
+                this.address_to_connection.put(from, connection);
+            }
+            this.rwl.readLock().unlock();
+            
+            // if the bytes are valid
+            if (udp_serialized!= null)
+            {
+                System.out.println("Entrou !");
+                try (ByteArrayInputStream bais = new ByteArrayInputStream(udp_serialized))
                 {
-                    if (packet.pNnumber== connection.received_number)
+                    // retrieve the udp packet itself
+                    DataInputStream dis = new DataInputStream(bais);
+                    UDP_Packet packet = UDP_Packet.deserialize(dis);
+                    dis.close();
+                    bais.reset();
+                    
+                    //set matching for the user in our side
+                    connection.user_destination.put(packet.to, packet.from);
+                    
+                    System.out.println(packet.type);
+
+                    // if there is no encryption key set and the received packet is not of type connect or
+                    // the packet as already been received
+                    try
                     {
-                        // set received_number for next packet
-                        connection.received_number++;
-                    }
-                    else
-                    {
-                        //if the received packet is over the expected received number
-                        if (packet.pNnumber> connection.received_number)
+                        connection.rwl.writeLock().lock();
+                        if ((connection.crypt== null && packet.type!= Type.CON) || (packet.pNnumber< connection.received_number&& !connection.non_received.contains(packet.pNnumber)))
                         {
-                            // add packets in between to not received and set received number and 
-                            // set received number to be the next packet to receive under normal conditions
-                            while (connection.received_number!= packet.pNnumber)
+                            //discard packet if it isn't expected
+                            if (packet.pNnumber== connection.received_number)
                             {
-                                connection.non_received.add(connection.received_number);
+                                // set received_number for next packet
                                 connection.received_number++;
-                            } 
-                            connection.received_number= packet.pNnumber+ 1;     
-                        }
-                        //if it's lower
-                        {
-                            // remove the packet from the non received list as it is now received
-                            connection.non_received.remove(packet.pNnumber);
+                            }
+                            else
+                            {
+                                //if the received packet is over the expected received number
+                                if (packet.pNnumber> connection.received_number)
+                                {
+                                    // add packets in between to not received and set received number and 
+                                    // set received number to be the next packet to receive under normal conditions
+                                    while (connection.received_number!= packet.pNnumber)
+                                    {
+                                        connection.non_received.add(connection.received_number);
+                                        connection.received_number++;
+                                    } 
+                                    connection.received_number= packet.pNnumber+ 1;     
+                                }
+                                //if it's lower
+                                {
+                                    // remove the packet from the non received list as it is now received
+                                    connection.non_received.remove(packet.pNnumber);
+                                }
+                            }
+                            
+                            //Handle the packet
+                            switch (packet.type)
+                            {
+                                case ACK:
+                                {
+                                    // remove packet corresponding to ack from retransmission queue
+                                    connection.retransmission_packets.remove(packet.pNnumber);
+                                    //allow the window to grow
+                                    connection.window+= 2;
+                                    break;
+                                }
+                                case CON:
+                                {
+                                    // handle the connection
+                                    dis = new DataInputStream(bais);
+                                    Connect connect_packet = Connect.deserialize(dis, packet);
+                                    dis.close();
+                                    // set up the crypt with the received key
+                                    connection.setCrypt(connect_packet.publicKey);
+                                    //mark the connection as received
+                                    connection.ack(packet.pNnumber);
+                                    break;
+                                }
+                                case DC:
+                                {
+                                    //not in use
+                                    break;
+                                }
+                                case MSG:
+                                {
+                                    //message is asking for responder
+                                    if (packet.to== 0)
+                                    {
+                                        //register new user with a target
+                                        UserData user_data= this.registerUser(from, packet.from);
+                                        //change packet target to newly created user
+                                        packet.to= user_data.user_id;
+                                        //set responder to be the newly created user
+                                        Thread responder= new Thread(new TransferServerHandle(tc, user_data, fbi, dir));
+                                        responder.start();
+                                    }
+                                    // deserialize message
+                                    dis = new DataInputStream(bais);
+                                    Message msg = Message.deserialize(dis, packet);
+                                    dis.close();
+                                    
+                                    // receive and ack the received message
+                                    connection.receiveMessage(msg);
+                                    connection.ack(packet.pNnumber);
+                                    break;
+                                }
+                            }
                         }
                     }
-
-                    //Handle the packet
-                    switch (packet.type)
+                    finally
                     {
-                        case ACK:
-                        {
-                            // remove packet corresponding to ack from retransmission queue
-                            connection.retransmission_packets.remove(packet.pNnumber);
-                            //allow the window to grow
-                            connection.window+= 2;
-                            break;
-                        }
-                        case CON:
-                        {
-                            // handle the connection
-                            dis = new DataInputStream(bais);
-                            Connect connect_packet = Connect.deserialize(dis, packet);
-                            dis.close();
-                            // set up the crypt with the received key
-                            connection.crypt= new Crypt(keys.getPrivate(), connect_packet.publicKey);
-
-                            //mark the connection as received
-                            connection.ack(packet.pNnumber);
-                            break;
-                        }
-                        case DC:
-                        {
-                            //not in use
-                            break;
-                        }
-                        case MSG:
-                        {
-                            //ask for responder
-                            if (packet.to== 0)
-                            {
-                                //register the user with a target
-                                UserData user_data= this.registerUser(from, packet.from);
-                                //change packet target to newly created user
-                                packet.to= user_data.user_id;
-                                //set responder to be the newly created user
-                                Thread responder= new Thread(new TransferServerHandle(tc, user_data, fbi, dir));
-                                responder.start();
-                            }
-                            dis = new DataInputStream(bais);
-                            Message msg = Message.deserialize(dis, packet);
-                            dis.close();
-                            connection.receiveMessage(msg);
-                            connection.ack(packet.pNnumber);
-                            break;
-                        }
+                        connection.rwl.writeLock().unlock();
                     }
                 }
+                catch (Exception e)
+                {
+                    e.printStackTrace();
+                }
             }
-            catch (Exception e)
-            {
-                e.printStackTrace();
-            }
+        }
+        finally
+        {
+            this.rwl.readLock().unlock();
         }
     }
 }
+    
