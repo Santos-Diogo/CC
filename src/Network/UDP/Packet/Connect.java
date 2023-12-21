@@ -20,6 +20,8 @@ public class Connect extends UDP_Packet
     public void serialize(DataOutputStream dos) throws Exception {
         super.serialize(dos);
         byte[] key = publicKey.getEncoded();
+        System.out.println("FOde te " + Crypt.bytesToHex(key));
+        System.out.println("length serialize" + key.length);
         dos.writeInt(key.length);
         dos.write(key);
     }
@@ -29,6 +31,8 @@ public class Connect extends UDP_Packet
         int length = dis.readInt();
         byte[] enconded = new byte[length];
         dis.read(enconded, 0, length);
+        System.out.println("length deserialize" + length);
+        System.out.println("Vamos la ver "+ Crypt.bytesToHex(enconded));
         PublicKey key = Crypt.deserializePublicKey(enconded);
         return new Connect(packet, key);
     }

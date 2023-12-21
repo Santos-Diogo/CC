@@ -480,6 +480,8 @@ public class SocketManager
         byte[] payload= new byte[length];
         System.arraycopy(datagram_packet.getData(), 0, payload, 0, length);
         byte[] udp_serialized= CRC.decouple(payload);
+        byte[] udp_serialized2= new byte[udp_serialized.length];
+        System.arraycopy(udp_serialized, 0, udp_serialized2, 0, udp_serialized.length);
         //get or create the connection if it doesn't exist
         this.rwl.readLock().lock();
         try
@@ -502,8 +504,6 @@ public class SocketManager
                     // retrieve the udp packet itself
                     DataInputStream dis = new DataInputStream(bais);
                     UDP_Packet packet = UDP_Packet.deserialize(dis);
-                    dis.close();
-                    bais.reset();
                     
                     //set matching for the user in our side
                     connection.user_destination.put(packet.to, packet.from);
@@ -558,9 +558,7 @@ public class SocketManager
                                 case CON:
                                 {
                                     // handle the connection
-                                    dis = new DataInputStream(bais);
                                     Connect connect_packet = Connect.deserialize(dis, packet);
-                                    dis.close();
                                     // set up the crypt with the received key
                                     connection.setCrypt(connect_packet.publicKey);
                                     //mark the connection as received
@@ -586,10 +584,7 @@ public class SocketManager
                                         responder.start();
                                     }
                                     // deserialize message
-                                    dis = new DataInputStream(bais);
                                     Message msg = Message.deserialize(dis, packet);
-                                    dis.close();
-                                    
                                     // receive and ack the received message
                                     connection.receiveMessage(msg);
                                     connection.ack(packet.pNnumber);
@@ -601,6 +596,7 @@ public class SocketManager
                     finally
                     {
                         connection.rwl.writeLock().unlock();
+                        dis.close();
                     }
                 }
                 catch (Exception e)

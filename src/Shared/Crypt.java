@@ -98,12 +98,14 @@ public class Crypt
      */
     public static PublicKey deserializePublicKey(byte[] publicKeyBytes) throws GeneralSecurityException 
     {
+        System.out.println(publicKeyBytes);
+        System.out.println("Deserialize " + bytesToHex(publicKeyBytes));
         KeyFactory keyFactory = KeyFactory.getInstance("DH");
         return keyFactory.generatePublic(new X509EncodedKeySpec(publicKeyBytes));
     }
 
     // Utility method to convert byte array to hex string for logging
-    private String bytesToHex(byte[] bytes) {
+    public static String bytesToHex(byte[] bytes) {
         StringBuilder hexStringBuilder = new StringBuilder();
         for (byte b : bytes) {
             hexStringBuilder.append(String.format("%02X", b));
