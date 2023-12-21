@@ -515,7 +515,7 @@ public class SocketManager
                     try
                     {
                         connection.rwl.writeLock().lock();
-                        if ((connection.crypt== null && packet.type!= Type.CON) || (packet.pNnumber< connection.received_number&& !connection.non_received.contains(packet.pNnumber)))
+                        if (connection.crypt!=null || (connection.crypt== null && packet.type== Type.CON))
                         {
                             //discard packet if it isn't expected
                             if (packet.pNnumber== connection.received_number)
