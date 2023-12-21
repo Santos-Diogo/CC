@@ -56,10 +56,9 @@ public class SocketManager
         final int INITIAL_PACKETS= 10;
 
         ReentrantReadWriteLock rwl;                                 // state lock
+        Condition connection_condition;                             // condition used for the connection's status
         KeyPair keys;                                               // keypair to be used in encryption/ decription
         Crypt crypt;                                                // used to encrypt and decryppt messages.
-        ReentrantLock connection_lock;                              // lock used for connection status
-        Condition connection_condition;                             // condition used for the connection's status
         Map<Long,Long> user_destination;                            // destination for a user's packets
         long window;                                                // sets the availability to trasnmit "window" packets in a given moment
         Map<Long, RePacket> retransmission_packets;                 // packet number to packet to retransmit
@@ -72,10 +71,9 @@ public class SocketManager
         Connection (DatagramSocket socket, InetAddress addr, KeyPair keys)
         {
             this.rwl= new ReentrantReadWriteLock();
+            this.connection_condition= this.rwl.writeLock().newCondition();
             this.keys= keys;
             this.crypt= null;
-            this.connection_lock= new ReentrantLock();
-            this.connection_condition= this.connection_lock.newCondition();
             this.user_destination= new HashMap<>();
             this.window= INITIAL_PACKETS;
             this.transmission_packets= new LinkedBlockingQueue<>();
