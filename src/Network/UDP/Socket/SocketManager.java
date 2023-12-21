@@ -277,6 +277,7 @@ public class SocketManager
                 byte[] checked= CRC.couple(serialized);
                 
                 // send the packet with crc-32 bitchecking
+                System.out.println("Enviou " + packet.type + ", " + packet.pNnumber);
                 socket.send(new DatagramPacket(checked, checked.length, addr, port));
             }      
         }
@@ -480,8 +481,6 @@ public class SocketManager
         byte[] payload= new byte[length];
         System.arraycopy(datagram_packet.getData(), 0, payload, 0, length);
         byte[] udp_serialized= CRC.decouple(payload);
-        byte[] udp_serialized2= new byte[udp_serialized.length];
-        System.arraycopy(udp_serialized, 0, udp_serialized2, 0, udp_serialized.length);
         //get or create the connection if it doesn't exist
         this.rwl.readLock().lock();
         try
@@ -498,7 +497,6 @@ public class SocketManager
             // if the bytes are valid
             if (udp_serialized!= null)
             {
-                System.out.println("Entrou !");
                 try (ByteArrayInputStream bais = new ByteArrayInputStream(udp_serialized))
                 {
                     // retrieve the udp packet itself
@@ -508,13 +506,15 @@ public class SocketManager
                     //set matching for the user in our side
                     connection.user_destination.put(packet.to, packet.from);
                     
-                    System.out.println(packet.type);
+                    System.out.println("Recebeu "+ packet.type + ", " + packet.pNnumber);
 
                     // if there is no encryption key set and the received packet is not of type connect or
                     // the packet as already been received
                     try
                     {
+                        if(packet.type.equals(Type.MSG)) System.out.println("Antes lock");
                         connection.rwl.writeLock().lock();
+                        if(packet.type.equals(Type.MSG)) System.out.println("Depois lock");
                         if (connection.crypt!=null || (connection.crypt== null && packet.type== Type.CON))
                         {
                             //discard packet if it isn't expected
@@ -550,7 +550,8 @@ public class SocketManager
                                 case ACK:
                                 {
                                     // remove packet corresponding to ack from retransmission queue
-                                    connection.retransmission_packets.remove(packet.pNnumber);
+                                    Ack ack = Ack.deserialize(dis, packet);
+                                    connection.retransmission_packets.remove(ack.ackNumber);
                                     //allow the window to grow
                                     connection.window+= 2;
                                     break;
@@ -573,17 +574,24 @@ public class SocketManager
                                 case MSG:
                                 {
                                     //message is asking for responder
+                                    System.out.println("Entrou msg");
                                     if (packet.to== 0)
                                     {
+                                        System.out.println("Vai enviar bloco");
                                         //register new user with a target
+                                        //Bloqueia aqui
                                         UserData user_data= this.registerUser(from, packet.from);
                                         //change packet target to newly created user
+                                        System.out.println("Vai enviar bloco");
                                         packet.to= user_data.user_id;
                                         //set responder to be the newly created user
+                                        System.out.println("Vai enviar bloco");
                                         Thread responder= new Thread(new TransferServerHandle(tc, user_data, fbi, dir));
                                         responder.start();
                                     }
                                     // deserialize message
+                                    System.out.println("Recebeu pedido");
+
                                     Message msg = Message.deserialize(dis, packet);
                                     // receive and ack the received message
                                     connection.receiveMessage(msg);

@@ -98,8 +98,6 @@ public class Crypt
      */
     public static PublicKey deserializePublicKey(byte[] publicKeyBytes) throws GeneralSecurityException 
     {
-        System.out.println(publicKeyBytes);
-        System.out.println("Deserialize " + bytesToHex(publicKeyBytes));
         KeyFactory keyFactory = KeyFactory.getInstance("DH");
         return keyFactory.generatePublic(new X509EncodedKeySpec(publicKeyBytes));
     }
