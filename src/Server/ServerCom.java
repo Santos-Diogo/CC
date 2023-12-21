@@ -99,7 +99,8 @@ public class ServerCom implements Runnable
         }
     }
 
-    private void handle_GET_REQ(TrackPacket packet) {
+    private void handle_GET_REQ(TrackPacket packet) 
+    {
         System.out.println("GET message");
         try 
         {
@@ -114,55 +115,71 @@ public class ServerCom implements Runnable
             out.writeObject(replyP);
             out.flush();
         }
-        catch (IOException e) {
+        catch (IOException e) 
+        {
             e.printStackTrace();
         }
     }
 
-    private void handle_DC(TrackPacket packet) {
+    private void handle_DC(TrackPacket packet) 
+    {
         System.out.println("DC message");
         serverInfo.remove_infoFromNode(packet.netId);
     }
 
-    private void handle(TrackPacket packet) {
-        switch (packet.type) {
-            case REG_REQ: {
+    private void handle(TrackPacket packet) 
+    {
+        switch (packet.type) 
+        {
+            case REG_REQ: 
+            {
                 handle_REG(packet);
                 break;
             }
-            case AVF_REQ: {
+            case AVF_REQ: 
+            {
                 handle_AVF_REQ(packet);
                 break;
             }
-            case ADD: {
+            case ADD: 
+            {
                 handle_ADD(packet);
                 break;
             }
-            case GET_REQ: {
+            case GET_REQ: 
+            {
                 handle_GET_REQ(packet);
                 break;
             }
-            case DC: {
+            case DC: 
+            {
                 handle_DC(packet);
                 break;
             }
-            default: {
+            default: 
+            {
                 System.out.println("");
             }
         }
     }
 
-    public void run() {
+    public void run() 
+    {
         TrackPacket packet = null;
 
-        while (tc.get_running() == true) {
-            try {
+        while (tc.get_running() == true) 
+        {
+            try 
+            {
                 packet = (TrackPacket) in.readObject();
-            } catch (IOException | ClassNotFoundException e) {
+            } 
+            catch (IOException | ClassNotFoundException e) 
+            {
                 break;
             }
             handle(packet);
         }
+        System.out.println("saimos do ciclo");
         handle_DC(packet);
     }
 }
