@@ -171,13 +171,13 @@ public class SocketManager
          */
         public void addPacketTransmission (long user_id, TransferPacket transfer_packet) throws Exception
         {
-            try
+            try (ByteArrayOutputStream baos = new ByteArrayOutputStream())
             {
                 //encrypt payload
-
-                ByteArrayOutputStream stream;
-                transfer_packet.serialize(new DataOutputStream(stream= new ByteArrayOutputStream()));
-                byte[] serialized= stream.toByteArray();
+                DataOutputStream dos = new DataOutputStream(baos);
+                transfer_packet.serialize(dos);
+                dos.close();
+                byte[] serialized= baos.toByteArray();
                 
                 //lock
                 this.rwl.writeLock().lock();
@@ -187,7 +187,7 @@ public class SocketManager
                 {
                     this.connection_condition.await();
                 }
-
+                System.out.println("Crypt nao e nula");
                 byte[] encrypted_payload= this.crypt.encrypt(serialized);
                 
                 //create packet

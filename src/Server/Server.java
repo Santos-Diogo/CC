@@ -19,7 +19,7 @@ public class Server {
     private static ThreadControl tc = new ThreadControl();
     private static ServerInfo serverInfo = new ServerInfo();
     private static NetId n;
-    private static Set<Thread> threads= new TreeSet<>();
+    //private static Set<Thread> threads= new TreeSet<>();
 
     public static void main(String[] args) {
         // Gets first connection from all nodes and then passes it down to a thread
@@ -39,7 +39,7 @@ public class Server {
                 // The client socket is passed down to a thread.
                 Thread t = new Thread(new ServerCom(clientSocket, tc, serverInfo, n));
                 t.start();
-                threads.add(t);
+                //threads.add(t);
             }
         } 
         catch (IOException e) 
@@ -67,10 +67,10 @@ public class Server {
 
                 // Terminate all threads using the ThreadControl object
                 tc.set_running(false);
-                for (Thread t: threads)
+                /*for (Thread t: threads)
                 {
                     t.join();
-                }
+                }*/
             }
             catch (Exception e)
             {
