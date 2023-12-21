@@ -106,23 +106,37 @@ public class Node
     /**
      * Arguments not enough
      */
-    private static void handle_command(String command) {
-        switch (command.split("\\s+")[0]) {
+    private static void handle_command(String command) 
+    {
+        switch (command.split("\\s+")[0]) 
+        {
             case "avf":
+            {
+
                 handle_avf();
                 break;
+            }
             case "get":
-                try {
+            {
+                try 
+                {
                     handle_get(command.split("\\s+")[1]);
-                } catch (ArrayIndexOutOfBoundsException e) {
-                    System.out.println("Please specify the file to download");
-                    break;
                 }
+                catch (ArrayIndexOutOfBoundsException e) 
+                {
+                    System.out.println("Please specify the file to download");
+                }
+                break;
+            }
             case "quit":
+            {
                 handle_quit();
                 break;
+            }
             default:
+            {
                 break;
+            }
         }
     }
 
