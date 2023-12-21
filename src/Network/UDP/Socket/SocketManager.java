@@ -176,10 +176,20 @@ public class SocketManager
             try
             {
                 //encrypt payload
-                System.out.println("Entrou Crypt !");
+
                 ByteArrayOutputStream stream;
                 transfer_packet.serialize(new DataOutputStream(stream= new ByteArrayOutputStream()));
                 byte[] serialized= stream.toByteArray();
+                
+                //lock
+                this.rwl.writeLock().lock();
+                
+                //wait for the connection to be established
+                while (this.crypt== null)
+                {
+                    this.connection_condition.await();
+                }
+
                 byte[] encrypted_payload= this.crypt.encrypt(serialized);
                 
                 //create packet
@@ -187,14 +197,6 @@ public class SocketManager
                 long to= this.user_destination.get(user_id);
                 UDP_Packet udp_packet= new Message(new UDP_Packet(Type.MSG, from, to, this.inc++), encrypted_payload);
                 
-                //lock
-                this.rwl.writeLock().lock();
-                
-                //wait for the connection to be established
-                if (this.crypt== null)
-                {
-                    this.connection_condition.await();
-                }
 
                 //add packet to transmission queue
                 this.transmission_packets.add(udp_packet);
@@ -455,46 +457,43 @@ public class SocketManager
      */
     void send (DatagramSocket socket, int port)
     {
-        try
-        {
+        this.rwl.readLock().lock();
+        Set<Entry<InetAddress, Connection>> entry_set = null;
+        try {
             //get the connections set and release the lock
-            this.rwl.readLock().lock();
-            Set<Entry<InetAddress, Connection>> entry_set= this.address_to_connection.entrySet();
+            entry_set= this.address_to_connection.entrySet();
+        } finally {
             this.rwl.readLock().unlock();
-
-            for (Map.Entry<InetAddress, Connection> entry: entry_set)
-            {
-                entry.getValue().sendALL(socket, entry.getKey(), port);
-            }
         }
-        finally
+        if (entry_set == null) return;
+        for (Map.Entry<InetAddress, Connection> entry: entry_set)
         {
-            this.rwl.readLock().unlock();
+            entry.getValue().sendALL(socket, entry.getKey(), port);
         }
     }
 
     //method to be used when a packet is received
     void received (DatagramPacket datagram_packet)
     {
+        InetAddress from= datagram_packet.getAddress();
+        
+        // retrieve the udp packet's bytes
+        int length = datagram_packet.getLength();
+        byte[] payload= new byte[length];
+        System.arraycopy(datagram_packet.getData(), 0, payload, 0, length);
+        byte[] udp_serialized= CRC.decouple(payload);
+        //get or create the connection if it doesn't exist
+        this.rwl.readLock().lock();
         try
         {
-            InetAddress from= datagram_packet.getAddress();
             
-            // retrieve the udp packet's bytes
-            int length = datagram_packet.getLength();
-            byte[] payload= new byte[length];
-            System.arraycopy(datagram_packet.getData(), 0, payload, 0, length);
-            byte[] udp_serialized= CRC.decouple(payload);
-            
-            //get or create the connection if it doesn't exist
-            this.rwl.readLock().lock();
             Connection connection= this.address_to_connection.get(from);
             if (connection== null)
             {
                 connection= new Connection(socket, from, this.keys);
                 this.address_to_connection.put(from, connection);
             }
-            this.rwl.readLock().unlock();
+            //this.rwl.readLock().unlock();
             
             // if the bytes are valid
             if (udp_serialized!= null)
