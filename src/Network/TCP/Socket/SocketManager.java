@@ -101,9 +101,11 @@ public class SocketManager
         try
         {
             // wait for threads
+            this.t1.interrupt();
             this.t1.join();
+            this.t2.interrupt();
             this.t2.join();
-            
+
             // close socket
             this.socket.close();
         }
