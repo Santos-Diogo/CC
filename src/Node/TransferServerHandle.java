@@ -53,14 +53,13 @@ public class TransferServerHandle implements Runnable
                 {
                     for (Long b : blocks)
                     {
-                        long skipBytes = (b - 1) * Shared.Defines.blockSize;
-                        if (fileInputStream.skip(skipBytes) == skipBytes) 
+                        //long skipBytes = (b - 1) * Shared.Defines.blockSize;
+                        if (true) 
                         {
                             byte[] block = new byte[Shared.Defines.blockSize];
                             fileInputStream.read(block);
                             TSFPayload rep_packet= new TSFPayload(b, block, TypeMsg.TSF);
                             user_data.user_connection.addPacketTransmission(user_data.user_id, rep_packet);
-                            System.out.println(new String (block));
                         }
                     }
                 }

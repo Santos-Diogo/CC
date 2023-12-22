@@ -208,7 +208,7 @@ public class Node
             }
             handle_quit();
             // Close the tpc socket manager when done
-            tcpSocketManager.stop();
+            System.exit(0);
         }
         catch (UnknownHostException e) 
         {

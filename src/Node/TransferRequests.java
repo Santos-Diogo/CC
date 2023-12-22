@@ -204,11 +204,11 @@ public class TransferRequests implements Runnable
                 for(int i = 0; i< nBlocks; i++)
                 {
                     TSFPayload block = queue.take();
-                    System.out.println(block.blockNumber);
+                    //System.out.println(block.blockNumber);
                     String newDirBlock = newDir + block.blockNumber;
                     filePaths.add(newDirBlock);
                     try (FileOutputStream fos = new FileOutputStream(newDirBlock)) {
-                        System.out.println(new String (block.block));
+                        //System.out.println(new String (block.block));
                         fos.write(block.block);
                     }
                     AddBlockPacket upd = new AddBlockPacket(new TrackPacket(self, TypeMsg.ADD, selfId, 0), file.getName(), block.blockNumber);
