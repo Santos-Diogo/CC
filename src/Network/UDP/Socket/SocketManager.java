@@ -190,7 +190,6 @@ public class SocketManager
                 {
                     this.connection_condition.await();
                 }
-                System.out.println("Crypt nao e nula");
                 byte[] encrypted_payload= this.crypt.encrypt(serialized);
                 
                 //create packet
@@ -430,9 +429,7 @@ public class SocketManager
     {
         try
         {
-            System.out.println("Pois é");
             this.rwl.writeLock().lock();
-            System.out.println("Pois é");
             long user_id= inc++;
 
             // get user's connection
@@ -581,23 +578,19 @@ public class SocketManager
                                 case MSG:
                                 {
                                     //message is asking for responder
-                                    System.out.println("Entrou msg");
                                     if (packet.to== 0)
                                     {
-                                        System.out.println("Vai enviar bloco");
                                         //register new user with a target
-                                        //Bloqueia aqui
                                         UserData user_data= this.registerUser(from, packet.from);
                                         //change packet target to newly created user
-                                        System.out.println("Vai enviar bloco");
+                                        
                                         packet.to= user_data.user_id;
                                         //set responder to be the newly created user
-                                        System.out.println("Vai enviar bloco");
+                                        
                                         Thread responder= new Thread(new TransferServerHandle(tc, user_data, fbi, dir));
                                         responder.start();
                                     }
                                     // deserialize message
-                                    System.out.println("Recebeu pedido");
 
                                     Message msg = Message.deserialize(dis, packet);
                                     // receive and ack the received message

@@ -179,7 +179,5 @@ public class ServerCom implements Runnable
             }
             handle(packet);
         }
-        System.out.println("Connection closed");
-        handle_DC(packet);
     }
 }

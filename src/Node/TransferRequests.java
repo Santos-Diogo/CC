@@ -216,7 +216,6 @@ public class TransferRequests implements Runnable
                 }
                 filePaths.sort(Comparator.comparingInt(s -> Character.digit(s.charAt(s.length() - 1), 10)));
                 String wholefile = dir + "/" + file.getName();
-                Thread.sleep(TimeUnit.SECONDS.toMillis(20));
                 concatenateFiles(filePaths, wholefile);
                 deleteOriginalFiles(filePaths);
                 

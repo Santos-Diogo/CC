@@ -206,7 +206,7 @@ public class Node
             {
                 handle_command(command);
             }
-
+            handle_quit();
             // Close the tpc socket manager when done
             tcpSocketManager.stop();
         }

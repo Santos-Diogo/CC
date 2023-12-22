@@ -29,11 +29,11 @@ public class SocketManager
             this.nUser= 0;
             this.userToInput= new HashMap<>();
             this.outputQueue = new LinkedBlockingQueue<>();
-            
+            this.tc = tc;
             //Initiate Sender and Receiver
             
-            t1= new Thread(new Receiver(this, socket, tc));
             t2= new Thread(new Sender(socket, outputQueue, tc));
+            t1= new Thread(new Receiver(this, socket, tc));
             t1.start();
             t2.start();
         }
