@@ -16,6 +16,10 @@ public class SocketManager
     private long nUser;
     private Map<Long, BlockingQueue<TrackPacket>> userToInput;      // Match user with corresponding input Queue
     private BlockingQueue<TrackPacket> outputQueue;                 // We only need one out
+    private Socket socket;
+    private ThreadControl tc;
+    private Thread t1;
+    private Thread t2;
 
     public SocketManager (Socket socket, ThreadControl tc)
     {
@@ -28,9 +32,8 @@ public class SocketManager
             
             //Initiate Sender and Receiver
             
-            Thread t2= new Thread(new Sender(socket, outputQueue, tc));
-            
-            Thread t1= new Thread(new Receiver(this, socket, tc));
+            t1= new Thread(new Receiver(this, socket, tc));
+            t2= new Thread(new Sender(socket, outputQueue, tc));
             t1.start();
             t2.start();
         }
@@ -88,5 +91,26 @@ public class SocketManager
         {
             this.rwl.readLock().unlock();
         }
+    }
+
+    public void stop ()
+    {
+        //stop threads
+        this.tc.set_running(false);
+
+        try
+        {
+            // wait for threads
+            this.t1.join();
+            this.t2.join();
+            
+            // close socket
+            this.socket.close();
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
+            
     }
 }

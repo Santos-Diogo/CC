@@ -180,6 +180,7 @@ public class Node
             // Define this machine IP adress
             net_Id = new NetId(InetAddress.getLocalHost().getHostName());
             System.out.println(net_Id);
+
             // Creates TCP Manager
             socket= new Socket(serverAddress, serverPort);
             tcpSocketManager= new SocketManager(socket, tc);
@@ -207,8 +208,8 @@ public class Node
                 handle_command(command);
             }
 
-            // Close the socket when done
-            socket.close();
+            // Close the tpc socket manager when done
+            tcpSocketManager.stop();
         }
         catch (UnknownHostException e) 
         {
