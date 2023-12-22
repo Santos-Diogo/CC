@@ -17,8 +17,7 @@ public class Receiver implements Runnable
     Receiver (SocketManager manager, Socket s, ThreadControl tc)
     {
         try
-        {
-            
+        {     
             this.in= new ObjectInputStream (s.getInputStream());
             this.manager= manager;
             this.tc= tc;
@@ -42,7 +41,8 @@ public class Receiver implements Runnable
             try
             {
                 TrackPacket p= (TrackPacket) in.readObject();
-                handle (p);
+                if (this.tc.get_running())
+                    handle (p);
             }
             catch (Exception e)
             {
