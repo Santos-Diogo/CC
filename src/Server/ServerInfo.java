@@ -19,10 +19,6 @@ public class ServerInfo
             this.netId = netId;
         }
 
-        public NetId get_netId() {
-            return this.netId;
-        }
-
         public boolean contains_NetID(NetId node) {
             return this.netId.equals(node);
         }
@@ -72,11 +68,6 @@ public class ServerInfo
             if (available_blocks.size() == nBlocks)
                 return true;
             return false;
-        }
-
-        long get_fileId ()
-        {
-            return this.fileId;
         }
 
         boolean nodeHasFile(NetId node) {
@@ -175,6 +166,7 @@ public class ServerInfo
         }
     }
 
+
     public void addTo_fileHistory (String file, Long filesize)
     {
         rwl.writeLock().lock();
@@ -185,6 +177,10 @@ public class ServerInfo
         }
     }
 
+    public boolean nodeHasFile(NetId node, String file)
+    {
+        return file_nodeData.get(file).nodeHasFile(node);
+    }
 
     public void add_load (Map<NetId, Integer> load)
     {

@@ -14,9 +14,9 @@ public class GETPayload extends TransferPacket
     public long file;
     public List<Long> blocks;
 
-    public GETPayload (long file, List<Long> blocks, TypeMsg type, byte[] payload)
+    public GETPayload (long file, List<Long> blocks, TypeMsg type)
     {
-        super(type, payload);
+        super(type);
         this.file= file;
         this.blocks= blocks;
     }
@@ -37,6 +37,6 @@ public class GETPayload extends TransferPacket
         List<Long> blocks = new ArrayList<>(size);
         for(int i = 0; i < size; i++)
             blocks.add(in.readLong());
-        return new GETPayload(file, blocks, packet.type, packet.payload);
+        return new GETPayload(file, blocks, packet.type);
     }
 }

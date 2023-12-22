@@ -24,10 +24,13 @@ public class SocketManager
             this.rwl= new ReentrantReadWriteLock();
             this.nUser= 0;
             this.userToInput= new HashMap<>();
+            this.outputQueue = new LinkedBlockingQueue<>();
             
             //Initiate Sender and Receiver
+            
+            Thread t2= new Thread(new Sender(socket, outputQueue, tc));
+            
             Thread t1= new Thread(new Receiver(this, socket, tc));
-            Thread t2= new Thread(new Sender(this, socket, outputQueue, tc));
             t1.start();
             t2.start();
         }
@@ -50,14 +53,14 @@ public class SocketManager
             //Register a user creating a new input q and assigning him a number
             BlockingQueue<TrackPacket> q= new LinkedBlockingQueue<>();
             this.userToInput.put(this.nUser, q);
-
-            //Increment nUser
-            this.nUser+= 1;
+            
             
             return nUser;
         }
         finally
         {
+            //Increment nUser
+            this.nUser+= 1;
             this.rwl.writeLock().unlock();
         }
     }

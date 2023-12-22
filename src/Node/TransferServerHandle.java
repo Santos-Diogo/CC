@@ -1,19 +1,16 @@
 package Node;
 
 import ThreadTools.ThreadControl;
-
-import java.net.DatagramPacket;
-import java.net.InetAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.concurrent.BlockingQueue;
 
-import Network.UDP.Socket.SocketManager.UserInfo;
+import Network.UDP.Socket.SocketManager.UserData;
 import Network.UDP.TransferProtocol.TransferPacket;
 import Network.UDP.TransferProtocol.TransferPacket.TypeMsg;
 import Network.UDP.TransferProtocol.TransferPayload.GETPayload;
 import Network.UDP.TransferProtocol.TransferPayload.TSFPayload;
 
-import java.security.KeyPair;
 import java.util.List;
 
 import Blocker.FileBlockInfo;
@@ -23,53 +20,23 @@ import java.io.FileInputStream;
 public class TransferServerHandle implements Runnable
 {
     private ThreadControl tc;
-    private InetAddress target;
-    private UserInfo userInfo;
-    private KeyPair keyPair;
+    private UserData user_data;
     private FileBlockInfo fbi;
     private String dir;
 
-
-    //E para cagar em ti
-    public void connect (TransferPacket p) throws Exception
+    public TransferServerHandle (ThreadControl tc, UserData data, FileBlockInfo fbi, String dir)
     {
-        //Create crypt from first packet
-        //this.targetId= p.from;
-        //this.crypt= new Crypt(this.keyPair.getPrivate(), p.payload);
-
-        TransferPacket packet= new TransferPacket(this.keyPair.getPublic().getEncoded());
-        byte[] serializedPacket= packet.serialize();
-        DatagramPacket datagramPacket= new DatagramPacket(serializedPacket, serializedPacket.length, this.target, Shared.Defines.transferPort);
-
-        //Send packet with own public key
-        //this.ioQueue.out.add(datagramPacket);
-    }
-
-    TransferServerHandle (ThreadControl tc, TransferPacket p, Network.UDP.Socket.SocketManager manager, KeyPair keyPair, FileBlockInfo fbi, String dir)
-    {
-        try
-        {
-            this.tc= tc;
-            this.target= p.source;
-            this.userInfo= manager.register(target);
-            this.keyPair= keyPair;
-            this.fbi = fbi;
-            this.dir = dir;
-
-            //connect to client that sent 1st packet
-            connect(p);
-        }
-        catch (Exception e)
-        {
-            e.printStackTrace();
-        }
+        this.tc= tc;
+        this.user_data= data;
+        this.fbi = fbi;
+        this.dir = dir;
     }
 
     public void handleGet (TransferPacket packet)
     {
         try
         {
-            GETPayload getPacket= new GETPayload(packet.payload);
+            GETPayload getPacket= (GETPayload) packet;
 
             //File and Blocks to send
             long fileID= getPacket.file;
@@ -80,10 +47,10 @@ public class TransferServerHandle implements Runnable
             //Send all the blocks
 
             String fileDir= dir + file;
-            
             if (fbi.hasWholeFile(file))
             {
-                try (FileInputStream fileInputStream = new FileInputStream(fileDir)){
+                try (FileInputStream fileInputStream = new FileInputStream(fileDir))
+                {
                     for (Long b : blocks)
                     {
                         long skipBytes = (long) b * Shared.Defines.blockSize;
@@ -91,22 +58,24 @@ public class TransferServerHandle implements Runnable
                         {
                             byte[] block = new byte[Shared.Defines.blockSize];
                             fileInputStream.read(block);
-                            TSFPayload payload = new TSFPayload(b, block);
-                            TransferPacket tsfpacket = new TransferPacket(TypeMsg.TSF, payload.serialize());
-                            userInfo.out.add(tsfpacket);
+                            TSFPayload rep_packet= new TSFPayload(b, block, TypeMsg.TSF);
+                            user_data.user_connection.addPacketTransmission(user_data.user_id, rep_packet);
                         }
                     }
-                } catch (Exception e) {
+                }
+                catch (Exception e) 
+                {
                     e.printStackTrace();
                 }
-            } else {
+            } 
+            else 
+            {
                 for(Long b : blocks)
                 {
                     String blockFileDir = fileDir + ".fsblk." + b;
                     byte[] block = Files.readAllBytes(Path.of(blockFileDir));
-                    TSFPayload payload = new TSFPayload(b, block);
-                    TransferPacket tsfpacket = new TransferPacket(TypeMsg.TSF, payload.serialize());
-                    userInfo.out.add(tsfpacket);
+                    TSFPayload rep_packet= new TSFPayload(b, block, TypeMsg.TSF);
+                    user_data.user_connection.addPacketTransmission(user_data.user_id, rep_packet);
                 }
             }
         }
@@ -123,19 +92,23 @@ public class TransferServerHandle implements Runnable
             case GET:
                 handleGet(packet);
             default:
-                throw new Exception("Impossible Packet in Server Handler");
+                throw new Exception("Fodeu-se");
         }
     }
 
     public void run ()
     {
+        BlockingQueue<TransferPacket> input_queue =user_data.user_connection.getInput(user_data.user_id);
+
         while (this.tc.get_running())
         {
-            try {
-                TransferPacket p= this.userInfo.in.take();
+            try 
+            {
+                TransferPacket p= input_queue.take();
                 handle (p);
-                
-            } catch (Exception e) {
+            } 
+            catch (Exception e)
+            {
                 e.printStackTrace();
             }
         }

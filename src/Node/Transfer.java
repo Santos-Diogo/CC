@@ -1,36 +1,26 @@
 package Node;
 
-import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
-import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 
-import Network.TCP.TrackProtocol.TrackPacket;
+import Network.UDP.Socket.SocketManager.UserData;
 import Network.UDP.TransferProtocol.TransferPacket;
 import Network.UDP.TransferProtocol.TransferPacket.TypeMsg;
 import Network.UDP.TransferProtocol.TransferPayload.GETPayload;
 import Network.UDP.TransferProtocol.TransferPayload.TSFPayload;
-import Shared.Crypt;
 
 public class Transfer implements Runnable{
 
-    private InetAddress node_toRequest; 
-    private long udpId;
-    private IOQueue udpQueue;
-    private BlockingQueue<TrackPacket> tcpQueue;
+    private UserData userData;
+    private BlockingQueue<TSFPayload> queue;
     private long fileid;
     private List<Long> blocks;
-    private Crypt crypt;
-    private long target_id;
 
-    public Transfer (Network.UDP.Socket.SocketManager udpManager, Network.TCP.Socket.SocketManager tcpManager, InetAddress node, long fileid, List<Long> blocks)
+    public Transfer (Network.UDP.Socket.SocketManager udpManager, InetAddress node, long fileid, List<Long> blocks, BlockingQueue<TSFPayload> queue)
     {
-        this.node_toRequest = node;
-        this.udpId = udpManager.register();
-        this.udpQueue = udpManager.getQueue(this.udpId);
-        this.tcpQueue = tcpManager.getOutpuQueue();
+        this.userData = udpManager.registerUser(node);
+        this.queue = queue;
         this.fileid = fileid;
         this.blocks = blocks;
     }
@@ -38,24 +28,16 @@ public class Transfer implements Runnable{
 
     public void run ()
     {
-        GETPayload payload = new GETPayload(fileid, blocks);
-        try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-            DataOutputStream dos = new DataOutputStream(baos);
-            payload.serialize(dos);
-            dos.flush();
-            TransferPacket packet = new TransferPacket(TypeMsg.GET, udpId, target_id, crypt.encrypt(baos.toByteArray()));
-            baos.reset();
-            packet.serialize(dos); 
-            byte[] serialized_packet = baos.toByteArray();
-            DatagramPacket packet2 = new DatagramPacket(serialized_packet, serialized_packet.length, node_toRequest, Shared.Defines.transferPort);
-            udpQueue.out.add(packet2);
+        GETPayload payload = new GETPayload(fileid, blocks, TypeMsg.GET);
+        try {
+            userData.user_connection.addPacketTransmission(userData.user_id, payload);
             int blocks_size = blocks.size();
+            BlockingQueue<TransferPacket> transfers = userData.user_connection.getInput(userData.user_id);            
             for(int i = 0; i < blocks_size; i++)
             {
-                TransferPacket repPacket = udpQueue.in.take();
-                TSFPayload file_block = new TSFPayload(crypt.decrypt(repPacket.payload));
+                TSFPayload repPacket = (TSFPayload) transfers.take();
+                queue.add(repPacket);
             }
-            
         } catch (Exception e) {
             e.printStackTrace();
         }
