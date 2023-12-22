@@ -186,15 +186,14 @@ public class Node
             trackerId= tcpSocketManager.register();
             trackerInput= tcpSocketManager.getInputQueue(trackerId);
             trackerOutput= tcpSocketManager.getOutpuQueue();
-
+            
+            //Registers Self
+            fbInfo= new FileBlockInfo(args[0]);
             
             // Creates UDP Manager
             udpSocketManager= new Network.UDP.Socket.SocketManager(tc, fbInfo, args[0]);
-
-            //Registers Self
-            fbInfo= new FileBlockInfo(args[0]);
             register (fbInfo);
-
+            
             //SetsUp UDP_Client
             Thread udpC= new Thread(new TransferRequests(net_Id, trackerId, tc, files, trackerOutput, udpSocketManager, args[0]));
             udpC.start();

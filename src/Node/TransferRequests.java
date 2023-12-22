@@ -2,6 +2,7 @@ package Node;
 
 import ThreadTools.ThreadControl;
 
+import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -9,7 +10,10 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.InetAddress;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -127,7 +131,7 @@ public class TransferRequests implements Runnable
             return nodes.get(0);
         }
 
-         private static void appendFileContent(String filePath, BufferedWriter bw) throws IOException {
+        private static void appendFileContent(String filePath, BufferedWriter bw) throws IOException {
             try (FileReader fr = new FileReader(filePath);
                     BufferedReader br = new BufferedReader(fr)) {
 
@@ -139,6 +143,19 @@ public class TransferRequests implements Runnable
                 }
             }
         }
+
+        public static void concatenateFiles(List<String> filePaths, String outputFilePath) throws IOException {
+        try (OutputStream outputStream = new BufferedOutputStream(new FileOutputStream(outputFilePath))) {
+            for (String filePath : filePaths) {
+                if (Files.exists(Path.of(filePath))) {
+                    byte[] fileBytes = Files.readAllBytes(Path.of(filePath));
+                    outputStream.write(fileBytes);
+                } else {
+                    System.err.println("File not found: " + filePath);
+                }
+            }
+        }
+    }
 
         private static void deleteOriginalFiles(List<String> fileList) {
             // Iterate over the list of files and delete each file
@@ -187,23 +204,22 @@ public class TransferRequests implements Runnable
                 for(int i = 0; i< nBlocks; i++)
                 {
                     TSFPayload block = queue.take();
+                    System.out.println(block.blockNumber);
                     String newDirBlock = newDir + block.blockNumber;
                     filePaths.add(newDirBlock);
-                    try (FileOutputStream fos = new FileOutputStream(newDir)) {
+                    try (FileOutputStream fos = new FileOutputStream(newDirBlock)) {
+                        System.out.println(new String (block.block));
                         fos.write(block.block);
                     }
                     AddBlockPacket upd = new AddBlockPacket(new TrackPacket(self, TypeMsg.ADD, selfId, 0), file.getName(), block.blockNumber);
                     tcpoutput.add(upd);
                 }
                 filePaths.sort(Comparator.comparingInt(s -> Character.digit(s.charAt(s.length() - 1), 10)));
-                try (FileWriter fw = new FileWriter(dir + "/" + file.getName()))
-                {
-                    BufferedWriter bw = new BufferedWriter(fw);
-                    for(String path : filePaths) {
-                        appendFileContent(path, bw);
-                    }
-                    deleteOriginalFiles(filePaths);
-                }
+                String wholefile = dir + "/" + file.getName();
+                Thread.sleep(TimeUnit.SECONDS.toMillis(20));
+                concatenateFiles(filePaths, wholefile);
+                deleteOriginalFiles(filePaths);
+                
             } catch (Exception e) {
                 e.printStackTrace();
             }

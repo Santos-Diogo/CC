@@ -18,7 +18,7 @@ public class Message extends UDP_Packet
     {
         int length = dis.readInt();
         byte[] message = new byte[length];
-        dis.read(message, length, length);
+        dis.read(message, 0, length);
         return new Message(packet, message);
     }
 

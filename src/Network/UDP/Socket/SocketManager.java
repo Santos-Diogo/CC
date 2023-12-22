@@ -28,6 +28,9 @@ import Network.UDP.Packet.Message;
 import Network.UDP.Packet.UDP_Packet;
 import Network.UDP.Packet.UDP_Packet.Type;
 import Network.UDP.TransferProtocol.*;
+import Network.UDP.TransferProtocol.TransferPacket.TypeMsg;
+import Network.UDP.TransferProtocol.TransferPayload.GETPayload;
+import Network.UDP.TransferProtocol.TransferPayload.TSFPayload;
 import Node.TransferServerHandle;
 import Shared.CRC;
 import Shared.Crypt;
@@ -225,13 +228,17 @@ public class SocketManager
                 ByteArrayInputStream bais = new ByteArrayInputStream(decrypted_transfer);
                 DataInputStream dis = new DataInputStream(bais);
                 TransferPacket transfer_packet = TransferPacket.deserialize(dis);
-
+                TransferPacket packet_d;
+                if (transfer_packet.type.equals(TypeMsg.GET))
+                    packet_d = GETPayload.deserialize(dis, transfer_packet);
+                else
+                    packet_d = TSFPayload.deserialize(dis, transfer_packet);
                 // lock
                 this.rwl.readLock().lock();
 
                 // add the packet to the user's input queue
                 BlockingQueue<TransferPacket> queue= this.received_packets.get(packet.to);
-                queue.add(transfer_packet);
+                queue.add(packet_d);
             }
             catch (Exception e)
             {
@@ -360,7 +367,7 @@ public class SocketManager
     FileBlockInfo fbi;
     String dir;
     DatagramSocket socket;
-    private static long inc= 0;                                                 
+    private static long inc= 1;                                                 
     KeyPair keys;
     Map<InetAddress, Connection> address_to_connection;
     Map<Long,Connection> user_to_connection;
@@ -423,7 +430,9 @@ public class SocketManager
     {
         try
         {
+            System.out.println("Pois é");
             this.rwl.writeLock().lock();
+            System.out.println("Pois é");
             long user_id= inc++;
 
             // get user's connection
@@ -482,7 +491,7 @@ public class SocketManager
         System.arraycopy(datagram_packet.getData(), 0, payload, 0, length);
         byte[] udp_serialized= CRC.decouple(payload);
         //get or create the connection if it doesn't exist
-        this.rwl.readLock().lock();
+        this.rwl.writeLock().lock();
         try
         {
             
@@ -510,11 +519,9 @@ public class SocketManager
 
                     // if there is no encryption key set and the received packet is not of type connect or
                     // the packet as already been received
+                    connection.rwl.writeLock().lock();
                     try
                     {
-                        if(packet.type.equals(Type.MSG)) System.out.println("Antes lock");
-                        connection.rwl.writeLock().lock();
-                        if(packet.type.equals(Type.MSG)) System.out.println("Depois lock");
                         if (connection.crypt!=null || (connection.crypt== null && packet.type== Type.CON))
                         {
                             //discard packet if it isn't expected
@@ -615,7 +622,7 @@ public class SocketManager
         }
         finally
         {
-            this.rwl.readLock().unlock();
+            this.rwl.writeLock().unlock();
         }
     }
 }

@@ -46,20 +46,21 @@ public class TransferServerHandle implements Runnable
 
             //Send all the blocks
 
-            String fileDir= dir + file;
+            String fileDir= dir + "/" + file;
             if (fbi.hasWholeFile(file))
             {
                 try (FileInputStream fileInputStream = new FileInputStream(fileDir))
                 {
                     for (Long b : blocks)
                     {
-                        long skipBytes = (long) b * Shared.Defines.blockSize;
+                        long skipBytes = (b - 1) * Shared.Defines.blockSize;
                         if (fileInputStream.skip(skipBytes) == skipBytes) 
                         {
                             byte[] block = new byte[Shared.Defines.blockSize];
                             fileInputStream.read(block);
                             TSFPayload rep_packet= new TSFPayload(b, block, TypeMsg.TSF);
                             user_data.user_connection.addPacketTransmission(user_data.user_id, rep_packet);
+                            System.out.println(new String (block));
                         }
                     }
                 }
@@ -91,6 +92,7 @@ public class TransferServerHandle implements Runnable
         {
             case GET:
                 handleGet(packet);
+                break;
             default:
                 throw new Exception("Fodeu-se");
         }
